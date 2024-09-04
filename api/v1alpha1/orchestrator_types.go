@@ -79,6 +79,17 @@ type OrchestratorPlatform struct {
 }
 
 type SonataFlowPlatform struct {
+	Resources Resource `json:"resources,omitempty"`
+}
+
+type Resource struct {
+	Requests MemoryCpu `json:"requests,omitempty"`
+	Limits   MemoryCpu `json:"limits,omitempty"`
+}
+
+type MemoryCpu struct {
+	Memory string `json:"memory,omitempty"`
+	Cpu    string `json:"cpu,omitempty"`
 }
 
 type Tekton struct {

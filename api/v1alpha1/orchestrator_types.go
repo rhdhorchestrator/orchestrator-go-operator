@@ -29,6 +29,8 @@ type OrchestratorSpec struct {
 	OrchestratorPlatform OrchestratorPlatform `json:"orchestrator,omitempty"`
 	Tekton               Tekton               `json:"tekton,omitempty"`
 	ArgoCd               ArgoCD               `json:"argocd,omitempty"`
+	ReplicaSize          int32                `json:"replicaSize,omitempty"`
+	ContainerPort        int32                `json:"containerPort,omitempty"`
 }
 
 type Subscription struct {

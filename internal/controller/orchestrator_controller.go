@@ -18,12 +18,16 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,9 +39,9 @@ import (
 
 // Definition to manage Orchestrator condition status.
 const (
-	TypeAvailable   string = "Available"
-	TypeProgressing string = "Progressing"
-	TypeDegraded    string = "Degraded"
+	TypeAvailable string = "Available"
+	//TypeProgressing string = "Progressing"
+	//TypeDegraded    string = "Degraded"
 )
 
 // OrchestratorReconciler reconciles a Orchestrator object
@@ -106,7 +110,98 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
+	// Check deployment exists, else create a new one.
+	orchestratorDeployment := &appsv1.Deployment{}
+	err = r.Get(ctx, types.NamespacedName{
+		Name:      orchestrator.Name,
+		Namespace: orchestrator.Namespace,
+	}, orchestratorDeployment)
+	if err != nil && apierrors.IsNotFound(err) {
+		// define a new deployment
+		dep, err := r.deploymentForOrchestrator(orchestrator)
+		if err != nil {
+			log.Error(err, "Failed to define new Deployment resource for Orchestrator")
+
+			// updating the status
+			meta.SetStatusCondition(
+				&orchestrator.Status.Conditions, metav1.Condition{
+					Type:    TypeAvailable,
+					Status:  metav1.ConditionFalse,
+					Reason:  "Reconciling",
+					Message: fmt.Sprintf("Failed to create Deployment for CR (%s): (%s)", orchestrator.Name, err),
+				},
+			)
+			if err := r.Status().Update(ctx, orchestrator); err != nil {
+				log.Error(err, "Failed to update orchestrator status")
+				return ctrl.Result{}, err
+			}
+		}
+		log.Info(
+			"Creating a new Deployment",
+			"Deployment.Namespace", dep.Namespace,
+			"Deployment.Name", dep.Name)
+		if err = r.Create(ctx, dep); err != nil {
+			log.Error(err, "Failed to create new Deployment",
+				"Deployment.Namespace", dep.Namespace,
+				"Deployment.Name", dep.Name)
+			return ctrl.Result{}, err
+		}
+		// Deployment created successfully
+		// We will requeue the reconciliation so that we can ensure the state
+		// and move forward for the next operations
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Deployment")
+		// Return the error for the reconciliation to be re-triggered again
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *OrchestratorReconciler) deploymentForOrchestrator(
+	orchestrator *orchestratorv1alpha1.Orchestrator) (*appsv1.Deployment, error) {
+	replicas := orchestrator.Spec.ReplicaSize
+
+	labels := map[string]string{
+		"app.kubernetes.io/name":       "orchestrator-operator",
+		"app.kubernetes.io/version":    "v1",
+		"app.kubernetes.io/instance":   orchestrator.Name,
+		"app.kubernetes.io/managed-by": "OrchestratorController",
+	}
+
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      orchestrator.Name,
+			Namespace: orchestrator.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:            orchestrator.Name,
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Ports: []corev1.ContainerPort{{
+							ContainerPort: orchestrator.Spec.ContainerPort,
+							Name:          "orchestrator",
+						}},
+					}},
+				},
+			},
+		},
+	}
+	// Set the ownerRef for the Deployment
+	if err := ctrl.SetControllerReference(orchestrator, dep, r.Scheme); err != nil {
+		return nil, err
+	}
+	return dep, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

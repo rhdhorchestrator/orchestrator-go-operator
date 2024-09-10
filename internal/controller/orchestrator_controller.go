@@ -18,17 +18,13 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,6 +43,7 @@ const (
 // OrchestratorReconciler reconciles a Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
+	OLMClient olmclientset.Interface
 	ClientSet *kubernetes.Clientset
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
@@ -111,8 +108,8 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
+	// sonataFlowOperator
 	// for creating and deleting use case
-
 	sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
 	subscriptionName := sonataFlowOperator.Subscription.Name
 	namespace := sonataFlowOperator.Subscription.Namespace
@@ -120,13 +117,22 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// check if the sonataflow subscription operator is enabled
 	// if disabled,
 	if !sonataFlowOperator.Enabled {
-		// check if subscription exists, delete it, then requeue for x amount of time (not hoard the thread)
-		// Use SubscriptionLister to check if a Subscription exists
-		sonataFlowSubscription, err := getSubscription(ctx, subscriptionName, namespace)
+		// check if subscription exists using olm client
+		sonataFlowSubscription, err := r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Get(context.TODO(), subscriptionName, metav1.GetOptions{})
 		if err != nil {
 			logger.Error(err, "Subscription does not exists: %v")
+			return ctrl.Result{}, err
 		}
 		logger.Info("Subscription exists: %s", sonataFlowSubscription.Name)
+
+		// deleting subscription resource;
+		//then requeue for x amount of time (not hoard the thread)
+		err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
+		if err != nil {
+			logger.Error(err, "Error occurred while deleting Subscription: %s", subscriptionName)
+			return ctrl.Result{}, err
+		}
+		logger.Info("Successfully deleted Subscription: %s", subscriptionName)
 	}
 
 	// if enabled, check if CRD exists, if not install the sonataflow operator
@@ -146,42 +152,21 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, nil
 }
 
-// getSubscription to retrieve a Subscription via OLM
-func getSubscription(ctx context.Context, subscriptionName, namespace string) (*v1alpha1.Subscription, error) {
-	logger := log.FromContext(ctx)
-
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		logger.Error(err, "Error creating Kubernetes config: %v")
-	}
+// SetupWithManager sets up the controller with the Manager.
+func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	//config, err := rest.InClusterConfig()
+	config := mgr.GetConfig()
 
 	// Create the OLM clientset using the config
 	olmClient, err := olmclientset.NewForConfig(config)
 	if err != nil {
-		logger.Error(err, "Failed to create OLM client")
+		return nil
 	}
-	// Retrieve the Subscription object from the cluster using OLM client
-	subscription, err := olmClient.OperatorsV1alpha1().Subscriptions(namespace).Get(context.TODO(), subscriptionName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Subscription %s in namespace %s: %v", subscriptionName, namespace, err)
-	}
+	r.OLMClient = olmClient
 
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("Subscription %s in namespace %s not found", subscriptionName, namespace)
-		}
-		logger.Error(err, "error getting Subscription %s in namespace %s: %v", subscriptionName, namespace)
-	}
-
-	logger.Info("Subscription %s found in namespace %s with status: %v", subscriptionName, namespace, subscription.Status)
-	return subscription, nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha1.Orchestrator{}).
-		Owns(&appsv1.Deployment{}).
+		//Owns(&appsv1.Deployment{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 2}).
 		Complete(r)
 }

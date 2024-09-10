@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+	// olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/typed/operators/v1alpha1"
+
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -115,7 +118,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	namespace := sonataFlowOperator.Subscription.Namespace
 
 	// check if the sonataflow subscription operator is enabled
-	// if disabled,
+	// subscription is disabled,
 	if !sonataFlowOperator.Enabled {
 		// check if subscription exists using olm client
 		sonataFlowSubscription, err := r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Get(context.TODO(), subscriptionName, metav1.GetOptions{})
@@ -135,10 +138,21 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		logger.Info("Successfully deleted Subscription: %s", subscriptionName)
 	}
 
-	// if enabled, check if CRD exists, if not install the sonataflow operator
-
+	// Subscription is enabled
+	// check if CRD exists;
 	// if the CRD exists, check if CR exists, if CR does not exist, create CR
 	// if CR exists, check desired state is the same as current state.
+
+	// if not install the sonataflow operator
+	subscriptionObject := createSubscriptionObject(subscriptionName, namespace, sonataFlowOperator)
+	installedSubscription, err := r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Create(ctx, subscriptionObject, metav1.CreateOptions{})
+
+	if err != nil {
+		logger.Error(err, "Error occurred while creating Subscription: %s", subscriptionName)
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("Successfully installed Operator Subscription: %s", installedSubscription.Name)
 
 	// testing
 
@@ -147,9 +161,23 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	//
 	// check status of resource, update it if not in desired state.
 
-	//sonataflow := orchestrator.Spec.SonataFlowOperator
-
 	return ctrl.Result{}, nil
+}
+
+func createSubscriptionObject(subscriptionName string, namespace string, sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) *v1alpha1.Subscription {
+	sonataFlowSubscriptionDetails := sonataFlowOperator.Subscription
+	subscriptionObject := &v1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: subscriptionName},
+		Spec: &v1alpha1.SubscriptionSpec{
+			Channel:                sonataFlowSubscriptionDetails.Channel,
+			InstallPlanApproval:    v1alpha1.Approval(sonataFlowSubscriptionDetails.InstallPlanApproval),
+			CatalogSource:          sonataFlowSubscriptionDetails.SourceName,
+			StartingCSV:            sonataFlowSubscriptionDetails.StartingCSV,
+			CatalogSourceNamespace: sonataFlowSubscriptionDetails.Namespace,
+			Package:                sonataFlowSubscriptionDetails.Name,
+		},
+	}
+	return subscriptionObject
 }
 
 // SetupWithManager sets up the controller with the Manager.

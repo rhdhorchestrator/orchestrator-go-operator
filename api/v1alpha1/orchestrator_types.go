@@ -29,10 +29,12 @@ type OrchestratorSpec struct {
 	OrchestratorPlatform OrchestratorPlatform `json:"orchestrator,omitempty"`
 	Tekton               Tekton               `json:"tekton,omitempty"`
 	ArgoCd               ArgoCD               `json:"argocd,omitempty"`
-	ReplicaSize          int32                `json:"replicaSize,omitempty"`
-	ContainerPort        int32                `json:"containerPort,omitempty"`
 }
 
+// reuse from the subscription - check from the api/compare with the subscription object
+// do we want to expose all the spec within the inherent subscription
+// inline embedding to add field in the subscription object
+// ask Moti to confirm - breaking changes
 type Subscription struct {
 	Namespace           string `json:"namespace,omitempty"`
 	Channel             string `json:"channel,omitempty"`

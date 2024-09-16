@@ -23,12 +23,14 @@ type PlatformServices struct {
 }
 
 type DataIndex struct {
+	// +kubebuilder:default=true
 	Enabled     bool        `json:"enabled,omitempty"`
 	Persistence Persistence `json:"persistence,omitempty"`
 	PodTemplate PodTemplate `json:"podTemplate,omitempty"`
 }
 
 type JobService struct {
+	// +kubebuilder:default=true
 	Enabled     bool        `json:"enabled,omitempty"`
 	Persistence Persistence `json:"persistence,omitempty"`
 	PodTemplate PodTemplate `json:"podTemplate,omitempty"`

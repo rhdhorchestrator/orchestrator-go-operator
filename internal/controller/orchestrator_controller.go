@@ -60,6 +60,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=orchestrator.parodos.dev,resources=orchestrators/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -144,7 +145,9 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Subscription is enabled
 	// check if CRD exists;
 	sonataCRD := &apiextensionsv1.CustomResourceDefinition{}
-	err = r.Get(ctx, types.NamespacedName{Name: subscriptionName, Namespace: namespace}, sonataCRD)
+	//err = r.Get(ctx, types.NamespacedName{Name: subscriptionName, Namespace: namespace}, sonataCRD)
+	subscriptionName = "sonataflowclusterplatforms.sonataflow.org"
+	err = r.Get(ctx, types.NamespacedName{Name: subscriptionName}, sonataCRD)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// CRD does not exist

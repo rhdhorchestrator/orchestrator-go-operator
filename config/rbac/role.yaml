@@ -28,9 +28,25 @@ rules:
   - ""
   resources:
   - events
+  - namespaces
   verbs:
   - create
+  - delete
+  - get
+  - list
   - patch
+  - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - subscriptions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
 - apiGroups:
   - orchestrator.parodos.dev
   resources:

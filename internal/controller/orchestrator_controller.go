@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -63,7 +64,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;events,verbs=list;get;create;delete;patch;watch
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;delete;patch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;catalogsources,verbs=get;list;watch;create;delete;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -178,6 +179,15 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				logger.Error(err, "Error occurred when checking namespace exists", "Namespace", namespace)
 				return ctrl.Result{RequeueAfter: 30 * time.Second}, err
 			}
+			// create operator group
+			sfog := &operatorsv1.OperatorGroup{
+				// confirm the namespace is the same as the subscription.namespace
+				ObjectMeta: metav1.ObjectMeta{Name: "openshift-serverless-logic", Namespace: namespace},
+			}
+			err := r.Create(ctx, sfog)
+			if err != nil {
+				logger.Error(err, "Error occurred when creating OperatorGroup resource", "Namespace", namespace)
+			}
 			subscriptionObject := createSubscriptionObject(subscriptionName, namespace, sonataFlowOperator)
 			installedSubscription, err := r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Create(ctx, subscriptionObject, metav1.CreateOptions{})
 
@@ -190,7 +200,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		}
 		// Error reading the object - requeue the request.
-		logger.Error(err, "Failed to get CRD resource", "SubscriptionName", subscriptionName)
+		logger.Error(err, "Failed to get Subscription resource", "SubscriptionName", subscriptionName)
 		return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
 	}
 

@@ -299,7 +299,7 @@ func installOperatorSubscription(
 		logger.Info("Successfully installed Operator Subscription", "SubscriptionName", installedSubscription.Name)
 		return nil
 	}
-	logger.Info("Successfully installed Operator Subscription: %s", installedSubscription.Name)
+	logger.Info("Successfully installed Operator Subscription", "SubscriptionName", installedSubscription.Name)
 	return err
 }
 
@@ -313,6 +313,18 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return nil
 	}
 	r.OLMClient = olmClient
+
+	// check if necessary CRDs exist
+	//crdName := "sonataflowclusterplatforms.sonataflow.org"
+	//exists, err := checkCRDExists(mgr.GetClient(), crdName)
+	//if err != nil || !exists {
+	//	setupLog.Error(err, "CRD not found for %s", crdName)
+	//	// TODO install CRD via subscription
+	//	setupLog.Info("Dummy message: Installing via subscription")
+	//	//installViaSubscription(olmClient, )
+	//	//os.Exit(1)
+	//}
+	//setupLog.Info("Necessary CRDs exists, proceed with controller setup")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha1.Orchestrator{}).

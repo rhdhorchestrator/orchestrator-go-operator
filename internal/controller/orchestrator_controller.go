@@ -20,13 +20,13 @@ import (
 	"context"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"time"
 
-	//appsv1 "k8s.io/api/apps/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -49,7 +49,7 @@ const (
 	//TypeDegraded    string = "Degraded"
 )
 
-// OrchestratorReconciler reconciles a Orchestrator object
+// OrchestratorReconciler reconciles an Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
 	OLMClient olmclientset.Interface
@@ -125,31 +125,40 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	subscriptionName := sonataFlowOperator.Subscription.Name
 	namespace := sonataFlowOperator.Subscription.Namespace
 
-	// check if the sonataflow subscription operator is enabled
-	// subscription is disabled,
+	// if subscription is disabled; check if subscription exists
 	if !sonataFlowOperator.Enabled {
 		// check if subscription exists using olm client
-		sonataFlowSubscription, err := r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, subscriptionName, metav1.GetOptions{})
+		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Info("Subscription resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+			return ctrl.Result{}, err
+		}
+		if subscriptionExists {
+			// deleting subscription resource
+			err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
+			if err != nil {
+				logger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
+				return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
 			}
-			logger.Error(err, "Failed to check Subscription does not exists", "SubscriptionName", subscriptionName)
-			return ctrl.Result{RequeueAfter: 30 * time.Second}, err
+			logger.Info("Successfully deleted Subscription: %s", subscriptionName)
+			return ctrl.Result{}, nil
 		}
-		logger.Info("Subscription exists: %s", sonataFlowSubscription.Name)
-
-		// deleting subscription resource
-		err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
-		if err != nil {
-			logger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
-			return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
-		}
-		logger.Info("Successfully deleted Subscription: %s", subscriptionName)
 	}
 
-	// Subscription is enabled
-	// check if CRD exists;
+	// Subscription is enabled; check if subscription exists
+	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+	if err != nil {
+		logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+		return ctrl.Result{RequeueAfter: 2 * time.Second}, err
+	}
+	if !subscriptionExists {
+		err := installOperatorSubscription(ctx, r.Client, r.OLMClient, namespace, subscriptionName, sonataFlowOperator)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, err
+		}
+	}
+
+	// subscription exists; check if CRD exists;
 	sonataCRD := &apiextensionsv1.CustomResourceDefinition{}
 	err = r.Get(ctx, types.NamespacedName{Name: subscriptionName, Namespace: namespace}, sonataCRD)
 	//subscriptionName = "sonataflowclusterplatforms.sonataflow.org"
@@ -157,140 +166,9 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// CRD does not exist
-			logger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namesapce", namespace)
-
-			// install operator via subscription
-			logger.Info("Starting subscription installation for", "SubscriptionName", subscriptionName)
-			logger.Info("Creating namespace", "Namespace", namespace)
-
-			serverlessLogicNamespace := &corev1.Namespace{}
-			// check if namespace exists
-			err = r.Get(ctx, types.NamespacedName{Name: namespace}, serverlessLogicNamespace)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					// create new namespace
-					newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
-					err = r.Create(ctx, newNamespace)
-					if err != nil {
-						logger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)
-						return ctrl.Result{RequeueAfter: 1 * time.Second}, err
-					}
-				}
-				logger.Error(err, "Error occurred when checking namespace exists", "Namespace", namespace)
-				return ctrl.Result{RequeueAfter: 30 * time.Second}, err
-			}
-			// create operator group
-			sfog := &operatorsv1.OperatorGroup{
-				// confirm the namespace is the same as the subscription.namespace
-				ObjectMeta: metav1.ObjectMeta{Name: "openshift-serverless-logic", Namespace: namespace},
-			}
-			err := r.Create(ctx, sfog)
-			if err != nil {
-				logger.Error(err, "Error occurred when creating OperatorGroup resource", "Namespace", namespace)
-			}
-			subscriptionObject := createSubscriptionObject(subscriptionName, namespace, sonataFlowOperator)
-			installedSubscription, err := r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Create(ctx, subscriptionObject, metav1.CreateOptions{})
-
-			if err != nil {
-				logger.Error(err, "Error occurred while creating Subscription", "SubscriptionName", subscriptionName)
-				return ctrl.Result{RequeueAfter: 5 * time.Second}, err
-			}
-
-			logger.Info("Successfully installed Operator Subscription", "SubscriptionName", installedSubscription.Name)
-
+			logger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
 		}
-		// Error reading the object - requeue the request.
-		logger.Error(err, "Failed to get Subscription resource", "SubscriptionName", subscriptionName)
-		return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
 	}
-
-	// CRD exists; check if CR exists,
-	//sfcCR := &orchestratorv1alpha1.SonataFlowCluster{}
-	//err = r.Get(ctx, req.NamespacedName, sfcCR)
-	//if err != nil {
-	//	if apierrors.IsNotFound(err) {
-	//		logger.Info("Sonataflow cluster Resource not found")
-	//		// if CR does not exist, create CR
-	//		// Create sonataflow cluster CR object
-	//		sonataFlowClusterCR := &orchestratorv1alpha1.SonataFlowCluster{
-	//			TypeMeta: metav1.TypeMeta{
-	//				APIVersion: "sonataflow.org/v1alpha08",  // Replace with your CRD group and version
-	//				Kind:       "SonataFlowClusterPlatform", // Replace with your CRD kind
-	//			},
-	//			ObjectMeta: metav1.ObjectMeta{
-	//				Name:      "cluster-platform", // Name of the CR
-	//				Namespace: "sonataflow-infra", // Namespace of the CR
-	//			},
-	//			Spec: orchestratorv1alpha1.SonataFlowClusterSpec{
-	//				PlatformRef: orchestratorv1alpha1.PlatformRef{
-	//					PlatformName:      "sonataflow-platform",
-	//					PlatformNamespace: "sonataflow-infra",
-	//				},
-	//			},
-	//		}
-	//
-	//		// Create sonataflow cluster CR
-	//		if err := r.Create(ctx, sonataFlowClusterCR); err != nil {
-	//			logger.Error(err, "Failed to create Custom Resource: %v", sonataFlowClusterCR.Name)
-	//			return ctrl.Result{}, err
-	//		}
-	//		logger.Info("Successfully created SonataFlow Cluster resource %s", sonataFlowClusterCR.Name)
-	//		return ctrl.Result{}, nil
-	//	}
-	//}
-	//
-	//sfpCR := &orchestratorv1alpha1.SonataFlow{}
-	//err = r.Get(ctx, req.NamespacedName, sfpCR)
-	//if err != nil {
-	//	if apierrors.IsNotFound(err) {
-	//		logger.Info("Sonataflow platform not found")
-	//		// Create sonataflow platform CR object
-	//		sonataFlowPlatformCR := &orchestratorv1alpha1.SonataFlow{
-	//			TypeMeta: metav1.TypeMeta{
-	//				APIVersion: "sonataflow.org/v1alpha08", // Replace with your CRD group and version
-	//				Kind:       "SonataFlowPlatform",       // Replace with your CRD kind
-	//			},
-	//			ObjectMeta: metav1.ObjectMeta{
-	//				Name:      "sonataflow-platform", // Name of the CR
-	//				Namespace: "sonataflow-infra",    // Namespace of the CR
-	//			},
-	//			Spec: orchestratorv1alpha1.SonataFlowPlatformSpec{
-	//				Build: orchestratorv1alpha1.PlatformBuild{
-	//					Template: orchestratorv1alpha1.Template{Resource: orchestratorv1alpha1.Resource{
-	//						Requests: orchestratorv1alpha1.MemoryCpu{
-	//							Memory: orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Memory,
-	//							Cpu:    orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Cpu,
-	//						},
-	//						Limits: orchestratorv1alpha1.MemoryCpu{
-	//							Memory: orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Memory,
-	//							Cpu:    orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Cpu,
-	//						},
-	//					},
-	//					},
-	//				},
-	//				Services: orchestratorv1alpha1.PlatformServices{
-	//					DataIndex: orchestratorv1alpha1.DataIndex{
-	//						Enabled:     true,
-	//						Persistence: getSonataFlowPersistence(orchestrator),
-	//					},
-	//					JobService: orchestratorv1alpha1.JobService{
-	//						Enabled:     true,
-	//						Persistence: getSonataFlowPersistence(orchestrator),
-	//						//PodTemplate: orchestratorv1alpha1.PodTemplate{},
-	//					},
-	//				},
-	//			},
-	//		}
-	//		// Create sonataflow platform CR
-	//		if err := r.Create(ctx, sonataFlowPlatformCR); err != nil {
-	//			logger.Error(err, "Failed to create Custom Resource: %v", sonataFlowPlatformCR.Name)
-	//			return ctrl.Result{}, err
-	//		}
-	//	}
-	//}
-
-	// if CR exists, check desired state is the same as current state.
-
 	return ctrl.Result{}, nil
 }
 
@@ -309,6 +187,45 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 //		}}
 //}
 
+func getOperatorGroup(ctx context.Context, client client.Client,
+	namespace string, operatorGroupName string) error {
+	logger := log.FromContext(ctx)
+	// check if operator group exists
+	operatorGroup := &operatorsv1.OperatorGroup{}
+	err := client.Get(ctx, types.NamespacedName{Name: operatorGroupName, Namespace: namespace}, operatorGroup)
+	if err == nil {
+		logger.Info("Operator Group already exists", "Operator Group", operatorGroupName)
+		return nil
+	}
+	// create operator group
+	sfog := &operatorsv1.OperatorGroup{
+		ObjectMeta: metav1.ObjectMeta{Name: operatorGroupName, Namespace: namespace},
+	}
+	err = client.Create(ctx, sfog)
+	if err != nil {
+		logger.Error(err, "Error occurred when creating OperatorGroup resource", "Namespace", namespace)
+		return err
+	}
+	return nil
+}
+
+func checkSubscriptionExists(ctx context.Context, olmClientSet olmclientset.Interface,
+	namespace string, subscriptionName string) (bool, error) {
+	logger := log.FromContext(ctx)
+
+	subscription, err := olmClientSet.OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, subscriptionName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Subscription resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			return false, nil
+		}
+		logger.Error(err, "Failed to check Subscription does not exists", "SubscriptionName", subscriptionName)
+		return false, err
+	}
+	logger.Info("Subscription exists", "SubscriptionName", subscription.Name)
+	return true, nil
+}
+
 func createSubscriptionObject(subscriptionName string, namespace string, sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) *v1alpha1.Subscription {
 	logger := log.Log.WithName("subscriptionObject")
 	logger.Info("Creating subscription object")
@@ -321,16 +238,73 @@ func createSubscriptionObject(subscriptionName string, namespace string, sonataF
 			InstallPlanApproval:    v1alpha1.Approval(sonataFlowSubscriptionDetails.InstallPlanApproval),
 			CatalogSource:          sonataFlowSubscriptionDetails.SourceName,
 			StartingCSV:            sonataFlowSubscriptionDetails.StartingCSV,
-			CatalogSourceNamespace: sonataFlowSubscriptionDetails.Namespace,
+			CatalogSourceNamespace: "openshift-marketplace",
 			Package:                sonataFlowSubscriptionDetails.Name,
 		},
 	}
 	return subscriptionObject
 }
 
+func installOperatorSubscription(
+	ctx context.Context, client client.Client, olmClientSet olmclientset.Interface, namespace string,
+	subscriptionName string, sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) error {
+
+	logger := log.FromContext(ctx)
+	logger.Info("Starting subscription installation process", "SubscriptionName", subscriptionName)
+
+	logger.Info("Creating namespace", "Namespace", namespace)
+	serverlessLogicNamespace := &corev1.Namespace{}
+	// check if namespace exists
+	err := client.Get(ctx, types.NamespacedName{Name: namespace}, serverlessLogicNamespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// create new namespace
+			newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+			err = client.Create(ctx, newNamespace)
+			if err != nil {
+				logger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)
+			}
+		}
+		logger.Error(err, "Error occurred when checking namespace exists", "Namespace", namespace)
+	}
+	// check operator group exists
+	operatorGroupName := "openshift-serverless-logic"
+	err = getOperatorGroup(ctx, client, namespace, operatorGroupName)
+	if err != nil {
+		logger.Error(err, "Failed to get operator group resource", "OperatorGroup", operatorGroupName)
+	}
+	// install subscription
+	subscriptionObject := createSubscriptionObject(subscriptionName, namespace, sonataFlowOperator)
+	installedSubscription, err := olmClientSet.OperatorsV1alpha1().
+		Subscriptions(namespace).
+		Create(context.Background(), subscriptionObject, metav1.CreateOptions{})
+
+	if err != nil {
+		logger.Error(err, "Error occurred while creating Subscription", "SubscriptionName", subscriptionName)
+	}
+	// Check the Subscription's status after installation
+	installedCSV := installedSubscription.Status.InstalledCSV
+	if installedCSV == "" {
+		logger.Info("Subscription has no installed CSV: Incorrectly installed subscription", "Subscription", subscriptionName)
+	}
+	// Get the ClusterServiceVersion (CSV) for the Subscription installed
+	sfcsv := &operatorsv1alpha1.ClusterServiceVersion{}
+	err = client.Get(ctx, types.NamespacedName{Name: installedCSV, Namespace: namespace}, sfcsv)
+	if err != nil {
+		logger.Error(err, "Error occurred when retrieving CSV", "ClusterServiceVersion", installedCSV)
+
+	}
+	// Check if the CSV's phase is "Succeeded"
+	if sfcsv.Status.Phase == operatorsv1alpha1.CSVPhaseSucceeded {
+		logger.Info("Successfully installed Operator Subscription", "SubscriptionName", installedSubscription.Name)
+		return nil
+	}
+	logger.Info("Successfully installed Operator Subscription: %s", installedSubscription.Name)
+	return err
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	//config, err := rest.InClusterConfig()
 	config := mgr.GetConfig()
 
 	// Create the OLM clientset using the config

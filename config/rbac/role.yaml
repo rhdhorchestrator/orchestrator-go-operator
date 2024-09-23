@@ -39,6 +39,8 @@ rules:
 - apiGroups:
   - operators.coreos.com
   resources:
+  - catalogsources
+  - operatorgroups
   - subscriptions
   verbs:
   - create

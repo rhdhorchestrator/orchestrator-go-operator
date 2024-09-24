@@ -75,3 +75,17 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - sonataflow.org
+  resources:
+  - sonataflowclusterplatforms
+  - sonataflowplatforms
+  - sonataflows
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

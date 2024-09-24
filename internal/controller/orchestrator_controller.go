@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+
+	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -65,6 +67,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=namespaces;events,verbs=list;get;create;delete;patch;watch
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;catalogsources,verbs=get;list;watch;create;delete;patch
+//+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -159,17 +162,64 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// subscription exists; check if CRD exists;
+	crdGroupName := "sonataflowclusterplatforms.sonataflow.org"
 	sonataCRD := &apiextensionsv1.CustomResourceDefinition{}
-	err = r.Get(ctx, types.NamespacedName{Name: subscriptionName, Namespace: namespace}, sonataCRD)
-	//subscriptionName = "sonataflowclusterplatforms.sonataflow.org"
-	//err = r.Get(ctx, types.NamespacedName{Name: subscriptionName}, sonataCRD)
+	err = r.Get(ctx, types.NamespacedName{Name: crdGroupName, Namespace: namespace}, sonataCRD)
+
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// CRD does not exist
 			logger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			return ctrl.Result{}, nil // do we want to attempt subscription installation?
 		}
+		logger.Error(err, "Error occurred when retrieving CRD", "CRD", crdGroupName)
 	}
+	// CRD exists; check CR exists
+	sfcCR := &sonataapi.SonataFlowClusterPlatform{}
+	sonataClusterName := "cluster-platform"
+	err = r.Get(ctx, types.NamespacedName{Name: sonataClusterName}, sfcCR)
+	if err == nil {
+		// check for CR updates
+		if apierrors.IsNotFound(err) {
+			logger.Info("CR resource not found.", "CR-Name", sonataClusterName)
+		}
+		logger.Error(err, "Error occurred when retrieving CR", "CR-Name", sonataClusterName)
+		return ctrl.Result{}, err
+	}
+
+	// CR does not exists; create CR
+	err = createSonataFlowClusterCR(ctx, r.Client, sonataClusterName)
 	return ctrl.Result{}, nil
+}
+
+func createSonataFlowClusterCR(ctx context.Context, client client.Client, crName string) error {
+	logger := log.FromContext(ctx)
+
+	// Create sonataflow cluster CR object
+	sonataFlowClusterCR := &sonataapi.SonataFlowClusterPlatform{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "sonataflow.org/v1alpha08",  // CRD group and version
+			Kind:       "SonataFlowClusterPlatform", // CRD kind
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      crName,             // Name of the CR
+			Namespace: "sonataflow-infra", // Namespace of the CR
+		},
+		Spec: sonataapi.SonataFlowClusterPlatformSpec{
+			PlatformRef: sonataapi.SonataFlowPlatformRef{
+				Name:      "sonataflow-platform",
+				Namespace: "sonataflow-infra",
+			},
+		},
+	}
+
+	// Create sonataflow cluster CR
+	if err := client.Create(ctx, sonataFlowClusterCR); err != nil {
+		logger.Error(err, "Error occurred when creating Custom Resource", "CR-Name", crName)
+		return err
+	}
+	logger.Info("Successfully created SonataFlow Cluster resource %s", sonataFlowClusterCR.Name)
+	return nil
 }
 
 //func getSonataFlowPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) orchestratorv1alpha1.Persistence {
@@ -209,7 +259,8 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 	return nil
 }
 
-func checkSubscriptionExists(ctx context.Context, olmClientSet olmclientset.Interface,
+func checkSubscriptionExists(
+	ctx context.Context, olmClientSet olmclientset.Interface,
 	namespace string, subscriptionName string) (bool, error) {
 	logger := log.FromContext(ctx)
 
@@ -226,7 +277,9 @@ func checkSubscriptionExists(ctx context.Context, olmClientSet olmclientset.Inte
 	return true, nil
 }
 
-func createSubscriptionObject(subscriptionName string, namespace string, sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) *v1alpha1.Subscription {
+func createSubscriptionObject(
+	subscriptionName string, namespace string,
+	sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) *v1alpha1.Subscription {
 	logger := log.Log.WithName("subscriptionObject")
 	logger.Info("Creating subscription object")
 
@@ -314,22 +367,10 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 	r.OLMClient = olmClient
 
-	// check if necessary CRDs exist
-	//crdName := "sonataflowclusterplatforms.sonataflow.org"
-	//exists, err := checkCRDExists(mgr.GetClient(), crdName)
-	//if err != nil || !exists {
-	//	setupLog.Error(err, "CRD not found for %s", crdName)
-	//	// TODO install CRD via subscription
-	//	setupLog.Info("Dummy message: Installing via subscription")
-	//	//installViaSubscription(olmClient, )
-	//	//os.Exit(1)
-	//}
-	//setupLog.Info("Necessary CRDs exists, proceed with controller setup")
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha1.Orchestrator{}).
-		//Owns(&orchestratorv1alpha1.SonataFlow{}).
-		//Owns(&orchestratorv1alpha1.SonataFlowCluster{}).
+		Owns(&sonataapi.SonataFlow{}).
+		Owns(&sonataapi.SonataFlowClusterPlatform{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 2}).
 		Complete(r)
 }

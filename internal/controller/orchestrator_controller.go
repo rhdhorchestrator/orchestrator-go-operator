@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-
 	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -26,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"time"
 
@@ -174,26 +174,34 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		logger.Error(err, "Error occurred when retrieving CRD", "CRD", crdGroupName)
 	}
-	// CRD exists; check CR exists
-	sfcCR := &sonataapi.SonataFlowClusterPlatform{}
-	sonataClusterName := "cluster-platform"
-	err = r.Get(ctx, types.NamespacedName{Name: sonataClusterName}, sfcCR)
-	if err == nil {
-		// check for CR updates
-		if apierrors.IsNotFound(err) {
-			logger.Info("CR resource not found.", "CR-Name", sonataClusterName)
-		}
-		logger.Error(err, "Error occurred when retrieving CR", "CR-Name", sonataClusterName)
-		return ctrl.Result{}, err
-	}
 
-	// CR does not exists; create CR
-	err = createSonataFlowClusterCR(ctx, r.Client, sonataClusterName)
+	// CR does not exists; create sonataflowclusterplatform  CR
+	err = createSonataFlowClusterCR(ctx, r.Client, "cluster-platform")
+	if err != nil {
+		logger.Error(err, "Error occurred when creating SonataFlowClusterCR", "CR-Name", "cluster-platform")
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, err
+	}
+	// create sonataflowplatform  CR
+	err = createSonataFlowPlatformCR(ctx, r.Client, orchestrator, "sonataflow-platform")
+	if err != nil {
+		logger.Error(err, "Error occurred when creating SonataFlowPlatform, CR-Name", "sonataflow-platform")
+		return ctrl.Result{RequeueAfter: 2 * time.Second}, err
+	}
 	return ctrl.Result{}, nil
 }
 
 func createSonataFlowClusterCR(ctx context.Context, client client.Client, crName string) error {
 	logger := log.FromContext(ctx)
+	// CRD exists; check sonataflowlusterplatform CR exists
+	sfcCR := &sonataapi.SonataFlowClusterPlatform{}
+	sonataClusterName := crName
+	sfNamespace := "sonataflow-infra"
+	err := client.Get(ctx, types.NamespacedName{Name: sonataClusterName, Namespace: sfNamespace}, sfcCR)
+	if err == nil {
+		// CR exists; check for CR updates TODO
+		logger.Info("CR resource  found.", "CR-Name", sonataClusterName, "Namespace", sfNamespace)
+		return nil
+	}
 
 	// Create sonataflow cluster CR object
 	sonataFlowClusterCR := &sonataapi.SonataFlowClusterPlatform{
@@ -222,20 +230,93 @@ func createSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 	return nil
 }
 
-//func getSonataFlowPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) orchestratorv1alpha1.Persistence {
-//	return orchestratorv1alpha1.Persistence{
-//		Postgresql: orchestratorv1alpha1.Postgresql{
-//			SecretRef: orchestratorv1alpha1.PostgresAuthSecret{
-//				SecretName:  orchestrator.Spec.PostgresDB.AuthSecret.SecretName,
-//				UserKey:     orchestrator.Spec.PostgresDB.AuthSecret.UserKey,
-//				PasswordKey: orchestrator.Spec.PostgresDB.AuthSecret.PasswordKey,
-//			},
-//			ServiceRef: orchestratorv1alpha1.ServiceRef{
-//				Name:      orchestrator.Spec.PostgresDB.ServiceName,
-//				Namespace: orchestrator.Spec.PostgresDB.ServiceNameSpace,
-//			},
-//		}}
-//}
+func createSonataFlowPlatformCR(
+	ctx context.Context, client client.Client,
+	orchestrator *orchestratorv1alpha1.Orchestrator, crName string) error {
+	logger := log.FromContext(ctx)
+
+	sfpCR := &sonataapi.SonataFlowPlatform{}
+	err := client.Get(ctx, types.NamespacedName{
+		Namespace: "sonataflow-platform",
+		Name:      "sonataflow-infra",
+	}, sfpCR)
+
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("SonataFlowPlatform not found")
+
+			// Create sonataflow platform CR object
+			limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
+
+			cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Cpu)
+			memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Memory)
+			limitResourceMap[corev1.ResourceCPU] = cpuQuantity
+			limitResourceMap[corev1.ResourceCPU] = memoryQuantity
+
+			requestResourceMap := make(map[corev1.ResourceName]resource.Quantity)
+			requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Cpu)
+			requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Memory)
+			requestResourceMap[corev1.ResourceCPU] = requestCpuQuantity
+			requestResourceMap[corev1.ResourceCPU] = requestMemoryQuantity
+
+			var enabled = true
+			sonataFlowPlatformCR := &sonataapi.SonataFlowPlatform{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "sonataflow.org/v1alpha08", // Replace with your CRD group and version
+					Kind:       "SonataFlowPlatform",       // Replace with your CRD kind
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sonataflow-platform", // Name of the CR
+					Namespace: "sonataflow-infra",    // Namespace of the CR
+				},
+				Spec: sonataapi.SonataFlowPlatformSpec{
+					Build: sonataapi.BuildPlatformSpec{
+						Template: sonataapi.BuildTemplate{
+							Resources: corev1.ResourceRequirements{
+								Limits:   limitResourceMap,
+								Requests: requestResourceMap},
+						}},
+					Services: &sonataapi.ServicesPlatformSpec{
+						DataIndex: &sonataapi.ServiceSpec{
+							Enabled:     &enabled,
+							Persistence: getSonataFlowPersistence(orchestrator),
+							//PodTemplate: sonataapi.PodTemplateSpec{},
+						},
+						JobService: &sonataapi.ServiceSpec{
+							Enabled:     &enabled,
+							Persistence: getSonataFlowPersistence(orchestrator),
+						},
+					},
+				},
+			}
+			// Create sonataflow platform CR
+			if err := client.Create(ctx, sonataFlowPlatformCR); err != nil {
+				logger.Error(err, "Failed to create Custom Resource", "CR-Name", crName)
+				return err
+			}
+			logger.Info("Successfully created CR", "CR-Name", sonataFlowPlatformCR.Name)
+		}
+	}
+	return nil
+}
+
+func getSonataFlowPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) *sonataapi.PersistenceOptionsSpec {
+	return &sonataapi.PersistenceOptionsSpec{
+		PostgreSQL: &sonataapi.PersistencePostgreSQL{
+			SecretRef: sonataapi.PostgreSQLSecretOptions{
+				Name:        orchestrator.Spec.PostgresDB.AuthSecret.SecretName,
+				UserKey:     orchestrator.Spec.PostgresDB.AuthSecret.UserKey,
+				PasswordKey: orchestrator.Spec.PostgresDB.AuthSecret.PasswordKey,
+			},
+			ServiceRef: &sonataapi.PostgreSQLServiceOptions{
+				SQLServiceOptions: &sonataapi.SQLServiceOptions{
+					Name:      orchestrator.Spec.PostgresDB.ServiceName,
+					Namespace: orchestrator.Spec.PostgresDB.ServiceNameSpace,
+				},
+			},
+		},
+	}
+}
 
 func getOperatorGroup(ctx context.Context, client client.Client,
 	namespace string, operatorGroupName string) error {

@@ -8,7 +8,7 @@ metadata:
   name: orchestrator-viewer-role
 rules:
 - apiGroups:
-  - orchestrator.parodos.dev
+  - rhdh.redhat.com
   resources:
   - orchestrators
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - orchestrator.parodos.dev
+  - rhdh.redhat.com
   resources:
   - orchestrators/status
   verbs:

@@ -28,7 +28,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # This variable is used to construct full image tags for bundle and catalog images.
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# parodos.dev/orchestrator-operator-bundle:$VERSION and parodos.dev/orchestrator-operator-catalog:$VERSION.
+# rhdh.redhat.com/orchestrator-operator-bundle:$VERSION and rhdh.redhat.com/orchestrator-operator-catalog:$VERSION.
 IMAGE_TAG_BASE ?= jenubah/orchestrator-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
@@ -50,7 +50,8 @@ endif
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPERATOR_SDK_VERSION ?= v1.36.0
 # Image URL to use all building/pushing image targets
-IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+#IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+IMG ?= $(IMAGE_TAG_BASE)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.29.0
 

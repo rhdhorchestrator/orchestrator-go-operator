@@ -2,7 +2,7 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: parodos.dev
+domain: rhdh.redhat.com
 layout:
 - go.kubebuilder.io/v4
 plugins:
@@ -15,7 +15,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: parodos.dev
+  domain: rhdh.redhat.com
   group: orchestrator
   kind: Orchestrator
   path: github.com/parodos-dev/orchestrator-operator/api/v1alpha1

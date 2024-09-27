@@ -1,4 +1,4 @@
-apiVersion: orchestrator.parodos.dev/v1alpha1
+apiVersion: rhdh.redhat.com/v1alpha1
 kind: Orchestrator
 metadata:
   labels:
@@ -16,6 +16,14 @@ spec:
       name: logic-operator-rhel8 # name of the operator package
       sourceName: redhat-operators # name of the catalog source
       startingCSV: logic-operator-rhel8.v1.33.0 # The initial version of the operator
+  postgres:
+    serviceName: "sonataflow-psql-postgresql" # The name of the Postgres DB service to be used by platform services. Cannot be empty.
+    serviceNamespace: "sonataflow-infra" # The namespace of the Postgres DB service to be used by platform services.
+    authSecret:
+      name: "sonataflow-psql-postgresql" # name of existing secret to use for PostgreSQL credentials.
+      userKey: postgres-username # name of key in existing secret to use for PostgreSQL credentials.
+      passwordKey: postgres-password # name of key in existing secret to use for PostgreSQL credentials.
+    database: sonataflow # existing database instance used by data index and job service
   orchestrator:
     namespace: "sonataflow-infra"
     sonataFlowPlatform:

@@ -194,7 +194,7 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 
 	} else {
 		// create sonataflowplatform  CR
-		err = createSonataFlowPlatformCR(ctx, r.Client, orchestrator, SonataFlowClusterPlatformCRName)
+		err = handleSonataFlowPlatformCR(ctx, r.Client, orchestrator, SonataFlowClusterPlatformCRName)
 		if err != nil {
 			sfLogger.Error(err, "Error occurred when creating SonataFlowPlatform", "CR-Name", SonataFlowClusterPlatformCRName)
 			return err

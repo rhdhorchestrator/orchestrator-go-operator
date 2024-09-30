@@ -63,39 +63,45 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 
 	err := client.Get(ctx, types.NamespacedName{Name: crName, Namespace: SonataFlowCRNamespace}, sfcCR)
 	if err == nil {
-		// CR exists; check for CR updates TODO
+		// CR exists; check for CR updates
 		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowCRNamespace)
+		sfcCR.Spec = getSonataFlowClusterSpec()
+		err = client.Update(ctx, sfcCR)
 		return nil
-	}
-
-	// Create sonataflow cluster CR object
-	sonataFlowClusterCR := &sonataapi.SonataFlowClusterPlatform{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: SonataFlowAPIVersion,          // CRD group and version
-			Kind:       SonataFlowClusterPlatformKind, // CRD kind
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,             // Name of the CR
-			Namespace: "sonataflow-infra", // Namespace of the CR
-		},
-		Spec: sonataapi.SonataFlowClusterPlatformSpec{
-			PlatformRef: sonataapi.SonataFlowPlatformRef{
-				Name:      SonataFlowPlatformCRName,
-				Namespace: "sonataflow-infra",
+	} else {
+		// Create sonataflowcluster CR object
+		sonataFlowClusterCR := &sonataapi.SonataFlowClusterPlatform{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: SonataFlowAPIVersion,          // CRD group and version
+				Kind:       SonataFlowClusterPlatformKind, // CRD kind
 			},
-		},
-	}
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      SonataFlowPlatformCRName, // Name of the CR
+				Namespace: SonataFlowCRNamespace,    // Namespace of the CR
+			},
+			Spec: getSonataFlowClusterSpec(),
+		}
 
-	// Create sonataflow cluster CR
-	if err := client.Create(ctx, sonataFlowClusterCR); err != nil {
-		logger.Error(err, "Error occurred when creating Custom Resource", "CR-Name", crName)
-		return err
+		// Create sonataflow cluster CR
+		if err := client.Create(ctx, sonataFlowClusterCR); err != nil {
+			logger.Error(err, "Error occurred when creating Custom Resource", "CR-Name", crName)
+			return err
+		}
+		logger.Info("Successfully created SonataFlow Cluster resource %s", sonataFlowClusterCR.Name)
 	}
-	logger.Info("Successfully created SonataFlow Cluster resource %s", sonataFlowClusterCR.Name)
 	return nil
 }
 
-func createSonataFlowPlatformCR(
+func getSonataFlowClusterSpec() sonataapi.SonataFlowClusterPlatformSpec {
+	return sonataapi.SonataFlowClusterPlatformSpec{
+		PlatformRef: sonataapi.SonataFlowPlatformRef{
+			Name:      SonataFlowPlatformCRName,
+			Namespace: SonataFlowCRNamespace,
+		},
+	}
+}
+
+func handleSonataFlowPlatformCR(
 	ctx context.Context,
 	client client.Client,
 	orchestrator *orchestratorv1alpha1.Orchestrator,
@@ -111,57 +117,27 @@ func createSonataFlowPlatformCR(
 		Name:      SonataFlowPlatformCRName,
 	}, sfpCR)
 
-	if err != nil {
+	if err == nil {
+		// CR exists; check for CR updates
+		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowCRNamespace)
+		err = client.Update(ctx, sfpCR)
+
+		return err
+	} else {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SonataFlowPlatform not found. Proceed to creating CR...")
-
 			// Create sonataflow platform CR object
-			limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
-			cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Cpu)
-			memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Memory)
-			limitResourceMap[corev1.ResourceCPU] = cpuQuantity
-			limitResourceMap[corev1.ResourceMemory] = memoryQuantity
-			//logger.Info("Limit Map", "Map", limitResourceMap)
-
-			requestResourceMap := make(map[corev1.ResourceName]resource.Quantity)
-			requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Cpu)
-			requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Memory)
-			requestResourceMap[corev1.ResourceCPU] = requestCpuQuantity
-			requestResourceMap[corev1.ResourceMemory] = requestMemoryQuantity
-			//logger.Info("Request Map", "Map", requestResourceMap)
-
-			var enabled = true
 			sonataFlowPlatformCR := &sonataapi.SonataFlowPlatform{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: SonataFlowAPIVersion,   // Replace with your CRD group and version
-					Kind:       SonataFlowPlatformKind, // Replace with your CRD kind
+					APIVersion: SonataFlowAPIVersion,
+					Kind:       SonataFlowPlatformKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      SonataFlowPlatformCRName, // Name of the CR
-					Namespace: SonataFlowCRNamespace,    // Namespace of the CR
+					Name:      SonataFlowPlatformCRName,
+					Namespace: SonataFlowCRNamespace,
 				},
-				Spec: sonataapi.SonataFlowPlatformSpec{
-					Build: sonataapi.BuildPlatformSpec{
-						Template: sonataapi.BuildTemplate{
-							Resources: corev1.ResourceRequirements{
-								Limits:   corev1.ResourceList(limitResourceMap),
-								Requests: corev1.ResourceList(requestResourceMap),
-							},
-						}},
-					Services: &sonataapi.ServicesPlatformSpec{
-						DataIndex: &sonataapi.ServiceSpec{
-							Enabled:     &enabled,
-							Persistence: getSonataFlowPersistence(orchestrator),
-							//PodTemplate: sonataapi.PodTemplateSpec{},
-						},
-						JobService: &sonataapi.ServiceSpec{
-							Enabled:     &enabled,
-							Persistence: getSonataFlowPersistence(orchestrator),
-							//PodTemplate: sonataapi.PodTemplateSpec{},
-						},
-					},
-				},
+				Spec: getSonataFlowPlatformSpec(orchestrator),
 			}
 			logger.Info("Persistence function", "Persistent", getSonataFlowPersistence(orchestrator))
 			// Create sonataflow platform CR
@@ -170,11 +146,50 @@ func createSonataFlowPlatformCR(
 				return err
 			}
 			logger.Info("Successfully created CR", "CR-Name", sonataFlowPlatformCR.Name)
+			return nil
 		}
+		logger.Error(err, "Error occurred when retrieving SonataFlowPlatform CR", "CR-Name", crName)
 	}
-	return nil
+	return err
 }
 
-func checkSonataFlowCRExists() {
+func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) sonataapi.SonataFlowPlatformSpec {
+	limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
+	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Cpu)
+	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Memory)
+	limitResourceMap[corev1.ResourceCPU] = cpuQuantity
+	limitResourceMap[corev1.ResourceMemory] = memoryQuantity
+	//logger.Info("Limit Map", "Map", limitResourceMap)
+
+	requestResourceMap := make(map[corev1.ResourceName]resource.Quantity)
+	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Cpu)
+	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Memory)
+	requestResourceMap[corev1.ResourceCPU] = requestCpuQuantity
+	requestResourceMap[corev1.ResourceMemory] = requestMemoryQuantity
+	//logger.Info("Request Map", "Map", requestResourceMap)
+
+	var serviceEnabled = true
+
+	return sonataapi.SonataFlowPlatformSpec{
+		Build: sonataapi.BuildPlatformSpec{
+			Template: sonataapi.BuildTemplate{
+				Resources: corev1.ResourceRequirements{
+					Limits:   corev1.ResourceList(limitResourceMap),
+					Requests: corev1.ResourceList(requestResourceMap),
+				},
+			}},
+		Services: &sonataapi.ServicesPlatformSpec{
+			DataIndex: &sonataapi.ServiceSpec{
+				Enabled:     &serviceEnabled,
+				Persistence: getSonataFlowPersistence(orchestrator),
+				//PodTemplate: sonataapi.PodTemplateSpec{},
+			},
+			JobService: &sonataapi.ServiceSpec{
+				Enabled:     &serviceEnabled,
+				Persistence: getSonataFlowPersistence(orchestrator),
+				//PodTemplate: sonataapi.PodTemplateSpec{},
+			},
+		},
+	}
 }

@@ -16,6 +16,14 @@ spec:
       name: logic-operator-rhel8 # name of the operator package
       sourceName: redhat-operators # name of the catalog source
       startingCSV: logic-operator-rhel8.v1.33.0 # The initial version of the operator
+  serverlessOperator:
+    enabled: true # whether the operator should be deployed by the chart
+    subscription:
+      namespace: openshift-serverless # namespace where the operator should be deployed
+      channel: stable # channel of an operator package to subscribe to
+      installPlanApproval: Automatic # whether the update should be installed automatically
+      name: serverless-operator # name of the operator package
+      sourceName: redhat-operators # name of the catalog source
   postgres:
     serviceName: "sonataflow-psql-postgresql" # The name of the Postgres DB service to be used by platform services. Cannot be empty.
     serviceNamespace: "sonataflow-infra" # The namespace of the Postgres DB service to be used by platform services.

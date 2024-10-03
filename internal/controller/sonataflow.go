@@ -66,19 +66,21 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 		// CR exists; check for CR updates
 		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowCRNamespace)
 		sfcCR.Spec = getSonataFlowClusterSpec()
-		err = client.Update(ctx, sfcCR)
+		if err = client.Update(ctx, sfcCR); err != nil {
+			logger.Error(err, "Failed to update CR", "CR-Name", sfcCR.Name)
+		}
 		return nil
 	} else {
 		if apierrors.IsNotFound(err) {
 			// Create sonataflowcluster CR object
 			sonataFlowClusterCR := &sonataapi.SonataFlowClusterPlatform{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: SonataFlowAPIVersion,          // CRD group and version
-					Kind:       SonataFlowClusterPlatformKind, // CRD kind
+					APIVersion: SonataFlowAPIVersion,
+					Kind:       SonataFlowClusterPlatformKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      SonataFlowClusterPlatformCRName, // Name of the CR
-					Namespace: SonataFlowCRNamespace,           // Namespace of the CR
+					Name:      SonataFlowClusterPlatformCRName,
+					Namespace: SonataFlowCRNamespace,
 				},
 				Spec: getSonataFlowClusterSpec(),
 			}

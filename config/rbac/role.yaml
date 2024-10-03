@@ -37,6 +37,19 @@ rules:
   - patch
   - watch
 - apiGroups:
+  - operator.knative.dev
+  resources:
+  - knativeeventings
+  - knativeservings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - operators.coreos.com
   resources:
   - catalogsources

@@ -24,6 +24,7 @@ import (
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,13 +32,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const (
+	CatalogSourceNamespace               = "openshift-marketplace"
+	OpenshiftServerlessOperatorGroupName = "serverless-operator-group"
+	ServerlessOperatorGroupName          = "serverless-operator-group"
+)
+
 func installOperatorViaSubscription(
-	ctx context.Context, client client.Client, olmClientSet olmclientset.Interface, namespace string,
-	subscriptionName string, sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) error {
+	ctx context.Context, client client.Client,
+	olmClientSet olmclientset.Interface,
+	operatorGroupName string,
+	subscription orchestratorv1alpha1.Subscription) error {
 
 	logger := log.FromContext(ctx)
+	subscriptionName := subscription.Name
 	logger.Info("Starting subscription installation process", "SubscriptionName", subscriptionName)
 
+	namespace := subscription.Namespace
 	logger.Info("Creating namespace", "Namespace", namespace)
 	namespaceObj := &corev1.Namespace{}
 	// check if namespace exists
@@ -54,13 +65,12 @@ func installOperatorViaSubscription(
 		logger.Error(err, "Error occurred when checking namespace exists", "Namespace", namespace)
 	}
 	// check operator group exists
-	operatorGroupName := "openshift-serverless-logic"
 	err = getOperatorGroup(ctx, client, namespace, operatorGroupName)
 	if err != nil {
 		logger.Error(err, "Failed to get operator group resource", "OperatorGroup", operatorGroupName)
 	}
 	// install subscription
-	subscriptionObject := createSubscriptionObject(subscriptionName, namespace, sonataFlowOperator)
+	subscriptionObject := createSubscriptionObject(subscriptionName, namespace, subscription)
 	installedSubscription, err := olmClientSet.OperatorsV1alpha1().
 		Subscriptions(namespace).
 		Create(context.Background(), subscriptionObject, metav1.CreateOptions{})
@@ -113,20 +123,19 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 
 func createSubscriptionObject(
 	subscriptionName string, namespace string,
-	sonataFlowOperator orchestratorv1alpha1.SonataFlowOperator) *v1alpha1.Subscription {
+	subscription orchestratorv1alpha1.Subscription) *v1alpha1.Subscription {
 	logger := log.Log.WithName("subscriptionObject")
 	logger.Info("Creating subscription object")
 
-	sonataFlowSubscriptionDetails := sonataFlowOperator.Subscription
 	subscriptionObject := &v1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: subscriptionName},
 		Spec: &v1alpha1.SubscriptionSpec{
-			Channel:                sonataFlowSubscriptionDetails.Channel,
-			InstallPlanApproval:    v1alpha1.Approval(sonataFlowSubscriptionDetails.InstallPlanApproval),
-			CatalogSource:          sonataFlowSubscriptionDetails.SourceName,
-			StartingCSV:            sonataFlowSubscriptionDetails.StartingCSV,
-			CatalogSourceNamespace: "openshift-marketplace",
-			Package:                sonataFlowSubscriptionDetails.Name,
+			Channel:                subscription.Channel,
+			InstallPlanApproval:    v1alpha1.Approval(subscription.InstallPlanApproval),
+			CatalogSource:          subscription.SourceName,
+			StartingCSV:            subscription.StartingCSV,
+			CatalogSourceNamespace: CatalogSourceNamespace,
+			Package:                subscription.Name,
 		},
 	}
 	return subscriptionObject
@@ -147,5 +156,17 @@ func checkSubscriptionExists(
 		return false, err
 	}
 	logger.Info("Subscription exists", "SubscriptionName", subscription.Name)
+	return true, nil
+}
+
+func checkCRDExists(ctx context.Context, client client.Client, name string, namespace string) (bool, error) {
+	crd := &apiextensionsv1.CustomResourceDefinition{}
+	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, crd)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
 	return true, nil
 }

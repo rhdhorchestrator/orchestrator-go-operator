@@ -19,6 +19,9 @@ package controller
 import (
 	"context"
 	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
+	knative "knative.dev/operator/pkg/apis/operator/v1beta1"
+
+	//corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -59,6 +62,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;catalogsources,verbs=get;list;watch;create;delete;patch
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
+//+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -113,12 +117,18 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
-	// sonataFlowOperator
+	//  handle sonataflow
 	sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
-	err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator)
-	if err != nil {
+	if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
 		logger.Error(err, "Error occurred when installing SonataFlow resources")
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	// handle knative
+	serverlessOperator := orchestrator.Spec.ServerlessOperator
+	if err = r.reconcileKnative(ctx, serverlessOperator); err != nil {
+		logger.Error(err, "Error occurred when installing K-Native resources")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	// handle backstage
@@ -165,7 +175,10 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 		return err
 	}
 	if !subscriptionExists {
-		err := installOperatorViaSubscription(ctx, r.Client, r.OLMClient, namespace, subscriptionName, sonataFlowOperator)
+		err := installOperatorViaSubscription(
+			ctx, r.Client, r.OLMClient,
+			OpenshiftServerlessOperatorGroupName,
+			sonataFlowOperator.Subscription)
 		if err != nil {
 			sfLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
 			return err
@@ -198,6 +211,86 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 		if err != nil {
 			sfLogger.Error(err, "Error occurred when creating SonataFlowPlatform", "CR-Name", SonataFlowClusterPlatformCRName)
 			return err
+		}
+	}
+	return err
+}
+
+func (r *OrchestratorReconciler) reconcileKnative(
+	ctx context.Context,
+	serverlessOperator orchestratorv1alpha1.ServerlessOperator) error {
+
+	knativeLogger := log.FromContext(ctx)
+	knativeLogger.Info("Starting Reconciliation for K-Native Serverless")
+
+	knativeSubscription := serverlessOperator.Subscription
+	subscriptionName := knativeSubscription.Name
+	namespace := knativeSubscription.Namespace
+
+	// if subscription is disabled; check if subscription exists and handle delete
+	if !serverlessOperator.Enabled {
+		// check if subscription exists using olm client
+		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		if err != nil {
+			knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+			return err
+		}
+		if subscriptionExists {
+			// deleting subscription resource
+			err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
+			if err != nil {
+				knativeLogger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
+				//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+				return err
+			}
+			knativeLogger.Info("Successfully deleted Subscription: %s", subscriptionName)
+			return nil
+		}
+	}
+
+	// Subscription is enabled; check if subscription exists
+	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+	if err != nil {
+		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+		return err
+	}
+
+	if !subscriptionExists {
+		err := installOperatorViaSubscription(
+			ctx, r.Client, r.OLMClient,
+			ServerlessOperatorGroupName, knativeSubscription)
+		if err != nil {
+			knativeLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
+			return err
+		}
+		knativeLogger.Info("Operator successfully installed", "SubscriptionName", subscriptionName)
+	}
+
+	// subscription exists; check if CRD exists knative eventing;
+	knativeEventingCrdExists, err := checkCRDExists(ctx, r.Client, "", namespace)
+	if err != nil {
+		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", "")
+	} else if knativeEventingCrdExists && (err == nil) {
+		knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+		return nil // do we want to re-attempt subscription installation?
+	} else if knativeEventingCrdExists {
+		// CRD exist; check and handle knative eventing CR
+		if err = handleKnativeEventingCR(ctx, r.Client); err != nil {
+			knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeEventingNamespacedName)
+		}
+	}
+
+	// subscription exists; check if CRD exists knative serving;
+	knativeServingCrdExists, err := checkCRDExists(ctx, r.Client, "", namespace)
+	if err != nil {
+		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", "")
+	} else if knativeServingCrdExists && (err == nil) {
+		knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+		return nil // do we want to re-attempt subscription installation?
+	} else if knativeServingCrdExists {
+		// CRD exist; check and handle knative eventing CR
+		if err = handleKnativeServingCR(ctx, r.Client); err != nil {
+			knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeServingNamespacedName)
 		}
 	}
 	return err

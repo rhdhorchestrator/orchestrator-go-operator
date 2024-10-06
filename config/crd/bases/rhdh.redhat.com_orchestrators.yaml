@@ -122,6 +122,22 @@ spec:
                         type: string
                     type: object
                 type: object
+              rhdhPlugins:
+                properties:
+                  npmRegistry:
+                    type: string
+                  plugins:
+                    additionalProperties:
+                      properties:
+                        integrity:
+                          type: string
+                        package:
+                          type: string
+                      type: object
+                    type: object
+                  scope:
+                    type: string
+                type: object
               serverlessOperator:
                 properties:
                   enabled:

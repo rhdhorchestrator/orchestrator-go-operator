@@ -38,6 +38,30 @@ const (
 	ServerlessOperatorGroupName          = "serverless-operator-group"
 )
 
+func checkNamespaceExist(ctx context.Context, client client.Client, namespace string) (bool, error) {
+	nsLogger := log.FromContext(ctx)
+	nsLogger.Info("Checking namespace exist", "Namespace", namespace)
+	namespaceObj := &corev1.Namespace{}
+	// check if namespace exists
+	if err := client.Get(ctx, types.NamespacedName{Name: namespace}, namespaceObj); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func createNamespace(ctx context.Context, client client.Client, namespace string) error {
+	nsLogger := log.FromContext(ctx)
+	nsLogger.Info("Creating namespace", "Namespace", namespace)
+	// create new namespace
+	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+	err := client.Create(ctx, newNamespace)
+	if err != nil {
+		nsLogger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)
+		return err
+	}
+	return nil
+}
+
 func installOperatorViaSubscription(
 	ctx context.Context, client client.Client,
 	olmClientSet olmclientset.Interface,
@@ -49,23 +73,9 @@ func installOperatorViaSubscription(
 	logger.Info("Starting subscription installation process", "SubscriptionName", subscriptionName)
 
 	namespace := subscription.Namespace
-	logger.Info("Creating namespace", "Namespace", namespace)
-	namespaceObj := &corev1.Namespace{}
-	// check if namespace exists
-	err := client.Get(ctx, types.NamespacedName{Name: namespace}, namespaceObj)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			// create new namespace
-			newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
-			err = client.Create(ctx, newNamespace)
-			if err != nil {
-				logger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)
-			}
-		}
-		logger.Error(err, "Error occurred when checking namespace exists", "Namespace", namespace)
-	}
+
 	// check operator group exists
-	err = getOperatorGroup(ctx, client, namespace, operatorGroupName)
+	err := getOperatorGroup(ctx, client, namespace, operatorGroupName)
 	if err != nil {
 		logger.Error(err, "Failed to get operator group resource", "OperatorGroup", operatorGroupName)
 	}

@@ -25,6 +25,7 @@ type OrchestratorSpec struct {
 	SonataFlowOperator   SonataFlowOperator   `json:"sonataFlowOperator,omitempty"`
 	ServerlessOperator   ServerlessOperator   `json:"serverlessOperator,omitempty"`
 	RhdhOperator         RHDHOperator         `json:"rhdhOperator,omitempty"`
+	RhdhPlugins          RHDHPlugins          `json:"rhdhPlugins,omitempty"`
 	PostgresDB           Postgres             `json:"postgres,omitempty"`
 	OrchestratorPlatform OrchestratorPlatform `json:"orchestrator,omitempty"`
 	Tekton               Tekton               `json:"tekton,omitempty"`
@@ -62,6 +63,17 @@ type RHDHOperator struct {
 	EnabledGuestProvider bool         `json:"enabledGuestProvider,omitempty"`
 	CatalogBranch        string       `json:"catalogBranch,omitempty"`
 	Subscription         Subscription `json:"subscription,omitempty"`
+}
+
+type PluginDetails struct {
+	Package   string `json:"package,omitempty"`
+	Integrity string `json:"integrity,omitempty"`
+}
+
+type RHDHPlugins struct {
+	NpmRegistry string                   `json:"npmRegistry,omitempty"`
+	Scope       string                   `json:"scope,omitempty"`
+	Plugins     map[string]PluginDetails `json:"plugins,omitempty"`
 }
 
 type Postgres struct {

@@ -58,7 +58,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=orchestrators/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=orchestrators/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=namespaces;events,verbs=list;get;create;delete;patch;watch
+//+kubebuilder:rbac:groups=core,resources=secrets;configmaps;namespaces;events,verbs=list;get;create;delete;patch;watch;update
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;catalogsources,verbs=get;list;watch;create;delete;patch
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
@@ -132,8 +132,12 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// handle backstage
-	//rhdhOperator := orchestrator.Spec.RhdhOperator
-
+	rhdhOperator := orchestrator.Spec.RhdhOperator
+	rhdhPlugins := orchestrator.Spec.RhdhPlugins
+	if err = r.reconcileBackstage(ctx, rhdhOperator, rhdhPlugins); err != nil {
+		logger.Error(err, "Error occurred when installing Backstage resources")
+		return ctrl.Result{Requeue: true}, err
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -167,8 +171,23 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 			return nil
 		}
 	}
+	// Subscription is enabled;
 
-	// Subscription is enabled; check if subscription exists
+	// check namespace exist
+	_, err := checkNamespaceExist(ctx, r.Client, namespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			sfLogger.Info("Creating namespace", "NS", namespace)
+			if err := createNamespace(ctx, r.Client, namespace); err != nil {
+				sfLogger.Error(err, "Error occurred when creating namespace", "NS", namespace)
+				return err
+			}
+		}
+		sfLogger.Error(err, "Error occurred when checking namespace exists", "NS", namespace)
+		return err
+	}
+
+	// check if subscription exist
 	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 	if err != nil {
 		sfLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
@@ -247,8 +266,23 @@ func (r *OrchestratorReconciler) reconcileKnative(
 			return nil
 		}
 	}
+	// Subscription is enabled;
 
-	// Subscription is enabled; check if subscription exists
+	// check namespace exist
+	_, err := checkNamespaceExist(ctx, r.Client, namespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			knativeLogger.Info("Creating namespace", "NS", namespace)
+			if err := createNamespace(ctx, r.Client, namespace); err != nil {
+				knativeLogger.Error(err, "Error occurred when creating namespace", "NS", namespace)
+				return err
+			}
+		}
+		knativeLogger.Error(err, "Error occurred when checking namespace exists", "NS", namespace)
+		return err
+	}
+
+	// check if subscription exists
 	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 	if err != nil {
 		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
@@ -296,6 +330,71 @@ func (r *OrchestratorReconciler) reconcileKnative(
 	return err
 }
 
+func (r *OrchestratorReconciler) reconcileBackstage(
+	ctx context.Context,
+	rhdhOperator orchestratorv1alpha1.RHDHOperator,
+	plugins orchestratorv1alpha1.RHDHPlugins) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Starting Reconciliation for K-Native Serverless")
+
+	rhdhSubscription := rhdhOperator.Subscription
+	subscriptionName := rhdhSubscription.Name
+	namespace := rhdhSubscription.Namespace
+
+	// if subscription is disabled; check if subscription exists and handle delete
+	if !rhdhOperator.Enabled {
+		// check if subscription exists using olm client
+		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		if err != nil {
+			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+			return err
+		}
+		if subscriptionExists {
+			// deleting subscription resource
+			err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
+			if err != nil {
+				logger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
+				//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+				return err
+			}
+			logger.Info("Successfully deleted Subscription: %s", subscriptionName)
+			return nil
+		}
+	}
+
+	nsExist, err := checkNamespaceExist(ctx, r.Client, namespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Error(err, "Ensure namespace already exist", "NS", namespace)
+		}
+		logger.Error(err, "Error occurred when checking namespace exists", "NS", namespace)
+		return err
+	}
+	if nsExist {
+		// Subscription is enabled; check if subscription exists
+		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		if err != nil {
+			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+			return err
+		}
+		if !subscriptionExists {
+			err := installOperatorViaSubscription(
+				ctx, r.Client, r.OLMClient,
+				BackstageOperatorGroup, rhdhSubscription)
+			if err != nil {
+				logger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
+				return err
+			}
+			logger.Info("Operator successfully installed", "SubscriptionName", subscriptionName)
+		}
+	}
+
+	// create secret
+	//createBSSecret()
+
+	return err
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	config := mgr.GetConfig()
@@ -311,6 +410,8 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&orchestratorv1alpha1.Orchestrator{}).
 		Owns(&sonataapi.SonataFlow{}).
 		Owns(&sonataapi.SonataFlowClusterPlatform{}).
+		Owns(&knative.KnativeEventing{}).
+		Owns(&knative.KnativeServing{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 2}).
 		Complete(r)
 }

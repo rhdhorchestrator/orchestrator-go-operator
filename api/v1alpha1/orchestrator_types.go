@@ -57,12 +57,49 @@ type ServerlessOperator struct {
 	Subscription Subscription `json:"subscription,omitempty"`
 }
 
+type BackstageSecret struct {
+	BackendSecret string `json:"backendSecret,omitempty"`
+}
+
+type ClusterTokenUrl struct {
+	ClusterToken string `json:"clusterToken,omitempty"`
+	ClusterUrl   string `json:"clusterUrl,omitempty"`
+}
+
+type GithubBS struct {
+	Token        string `json:"token,omitempty"`
+	ClientID     string `json:"clientId,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty"`
+}
+
+type ArgoCDBS struct {
+	Url      string `json:"url,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+type NotificationEmailBS struct {
+	Hostname string `json:"hostname,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+type SecretRefBS struct {
+	Name              string              `json:"name,omitempty"`
+	Backstage         BackstageSecret     `json:"backstage,omitempty"`
+	Github            GithubBS            `json:"github,omitempty"`
+	ClusterTokenUrl   ClusterTokenUrl     `json:"k8s,omitempty"`
+	ArgoCD            ArgoCDBS            `json:"argoCD,omitempty"`
+	NotificationEmail NotificationEmailBS `json:"notificationEmail,omitempty"`
+}
+
 type RHDHOperator struct {
 	IsReleaseCandidate   bool         `json:"isReleaseCandidate,omitempty"`
 	Enabled              bool         `json:"enabled,omitempty"`
 	EnabledGuestProvider bool         `json:"enabledGuestProvider,omitempty"`
 	CatalogBranch        string       `json:"catalogBranch,omitempty"`
 	Subscription         Subscription `json:"subscription,omitempty"`
+	SecretRef            SecretRefBS  `json:"secretRef,omitempty"`
 }
 
 type PluginDetails struct {
@@ -70,10 +107,18 @@ type PluginDetails struct {
 	Integrity string `json:"integrity,omitempty"`
 }
 
+type NotificationConfig struct {
+	Enabled   bool   `json:"enabled,omitempty"`
+	Port      int64  `json:"port,omitempty"`
+	Sender    string `json:"sender,omitempty"`
+	Recipient string `json:"replyTo,omitempty"`
+}
+
 type RHDHPlugins struct {
-	NpmRegistry string                   `json:"npmRegistry,omitempty"`
-	Scope       string                   `json:"scope,omitempty"`
-	Plugins     map[string]PluginDetails `json:"plugins,omitempty"`
+	NpmRegistry        string                   `json:"npmRegistry,omitempty"`
+	Scope              string                   `json:"scope,omitempty"`
+	Plugins            map[string]PluginDetails `json:"plugins,omitempty"`
+	NotificationConfig NotificationConfig       `json:"notificationConfig,omitempty"`
 }
 
 type Postgres struct {

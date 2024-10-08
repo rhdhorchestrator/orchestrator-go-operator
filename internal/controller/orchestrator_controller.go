@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -63,6 +62,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;catalogsources,verbs=get;list;watch;create;delete;patch
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
+//+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;watch;create;delete;patch;update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -389,10 +389,17 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 		}
 	}
 
+	targetNamespace := rhdhSubscription.TargetNamespace
+	npmRegistry := plugins.NpmRegistry
 	// create secret
-	//createBSSecret()
-
-	return err
+	if err := createBSSecret(RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
+		return err
+	}
+	// create backstage CR
+	if err := handleCRCreation(targetNamespace, rhdhOperator.SecretRef.Name, ctx, r.Client); err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

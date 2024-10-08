@@ -68,6 +68,18 @@ rules:
 - apiGroups:
   - rhdh.redhat.com
   resources:
+  - backstages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rhdh.redhat.com
+  resources:
   - orchestrators
   verbs:
   - create

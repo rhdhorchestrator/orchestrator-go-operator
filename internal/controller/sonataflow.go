@@ -174,8 +174,6 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 	requestResourceMap[corev1.ResourceMemory] = requestMemoryQuantity
 	//logger.Info("Request Map", "Map", requestResourceMap)
 
-	var serviceEnabled = true
-
 	return sonataapi.SonataFlowPlatformSpec{
 		Build: sonataapi.BuildPlatformSpec{
 			Template: sonataapi.BuildTemplate{
@@ -186,12 +184,12 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 			}},
 		Services: &sonataapi.ServicesPlatformSpec{
 			DataIndex: &sonataapi.ServiceSpec{
-				Enabled:     &serviceEnabled,
+				Enabled:     makePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
 				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},
 			JobService: &sonataapi.ServiceSpec{
-				Enabled:     &serviceEnabled,
+				Enabled:     makePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
 				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},

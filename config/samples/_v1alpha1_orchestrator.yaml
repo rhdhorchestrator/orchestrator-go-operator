@@ -85,6 +85,11 @@ spec:
         port: 587 # SMTP server port
         sender: "" # the email sender address
         replyTo: "" # reply-to address
+    notificationsConfig:
+      enabled: false # whether to install the notifications email plugin. requires setting of hostname and credentials in backstage secret to enable. See value backstage-backend-auth-secret. See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
+      port: 587 # SMTP server port
+      sender: "" # the email sender address
+      replyTo: "" # reply-to address
 
   postgres:
     serviceName: "sonataflow-psql-postgresql" # The name of the Postgres DB service to be used by platform services. Cannot be empty.

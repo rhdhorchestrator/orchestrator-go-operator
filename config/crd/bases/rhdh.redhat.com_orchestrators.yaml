@@ -99,6 +99,50 @@ spec:
                     type: boolean
                   isReleaseCandidate:
                     type: boolean
+                  secretRef:
+                    properties:
+                      argoCD:
+                        properties:
+                          password:
+                            type: string
+                          url:
+                            type: string
+                          username:
+                            type: string
+                        type: object
+                      backstage:
+                        properties:
+                          backendSecret:
+                            type: string
+                        type: object
+                      github:
+                        properties:
+                          clientId:
+                            type: string
+                          clientSecret:
+                            type: string
+                          token:
+                            type: string
+                        type: object
+                      k8s:
+                        properties:
+                          clusterToken:
+                            type: string
+                          clusterUrl:
+                            type: string
+                        type: object
+                      name:
+                        type: string
+                      notificationEmail:
+                        properties:
+                          hostname:
+                            type: string
+                          password:
+                            type: string
+                          username:
+                            type: string
+                        type: object
+                    type: object
                   subscription:
                     description: |-
                       reuse from the subscription - check from the api/compare with the subscription object
@@ -124,6 +168,18 @@ spec:
                 type: object
               rhdhPlugins:
                 properties:
+                  notificationConfig:
+                    properties:
+                      enabled:
+                        type: boolean
+                      port:
+                        format: int64
+                        type: integer
+                      replyTo:
+                        type: string
+                      sender:
+                        type: string
+                    type: object
                   npmRegistry:
                     type: string
                   plugins:

@@ -396,7 +396,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 		return err
 	}
 	// create backstage CR
-	if err := handleCRCreation(targetNamespace, rhdhOperator.SecretRef.Name, ctx, r.Client); err != nil {
+	if err := handleCRCreation(rhdhOperator, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil

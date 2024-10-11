@@ -73,9 +73,11 @@ type GithubBS struct {
 }
 
 type ArgoCDBS struct {
-	Url      string `json:"url,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Enabled   bool   `json:"enabled,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+	Url       string `json:"url,omitempty"`
+	Username  string `json:"username,omitempty"`
+	Password  string `json:"password,omitempty"`
 }
 
 type NotificationEmailBS struct {

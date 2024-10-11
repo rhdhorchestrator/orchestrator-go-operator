@@ -103,6 +103,10 @@ spec:
                     properties:
                       argoCD:
                         properties:
+                          enabled:
+                            type: boolean
+                          namespace:
+                            type: string
                           password:
                             type: string
                           url:

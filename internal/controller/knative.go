@@ -38,7 +38,7 @@ const (
 
 func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Creating K-Native Eventing CR")
+	logger.Info("Handling K-Native Eventing CR")
 	// check CR exists
 	knativeEventingCR := &knative.KnativeEventing{}
 	err := client.Get(ctx, types.NamespacedName{Name: KnativeEventingNamespacedName, Namespace: KnativeEventingNamespacedName}, knativeEventingCR)
@@ -70,7 +70,7 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 
 func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Creating K-Native Serving CR")
+	logger.Info("Handling K-Native Serving CR")
 	// check CR exists
 	knativeServingCR := &knative.KnativeServing{}
 	err := client.Get(ctx, types.NamespacedName{Name: KnativeServingNamespacedName, Namespace: KnativeServingNamespacedName}, knativeServingCR)

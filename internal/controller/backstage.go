@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rhdh "redhat-developer/red-hat-developer-hub-operator/api/v1alpha1"
@@ -82,7 +83,7 @@ func handleCRCreation(
 				ExtraEnvs: &rhdh.ExtraEnvs{
 					Secrets: []rhdh.ObjectKeyRef{secret},
 				},
-				Replicas: makePointer(BackstageReplica),
+				Replicas: util.MakePointer(BackstageReplica),
 			},
 		},
 	}
@@ -129,8 +130,4 @@ func createConfigMap(
 	}
 	logger.Info("Successfully created ConfigMap", "CM", name)
 	return nil
-}
-
-func makePointer[T any](t T) *T {
-	return &t
 }

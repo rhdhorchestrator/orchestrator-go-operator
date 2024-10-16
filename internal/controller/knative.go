@@ -32,10 +32,13 @@ const (
 	KnativeServingNamespacedName  = "knative-serving"
 	KnativeEventingKind           = "KnativeEventing"
 	KnativeEventingNamespacedName = "knative-eventing"
+	KnativeEventingCRDName        = "knativeeventings.operator.knative.dev"
+	KnativeServingCRDName         = "knativeservings.operator.knative.dev"
 )
 
 func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
+	logger.Info("Creating K-Native Eventing CR")
 	// check CR exists
 	knativeEventingCR := &knative.KnativeEventing{}
 	err := client.Get(ctx, types.NamespacedName{Name: KnativeEventingNamespacedName, Namespace: KnativeEventingNamespacedName}, knativeEventingCR)
@@ -57,9 +60,9 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 				//Status: knative.KnativeEventingStatus{},
 			}
 			if err = client.Create(ctx, knEventing); err != nil {
-				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knativeEventingCR.Name)
+				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knEventing.Name)
 			}
-			logger.Info("Successfully created Knative Eventing resource", "CR-Name", knativeEventingCR.Name)
+			logger.Info("Successfully created Knative Eventing resource", "CR-Name", knEventing.Name)
 		}
 	}
 	return err
@@ -67,6 +70,7 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 
 func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
+	logger.Info("Creating K-Native Serving CR")
 	// check CR exists
 	knativeServingCR := &knative.KnativeServing{}
 	err := client.Get(ctx, types.NamespacedName{Name: KnativeServingNamespacedName, Namespace: KnativeServingNamespacedName}, knativeServingCR)
@@ -75,7 +79,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 		return nil
 	} else {
 		if apierrors.IsNotFound(err) {
-			knEventing := &knative.KnativeEventing{
+			knServing := &knative.KnativeServing{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: KnativeAPIVersion,
 					Kind:       KnativeServingKind,
@@ -84,13 +88,13 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 					Name:      KnativeServingNamespacedName,
 					Namespace: KnativeServingNamespacedName,
 				},
-				Spec: knative.KnativeEventingSpec{},
+				Spec: knative.KnativeServingSpec{},
 				//Status: knative.KnativeEventingStatus{},
 			}
-			if err = client.Create(ctx, knEventing); err != nil {
-				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knativeServingCR.Name)
+			if err = client.Create(ctx, knServing); err != nil {
+				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knServing.Name)
 			}
-			logger.Info("Successfully created Knative Serving resource", "CR-Name", knativeServingCR.Name)
+			logger.Info("Successfully created Knative Serving resource", "CR-Name", knServing.Name)
 		}
 	}
 	return err

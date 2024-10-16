@@ -83,7 +83,7 @@ func installOperatorViaSubscription(
 	subscriptionObject := createSubscriptionObject(subscriptionName, namespace, subscription)
 	installedSubscription, err := olmClientSet.OperatorsV1alpha1().
 		Subscriptions(namespace).
-		Create(context.Background(), subscriptionObject, metav1.CreateOptions{})
+		Create(ctx, subscriptionObject, metav1.CreateOptions{})
 
 	if err != nil {
 		logger.Error(err, "Error occurred while creating Subscription", "SubscriptionName", subscriptionName)
@@ -102,10 +102,10 @@ func installOperatorViaSubscription(
 	}
 	// Check if the CSV's phase is "Succeeded"
 	if sfcsv.Status.Phase == operatorsv1alpha1.CSVPhaseSucceeded {
-		logger.Info("Successfully installed Operator Subscription", "SubscriptionName", installedSubscription.Name)
+		logger.Info("Successfully installed Operator Via Subscription", "SubscriptionName", installedSubscription.Name)
 		return nil
 	}
-	logger.Info("Successfully installed Operator Subscription", "SubscriptionName", installedSubscription.Name)
+	logger.Info("Successfully installed Operator Via Subscription", "SubscriptionName", installedSubscription.Name)
 	return err
 }
 

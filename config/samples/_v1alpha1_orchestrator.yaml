@@ -55,7 +55,7 @@ spec:
       channel: fast-1.2 # channel of an operator package to subscribe to
       installPlanApproval: Automatic # whether the update should be installed automatically
       name: rhdh # name of the operator package
-      source: redhat-operators # name of the catalog source
+      sourceName: redhat-operators # name of the catalog source
       startingCSV: "" # The initial version of the operator
       targetNamespace: rhdh-operator # the target namespace for the backstage CR in which RHDH instance is created
   rhdhPlugins: # RHDH plugins required for the Orchestrator
@@ -81,12 +81,8 @@ spec:
         package: "plugin-signals-backend-dynamic@1.2.0"
         integrity: sha512-DIISzxtjeJ4a9mX3TLcuGcavRHbCtQ5b52wHn+9+uENUL2IDbFoqmB4/9BQASaKIUSFkRKLYpc5doIkrnTVyrA==
       notificationsEmail:
-        enabled: false # whether to install the notifications email plugin. requires setting of hostname and credentials in backstage secret to enable. See value backstage-backend-auth-secret. See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
         package: "plugin-notifications-backend-module-email-dynamic@1.2.0"
         integrity: sha512-dtmliahV5+xtqvwdxP2jvyzd5oXTbv6lvS3c9nR8suqxTullxxj0GFg1uU2SQ2uKBQWhOz8YhSmrRwxxLa9Zqg==
-        port: 587 # SMTP server port
-        sender: "" # the email sender address
-        replyTo: "" # reply-to address
     notificationsConfig:
       enabled: false # whether to install the notifications email plugin. requires setting of hostname and credentials in backstage secret to enable. See value backstage-backend-auth-secret. See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
       port: 587 # SMTP server port

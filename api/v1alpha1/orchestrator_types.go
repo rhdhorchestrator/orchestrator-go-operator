@@ -87,21 +87,21 @@ type NotificationEmailBS struct {
 }
 
 type SecretRefBS struct {
-	Name              string              `json:"name,omitempty"`
-	Backstage         BackstageSecret     `json:"backstage,omitempty"`
-	Github            GithubBS            `json:"github,omitempty"`
-	ClusterTokenUrl   ClusterTokenUrl     `json:"k8s,omitempty"`
-	ArgoCD            ArgoCDBS            `json:"argoCD,omitempty"`
-	NotificationEmail NotificationEmailBS `json:"notificationEmail,omitempty"`
+	Name               string              `json:"name,omitempty"`
+	Backstage          BackstageSecret     `json:"backstage,omitempty"`
+	Github             GithubBS            `json:"github,omitempty"`
+	ClusterTokenUrl    ClusterTokenUrl     `json:"k8s,omitempty"`
+	ArgoCD             ArgoCDBS            `json:"argocd,omitempty"`
+	NotificationsEmail NotificationEmailBS `json:"notificationsEmail,omitempty"`
 }
 
 type RHDHOperator struct {
-	IsReleaseCandidate   bool         `json:"isReleaseCandidate,omitempty"`
-	Enabled              bool         `json:"enabled,omitempty"`
-	EnabledGuestProvider bool         `json:"enabledGuestProvider,omitempty"`
-	CatalogBranch        string       `json:"catalogBranch,omitempty"`
-	Subscription         Subscription `json:"subscription,omitempty"`
-	SecretRef            SecretRefBS  `json:"secretRef,omitempty"`
+	IsReleaseCandidate  bool         `json:"isReleaseCandidate,omitempty"`
+	Enabled             bool         `json:"enabled,omitempty"`
+	EnableGuestProvider bool         `json:"enableGuestProvider,omitempty"`
+	CatalogBranch       string       `json:"catalogBranch,omitempty"`
+	Subscription        Subscription `json:"subscription,omitempty"`
+	SecretRef           SecretRefBS  `json:"secretRef,omitempty"`
 }
 
 type PluginDetails struct {
@@ -117,10 +117,10 @@ type NotificationConfig struct {
 }
 
 type RHDHPlugins struct {
-	NpmRegistry        string                   `json:"npmRegistry,omitempty"`
-	Scope              string                   `json:"scope,omitempty"`
-	Plugins            map[string]PluginDetails `json:"plugins,omitempty"`
-	NotificationConfig NotificationConfig       `json:"notificationConfig,omitempty"`
+	NpmRegistry         string                   `json:"npmRegistry,omitempty"`
+	Scope               string                   `json:"scope,omitempty"`
+	Plugins             map[string]PluginDetails `json:"plugins,omitempty"`
+	NotificationsConfig NotificationConfig       `json:"notificationsConfig,omitempty"`
 }
 
 type Postgres struct {

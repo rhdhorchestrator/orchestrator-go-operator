@@ -132,14 +132,14 @@ func ConfigMapTemplateFactory(cmTemplateType string, operator v1alpha1.RHDHOpera
 			Environment:         "development",
 			GitHubClientId:      operator.SecretRef.Github.ClientID,
 			GitHubClientSecret:  operator.SecretRef.Github.ClientSecret,
-			EnableGuestProvider: operator.EnabledGuestProvider,
+			EnableGuestProvider: operator.EnableGuestProvider,
 		}
 		formattedConfig, _ := parseConfigTemplate(RHDHAuthTempl, configData)
 		return formattedConfig
 	case AppConfigRHDHCatalogName:
 		configData := struct {
 			EnableGuestProvider bool
-		}{operator.EnabledGuestProvider}
+		}{operator.EnableGuestProvider}
 		formattedConfig, _ := parseConfigTemplate(RHDHCatalogTempl, configData)
 		return formattedConfig
 	//case AppConfigRHDHDynamicPluginName:

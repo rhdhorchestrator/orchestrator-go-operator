@@ -93,15 +93,15 @@ spec:
                 properties:
                   catalogBranch:
                     type: string
-                  enabled:
+                  enableGuestProvider:
                     type: boolean
-                  enabledGuestProvider:
+                  enabled:
                     type: boolean
                   isReleaseCandidate:
                     type: boolean
                   secretRef:
                     properties:
-                      argoCD:
+                      argocd:
                         properties:
                           enabled:
                             type: boolean
@@ -137,7 +137,7 @@ spec:
                         type: object
                       name:
                         type: string
-                      notificationEmail:
+                      notificationsEmail:
                         properties:
                           hostname:
                             type: string
@@ -172,7 +172,7 @@ spec:
                 type: object
               rhdhPlugins:
                 properties:
-                  notificationConfig:
+                  notificationsConfig:
                     properties:
                       enabled:
                         type: boolean

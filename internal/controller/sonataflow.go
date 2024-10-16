@@ -185,12 +185,12 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 			}},
 		Services: &sonataapi.ServicesPlatformSpec{
 			DataIndex: &sonataapi.ServiceSpec{
-				Enabled:     makePointer(true),
+				Enabled:     util.MakePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
 				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},
 			JobService: &sonataapi.ServiceSpec{
-				Enabled:     makePointer(true),
+				Enabled:     util.MakePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
 				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},

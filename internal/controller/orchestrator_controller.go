@@ -136,7 +136,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	rhdhPlugins := orchestrator.Spec.RhdhPlugins
 	if err = r.reconcileBackstage(ctx, rhdhOperator, rhdhPlugins); err != nil {
 		logger.Error(err, "Error occurred when installing Backstage resources")
-		return ctrl.Result{Requeue: true}, err
+		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
 	return ctrl.Result{}, nil
 }

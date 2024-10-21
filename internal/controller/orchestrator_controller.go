@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/rhdh"
 	"time"
 
 	//corev1 "k8s.io/api/core/v1"
@@ -117,11 +118,11 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	//  handle sonataflow
-	//sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
-	//if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
-	//	logger.Error(err, "Error occurred when installing SonataFlow resources")
-	//	return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
-	//}
+	sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
+	if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
+		logger.Error(err, "Error occurred when installing SonataFlow resources")
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
+	}
 
 	//handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
@@ -314,17 +315,18 @@ func (r *OrchestratorReconciler) reconcileKnative(
 			}
 		}
 
-	// subscription exists; check if CRD exists knative serving;
-	knativeServingCrdExists, err := checkCRDExists(ctx, r.Client, "", namespace)
-	if err != nil {
-		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", "")
-	} else if knativeServingCrdExists && (err == nil) {
-		knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
-		return nil // do we want to re-attempt subscription installation?
-	} else if knativeServingCrdExists {
-		// CRD exist; check and handle knative eventing CR
-		if err = handleKnativeServingCR(ctx, r.Client); err != nil {
-			knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeServingNamespacedName)
+		// subscription exists; check if CRD exists knative serving;
+		knativeServingCrdExists, err := checkCRDExists(ctx, r.Client, KnativeServingCRDName, namespace)
+		if err != nil {
+			knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeServingCRDName)
+		} else if !knativeServingCrdExists && (err == nil) {
+			knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			return nil // do we want to re-attempt subscription installation?
+		} else if knativeServingCrdExists {
+			// CRD exist; check and handle knative eventing CR
+			if err = handleKnativeServingCR(ctx, r.Client); err != nil {
+				knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeServingNamespacedName)
+			}
 		}
 	}
 	return err
@@ -335,7 +337,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	rhdhOperator orchestratorv1alpha1.RHDHOperator,
 	plugins orchestratorv1alpha1.RHDHPlugins) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Starting Reconciliation for K-Native Serverless")
+	logger.Info("Starting Reconciliation for Backstage Serverless")
 
 	rhdhSubscription := rhdhOperator.Subscription
 	subscriptionName := rhdhSubscription.Name
@@ -380,7 +382,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 		if !subscriptionExists {
 			err := installOperatorViaSubscription(
 				ctx, r.Client, r.OLMClient,
-				BackstageOperatorGroup, rhdhSubscription)
+				rhdh.BackstageOperatorGroup, rhdhSubscription)
 			if err != nil {
 				logger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
 				return err
@@ -392,11 +394,11 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	targetNamespace := rhdhSubscription.TargetNamespace
 	npmRegistry := plugins.NpmRegistry
 	// create secret
-	if err := createBSSecret(RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
+	if err := rhdh.CreateBSSecret(rhdh.RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
 		return err
 	}
 	// create backstage CR
-	if err := handleCRCreation(rhdhOperator, ctx, r.Client); err != nil {
+	if err := rhdh.HandleCRCreation(rhdhOperator, plugins, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil

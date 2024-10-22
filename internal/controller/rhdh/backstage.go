@@ -85,8 +85,7 @@ func HandleCRCreation(
 		Name:      BackstageCRName,
 	}, &rhdh.Backstage{}); apierrors.IsNotFound(err) {
 		secret := rhdh.ObjectKeyRef{
-			Name: "name",
-			Key:  operator.SecretRef.Name,
+			Name: operator.SecretRef.Name,
 		}
 		backstageCR := &rhdh.Backstage{
 			TypeMeta: metav1.TypeMeta{

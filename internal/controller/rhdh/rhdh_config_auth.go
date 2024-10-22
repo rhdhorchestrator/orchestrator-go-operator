@@ -4,20 +4,20 @@ const RHDHAuthTempl = `
 integrations:
   github:
 	- host: github.com
-	  token: {{ .GitHubToken }}
+	  token: {{ printf "${%s}" .GitHubToken }}
 auth:
   environment: {{ .Environment }}
-providers:
+  providers:
 {{- if .GitHubClientId }}
-github:
-  development:
-	clientId: {{ .GitHubClientId }}
-	clientSecret: {{ .GitHubClientSecret }}
+  github:
+  	development:
+      clientId: {{ printf "${%s}" .GitHubClientId }}
+      clientSecret: {{ printf "${%s}" .GitHubClientSecret }}
 {{- end }}
 {{- if .EnableGuestProvider }}
-guest:
-  dangerouslyAllowOutsideDevelopment: true
-  userEntityRef: user:default/guest
+  guest:
+    dangerouslyAllowOutsideDevelopment: true
+    userEntityRef: user:default/guest
 {{- end }}
 `
 

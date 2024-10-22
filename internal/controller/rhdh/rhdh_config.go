@@ -9,7 +9,7 @@ backend:
 	externalAccess:
 	  - type: static
 		options:
-		  token: {{ .BackendSecret }}
+		  token: {{ printf "${%s}" .BackendSecret }}
 		  subject: orchestrator
   baseUrl: https://backstage-backstage-{{ .TargetNamespace }}.{{ .ClusterDomain }}
   csp:
@@ -30,9 +30,9 @@ argocd:
   appLocatorMethods:
   - instances:
 	- name: main
-	  url: {{ .ArgoCDUrl }}
-	  username: {{ .ArgoCDUsername }}
-	  password: {{ .ArgoCDPassword }}
+	  url: {{ printf "${%s}" .ArgoCDUrl }}
+	  username: {{ printf "${%s}" .ArgoCDUsername }}
+	  password: {{ printf "${%s}" .ArgoCDPassword }}
 	type: config
 {{- end }}
 `

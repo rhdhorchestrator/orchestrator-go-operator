@@ -130,8 +130,7 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 		} else {
 			if err := CreateConfigMap(cmName, configDataKey, operator.Subscription.TargetNamespace, configValue, ctx, client); err == nil {
 				configmapList = append(configmapList, rhdh.ObjectKeyRef{
-					Name: "name",
-					Key:  cmName,
+					Name: cmName,
 				})
 			}
 		}

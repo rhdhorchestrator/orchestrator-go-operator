@@ -75,10 +75,13 @@ func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
 func HandleCRCreation(
 	operator orchestratorv1alpha1.RHDHOperator,
 	pluginsDetails orchestratorv1alpha1.RHDHPlugins,
+	clusterDomain string,
 	ctx context.Context, client client.Client) error {
 	bsLogger := log.FromContext(ctx)
 
 	bsLogger.Info("Handling Backstage resources")
+
+	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, operator, pluginsDetails)
 
 	if err := client.Get(ctx, types.NamespacedName{
 		Namespace: operator.Subscription.TargetNamespace,
@@ -98,7 +101,7 @@ func HandleCRCreation(
 			},
 			Spec: rhdh.BackstageSpec{
 				Application: &rhdh.Application{
-					AppConfig:                   &rhdh.AppConfig{ConfigMaps: GetConfigmapList(ctx, client, operator, pluginsDetails)},
+					AppConfig:                   &rhdh.AppConfig{ConfigMaps: bsConfigMapList},
 					DynamicPluginsConfigMapName: AppConfigRHDHDynamicPluginName,
 					ExtraEnvs: &rhdh.ExtraEnvs{
 						Secrets: []rhdh.ObjectKeyRef{secret},
@@ -116,23 +119,33 @@ func HandleCRCreation(
 	return nil
 }
 
-func GetConfigmapList(ctx context.Context, client client.Client,
-	operator orchestratorv1alpha1.RHDHOperator, rhdhPlugins orchestratorv1alpha1.RHDHPlugins) []rhdh.ObjectKeyRef {
+func GetConfigmapList(ctx context.Context, client client.Client, clusterDomain string,
+	operator orchestratorv1alpha1.RHDHOperator,
+	rhdhPlugins orchestratorv1alpha1.RHDHPlugins) []rhdh.ObjectKeyRef {
+
 	cmLogger := log.FromContext(ctx)
-	configmapList := make([]rhdh.ObjectKeyRef, 0)
 	cmLogger.Info("Creating configmaps")
+
+	configmapList := make([]rhdh.ObjectKeyRef, 0)
+	namespace := operator.Subscription.TargetNamespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
-		configValue, err := ConfigMapTemplateFactory(cmName, operator, rhdhPlugins)
-		if err != nil {
-			cmLogger.Error(err, "Error occurred when creating configmap", "CM", cmName)
-			continue
-		} else {
-			if err := CreateConfigMap(cmName, configDataKey, operator.Subscription.TargetNamespace, configValue, ctx, client); err == nil {
-				configmapList = append(configmapList, rhdh.ObjectKeyRef{
-					Name: cmName,
-				})
+		if err := client.Get(ctx, types.NamespacedName{
+			Namespace: namespace,
+			Name:      cmName,
+		}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
+			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, operator, rhdhPlugins)
+			if err != nil {
+				cmLogger.Error(err, "Error occurred when parsing config data for configmap", "CM", cmName)
+				continue
+			} else {
+				if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err == nil {
+					if cmName != AppConfigRHDHDynamicPluginName {
+						configmapList = append(configmapList, rhdh.ObjectKeyRef{Name: cmName})
+					}
+				}
 			}
 		}
+
 	}
 	return configmapList
 }
@@ -142,25 +155,21 @@ func CreateConfigMap(
 	ctx context.Context, client client.Client) error {
 
 	logger := log.FromContext(ctx)
-	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: namespace,
-		Name:      name,
-	}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
-		// Create the ConfigMap object
-		configMap := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-			Data: map[string]string{
-				configDataKey: configValue,
-			},
-		}
-		if err := client.Create(ctx, configMap); err != nil {
-			logger.Error(err, "Error occurred when creating ConfigMap", "CM", name)
-			return err
-		}
-		logger.Info("Successfully created ConfigMap", "CM", name)
+
+	// Create the ConfigMap object
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: map[string]string{
+			configDataKey: configValue,
+		},
 	}
+	if err := client.Create(ctx, configMap); err != nil {
+		logger.Error(err, "Error occurred when creating ConfigMap", "CM", name)
+		return err
+	}
+	logger.Info("Successfully created ConfigMap", "CM", name)
 	return nil
 }

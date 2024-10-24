@@ -19,6 +19,9 @@ package controller
 import (
 	"context"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/rhdh"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"time"
 
 	//corev1 "k8s.io/api/core/v1"
@@ -27,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
@@ -44,13 +46,20 @@ const (
 	TypeAvailable string = "Available"
 )
 
+// Define the GroupVersionResource for the OpenShift Ingress resource
+var ingressGVR = schema.GroupVersionResource{
+	Group:    "config.openshift.io",
+	Version:  "v1",
+	Resource: "ingresses",
+}
+
 // OrchestratorReconciler reconciles an Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
-	OLMClient olmclientset.Interface
-	ClientSet *kubernetes.Clientset
-	Scheme    *runtime.Scheme
-	Recorder  record.EventRecorder
+	OLMClient     olmclientset.Interface
+	DynamicClient dynamic.Interface
+	Scheme        *runtime.Scheme
+	Recorder      record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=orchestrators,verbs=get;list;watch;create;update;patch;delete
@@ -337,7 +346,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	rhdhOperator orchestratorv1alpha1.RHDHOperator,
 	plugins orchestratorv1alpha1.RHDHPlugins) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Starting Reconciliation for Backstage Serverless")
+	logger.Info("Starting Reconciliation for Backstage")
 
 	rhdhSubscription := rhdhOperator.Subscription
 	subscriptionName := rhdhSubscription.Name
@@ -393,15 +402,41 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 
 	targetNamespace := rhdhSubscription.TargetNamespace
 	npmRegistry := plugins.NpmRegistry
+	//clusterDomain, _ := r.getClusterDomain(ctx)
 	// create secret
 	if err := rhdh.CreateBSSecret(rhdh.RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
 		return err
 	}
 	// create backstage CR
-	if err := rhdh.HandleCRCreation(rhdhOperator, plugins, ctx, r.Client); err != nil {
+	if err := rhdh.HandleCRCreation(rhdhOperator, plugins, "clusterDomain", ctx, r.Client); err != nil {
 		return err
 	}
 	return nil
+}
+
+// getClusterDomain retrieves the OpenShift cluster domain from the Ingress resource
+func (r *OrchestratorReconciler) getClusterDomain(ctx context.Context) (string, error) {
+	gcdLogger := log.FromContext(ctx)
+	// Use the dynamic client to fetch the Ingress resource
+	ingress, err := r.DynamicClient.Resource(ingressGVR).Get(ctx, "cluster", metav1.GetOptions{})
+	if err != nil {
+		gcdLogger.Error(err, "Unable to retrieve OpenShift Ingress resource")
+		return "", err
+	}
+
+	// Extract the spec.domain field from the unstructured response
+	spec, found, err := unstructured.NestedMap(ingress.Object, "spec")
+	if err != nil || !found {
+		gcdLogger.Error(err, "Missing 'spec' field in the Ingress resource")
+		return "", err
+	}
+
+	clusterDomain, found, err := unstructured.NestedString(spec, "domain")
+	if err != nil || !found {
+		gcdLogger.Error(err, "Missing 'spec.domain' field in the Ingress resource")
+		return "", err
+	}
+	return clusterDomain, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

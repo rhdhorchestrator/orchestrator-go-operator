@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
-	"os"
 	"text/template"
 )
 
-func ConfigMapTemplateFactory(cmTemplateType string, operator v1alpha1.RHDHOperator, plugins v1alpha1.RHDHPlugins) (string, error) {
+func ConfigMapTemplateFactory(
+	cmTemplateType string, clusterDomain string,
+	operator v1alpha1.RHDHOperator, plugins v1alpha1.RHDHPlugins) (string, error) {
 	switch cmTemplateType {
 	case AppConfigRHDHName:
 		configData := RHDHConfig{
@@ -18,7 +19,7 @@ func ConfigMapTemplateFactory(cmTemplateType string, operator v1alpha1.RHDHOpera
 			ArgoCDUrl:       operator.SecretRef.ArgoCD.Url,
 			ArgoCDEnabled:   operator.SecretRef.ArgoCD.Enabled,
 			BackendSecret:   operator.SecretRef.Backstage.BackendSecret,
-			ClusterDomain:   os.Getenv("CLUSTER_DOMAIN"),
+			ClusterDomain:   clusterDomain,
 		}
 		formattedConfig, err := parseConfigTemplate(RHDHConfigTempl, configData)
 		if err != nil {
@@ -94,7 +95,7 @@ func ConfigMapTemplateFactory(cmTemplateType string, operator v1alpha1.RHDHOpera
 
 func parseConfigTemplate(templateString string, configData any) (string, error) {
 	// parse the template
-	t, err := template.New("config").Parse(templateString)
+	templ, err := template.New("config").Parse(templateString)
 	if err != nil {
 		fmt.Printf("Error occurred when parsing template: %v\n", err)
 		return "", err
@@ -102,7 +103,7 @@ func parseConfigTemplate(templateString string, configData any) (string, error) 
 
 	// execute template with the dynamic data
 	var output bytes.Buffer
-	err = t.Execute(&output, configData)
+	err = templ.Execute(&output, configData)
 	if err != nil {
 		fmt.Printf("Error occurred when executing template: %v\n", err)
 		return "", err

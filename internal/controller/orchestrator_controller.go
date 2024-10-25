@@ -19,12 +19,8 @@ package controller
 import (
 	"context"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/rhdh"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"time"
 
-	//corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -33,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	configv1 "github.com/openshift/api/config/v1"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,20 +43,12 @@ const (
 	TypeAvailable string = "Available"
 )
 
-// Define the GroupVersionResource for the OpenShift Ingress resource
-var ingressGVR = schema.GroupVersionResource{
-	Group:    "config.openshift.io",
-	Version:  "v1",
-	Resource: "ingresses",
-}
-
 // OrchestratorReconciler reconciles an Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
-	OLMClient     olmclientset.Interface
-	DynamicClient dynamic.Interface
-	Scheme        *runtime.Scheme
-	Recorder      record.EventRecorder
+	OLMClient olmclientset.Interface
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=orchestrators,verbs=get;list;watch;create;update;patch;delete
@@ -72,6 +61,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;watch;create;delete;patch;update
+//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -402,13 +392,13 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 
 	targetNamespace := rhdhSubscription.TargetNamespace
 	npmRegistry := plugins.NpmRegistry
-	//clusterDomain, _ := r.getClusterDomain(ctx)
+	clusterDomain, _ := r.getClusterDomain(ctx)
 	// create secret
 	if err := rhdh.CreateBSSecret(rhdh.RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
 		return err
 	}
 	// create backstage CR
-	if err := rhdh.HandleCRCreation(rhdhOperator, plugins, "clusterDomain", ctx, r.Client); err != nil {
+	if err := rhdh.HandleCRCreation(rhdhOperator, plugins, clusterDomain, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil
@@ -417,25 +407,19 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 // getClusterDomain retrieves the OpenShift cluster domain from the Ingress resource
 func (r *OrchestratorReconciler) getClusterDomain(ctx context.Context) (string, error) {
 	gcdLogger := log.FromContext(ctx)
-	// Use the dynamic client to fetch the Ingress resource
-	ingress, err := r.DynamicClient.Resource(ingressGVR).Get(ctx, "cluster", metav1.GetOptions{})
+	ingress := &configv1.Ingress{}
+	err := r.Get(ctx, client.ObjectKey{Name: "cluster"}, ingress)
 	if err != nil {
 		gcdLogger.Error(err, "Unable to retrieve OpenShift Ingress resource")
 		return "", err
 	}
 
-	// Extract the spec.domain field from the unstructured response
-	spec, found, err := unstructured.NestedMap(ingress.Object, "spec")
-	if err != nil || !found {
-		gcdLogger.Error(err, "Missing 'spec' field in the Ingress resource")
+	clusterDomain := ingress.Spec.Domain
+	if ingress.Spec.Domain == "" {
+		gcdLogger.Error(err, "Cluster domain not set in Ingress resource")
 		return "", err
 	}
-
-	clusterDomain, found, err := unstructured.NestedString(spec, "domain")
-	if err != nil || !found {
-		gcdLogger.Error(err, "Missing 'spec.domain' field in the Ingress resource")
-		return "", err
-	}
+	gcdLogger.Info("Successfully retrieved cluster domain", "Domain", clusterDomain)
 	return clusterDomain, nil
 }
 

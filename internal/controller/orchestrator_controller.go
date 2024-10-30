@@ -61,7 +61,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;watch;create;delete;patch;update
-//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list
+//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -96,6 +96,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Set the status to Unknown when no status is available - usually initial reconciliation.
 	if orchestrator.Status.Conditions == nil || len(orchestrator.Status.Conditions) == 0 {
+		//corev1.PodRunning
 		meta.SetStatusCondition(
 			&orchestrator.Status.Conditions,
 			metav1.Condition{
@@ -103,6 +104,8 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				Status:  metav1.ConditionUnknown,
 				Reason:  "Reconciling",
 				Message: "Starting Reconciliation",
+				// lastTransitionTime - optional (research on it)
+				// lastProbe - optionally
 			},
 		)
 		if err = r.Status().Update(ctx, orchestrator); err != nil {
@@ -152,23 +155,7 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !sonataFlowOperator.Enabled {
-		// check if subscription exists using olm client
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
-		if err != nil {
-			sfLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
-			return err
-		}
-		if subscriptionExists {
-			// deleting subscription resource
-			err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
-			if err != nil {
-				sfLogger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
-				//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
-				return err
-			}
-			sfLogger.Info("Successfully deleted Subscription: %s", subscriptionName)
-			return nil
-		}
+		// handle clean up TODO
 	}
 	// Subscription is enabled;
 

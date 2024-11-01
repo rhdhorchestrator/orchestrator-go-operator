@@ -77,25 +77,40 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	if err == nil {
 		// update CR TODO
 		return nil
-	} else {
-		if apierrors.IsNotFound(err) {
-			knServing := &knative.KnativeServing{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: KnativeAPIVersion,
-					Kind:       KnativeServingKind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      KnativeServingNamespacedName,
-					Namespace: KnativeServingNamespacedName,
-				},
-				Spec: knative.KnativeServingSpec{},
-				//Status: knative.KnativeEventingStatus{},
-			}
-			if err = client.Create(ctx, knServing); err != nil {
-				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knServing.Name)
-			}
-			logger.Info("Successfully created Knative Serving resource", "CR-Name", knServing.Name)
+	}
+	if apierrors.IsNotFound(err) {
+		knServing := &knative.KnativeServing{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: KnativeAPIVersion,
+				Kind:       KnativeServingKind,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      KnativeServingNamespacedName,
+				Namespace: KnativeServingNamespacedName,
+			},
+			Spec: knative.KnativeServingSpec{},
 		}
+		if err = client.Create(ctx, knServing); err != nil {
+			logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knServing.Name)
+		}
+		logger.Info("Successfully created Knative Serving resource", "CR-Name", knServing.Name)
 	}
 	return err
+}
+
+func handleKnativeCleanUp(ctx context.Context, client client.Client) error {
+	//logger := log.FromContext(ctx)
+	// remove all namespace
+	if err := cleanUpNamespace(ctx, KnativeEventingNamespacedName, client); err != nil {
+		return err
+	}
+	if err := cleanUpNamespace(ctx, KnativeServingNamespacedName, client); err != nil {
+		return err
+	}
+
+	// remove all CRs
+	// remove all subscriptions
+	// remove all CSVs
+	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
+	return nil
 }

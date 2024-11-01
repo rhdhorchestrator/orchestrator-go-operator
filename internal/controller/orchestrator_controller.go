@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/rhdh"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -41,6 +42,10 @@ import (
 // Definition to manage Orchestrator condition status.
 const (
 	TypeAvailable string = "Available"
+)
+
+const (
+	FinalizerCRCleanup = "cr-cleanup"
 )
 
 // OrchestratorReconciler reconciles an Orchestrator object
@@ -86,11 +91,28 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if apierrors.IsNotFound(err) {
 			// If the custom resource is not found then it usually means that it was deleted or not created
 			// In this way, we will stop the reconciliation
-			logger.Info("orchestrator resource not found. Ignoring since object must be deleted")
+			logger.Info("Orchestrator resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		logger.Error(err, "Failed to get orchestrator")
+		return ctrl.Result{}, err
+	}
+
+	if !orchestrator.DeletionTimestamp.IsZero() {
+		err := r.handleCleanup(ctx, orchestrator)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+		}
+		// Remove the finalizer to complete deletion
+		controllerutil.RemoveFinalizer(orchestrator, FinalizerCRCleanup)
+		if err := r.Update(ctx, orchestrator); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// Add finalizer if not present
+	if err := r.addFinalizers(ctx, orchestrator); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -408,6 +430,24 @@ func (r *OrchestratorReconciler) getClusterDomain(ctx context.Context) (string, 
 	}
 	gcdLogger.Info("Successfully retrieved cluster domain", "Domain", clusterDomain)
 	return clusterDomain, nil
+}
+
+func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+	if !controllerutil.ContainsFinalizer(orchestrator, FinalizerCRCleanup) {
+		controllerutil.AddFinalizer(orchestrator, FinalizerCRCleanup)
+		if err := r.Update(ctx, orchestrator); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *OrchestratorReconciler) handleCleanup(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+	// handle knative cleanup
+	if err := handleKnativeCleanUp(ctx, r.Client); err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

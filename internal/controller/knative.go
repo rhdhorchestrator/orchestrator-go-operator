@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -34,6 +35,8 @@ const (
 	KnativeEventingNamespacedName = "knative-eventing"
 	KnativeEventingCRDName        = "knativeeventings.operator.knative.dev"
 	KnativeServingCRDName         = "knativeservings.operator.knative.dev"
+	KnativeSubscriptionName       = "serverless-operator"
+	KnativeSubscriptionNamespace  = "openshift-serverless"
 )
 
 func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
@@ -98,19 +101,21 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	return err
 }
 
-func handleKnativeCleanUp(ctx context.Context, client client.Client) error {
-	//logger := log.FromContext(ctx)
+func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+	logger := log.FromContext(ctx)
 	// remove all namespace
 	if err := cleanUpNamespace(ctx, KnativeEventingNamespacedName, client); err != nil {
+		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}
 	if err := cleanUpNamespace(ctx, KnativeServingNamespacedName, client); err != nil {
+		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeServingNamespacedName)
 		return err
 	}
-
-	// remove all CRs
-	// remove all subscriptions
-	// remove all CSVs
+	if err := cleanUpSubscriptionAndCSV(ctx, olmClientSet, KnativeSubscriptionName, KnativeSubscriptionNamespace); err != nil {
+		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", KnativeSubscriptionName)
+		return err
+	}
 	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
 	return nil
 }

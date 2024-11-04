@@ -51,7 +51,7 @@ const (
 // OrchestratorReconciler reconciles an Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
-	OLMClient olmclientset.Interface
+	OLMClient olmclientset.Clientset
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
 }
@@ -100,7 +100,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if !orchestrator.DeletionTimestamp.IsZero() {
-		err := r.handleCleanup(ctx, orchestrator)
+		err := r.handleCleanup(ctx)
 		if err != nil {
 			return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
 		}
@@ -196,7 +196,7 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 	}
 
 	// check if subscription exist
-	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+	subscriptionExists, _, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 	if err != nil {
 		sfLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 		return err
@@ -257,7 +257,7 @@ func (r *OrchestratorReconciler) reconcileKnative(
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !serverlessOperator.Enabled {
 		// check if subscription exists using olm client
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		subscriptionExists, _, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 		if err != nil {
 			knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 			return err
@@ -291,7 +291,7 @@ func (r *OrchestratorReconciler) reconcileKnative(
 	}
 
 	// check if subscription exists
-	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+	subscriptionExists, _, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 	if err != nil {
 		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 		return err
@@ -354,7 +354,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !rhdhOperator.Enabled {
 		// check if subscription exists using olm client
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		subscriptionExists, _, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 		if err != nil {
 			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 			return err
@@ -382,7 +382,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	}
 	if nsExist {
 		// Subscription is enabled; check if subscription exists
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		subscriptionExists, _, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 		if err != nil {
 			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 			return err
@@ -442,11 +442,17 @@ func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator
 	return nil
 }
 
-func (r *OrchestratorReconciler) handleCleanup(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
-	// handle knative cleanup
-	if err := handleKnativeCleanUp(ctx, r.Client); err != nil {
+func (r *OrchestratorReconciler) handleCleanup(ctx context.Context) error {
+	// cleanup sonataflow
+	if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 		return err
 	}
+	// cleanup sonataflow
+	if err := handleSonataFlowCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+		return err
+	}
+
+	// cleanup backstage
 	return nil
 }
 
@@ -457,9 +463,9 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Create the OLM clientset using the config
 	olmClient, err := olmclientset.NewForConfig(config)
 	if err != nil {
-		return nil
+		return err
 	}
-	r.OLMClient = olmClient
+	r.OLMClient = *olmClient
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha1.Orchestrator{}).

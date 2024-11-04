@@ -64,7 +64,7 @@ func createNamespace(ctx context.Context, client client.Client, namespace string
 
 func installOperatorViaSubscription(
 	ctx context.Context, client client.Client,
-	olmClientSet olmclientset.Interface,
+	olmClientSet olmclientset.Clientset,
 	operatorGroupName string,
 	subscription orchestratorv1alpha1.Subscription) error {
 
@@ -152,21 +152,21 @@ func createSubscriptionObject(
 }
 
 func checkSubscriptionExists(
-	ctx context.Context, olmClientSet olmclientset.Interface,
-	namespace, subscriptionName string) (bool, error) {
+	ctx context.Context, olmClientSet olmclientset.Clientset,
+	namespace, subscriptionName string) (bool, *v1alpha1.Subscription, error) {
 	logger := log.FromContext(ctx)
 
 	subscription, err := olmClientSet.OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, subscriptionName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Subscription resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
-			return false, nil
+			return false, subscription, nil
 		}
 		logger.Error(err, "Failed to check Subscription does not exists", "SubscriptionName", subscriptionName)
-		return false, err
+		return false, subscription, err
 	}
 	logger.Info("Subscription exists", "SubscriptionName", subscription.Name)
-	return true, nil
+	return true, subscription, nil
 }
 
 func checkCRDExists(ctx context.Context, client client.Client, name string, namespace string) (bool, error) {
@@ -203,43 +203,42 @@ func cleanUpNamespace(ctx context.Context, namespaceName string, client client.C
 	return nil
 }
 
-func cleanUpSubscription(ctx context.Context, olmClientSet olmclientset.Interface, subscriptionName, namespace string) error {
-	sublog := log.FromContext(ctx)
+func cleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Clientset, subscriptionName, namespace string) error {
+	logger := log.FromContext(ctx)
 	// check if subscription exists using olm client
-	subscriptionExists, err := checkSubscriptionExists(ctx, olmClientSet, namespace, subscriptionName)
+	subscriptionExists, subscription, err := checkSubscriptionExists(ctx, olmClientSet, namespace, subscriptionName)
 	if err != nil {
-		sublog.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+		logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 		return err
 	}
 	if subscriptionExists {
+		// get name of csv before deletion
+		csvName := subscription.Status.InstalledCSV
+
 		// deleting subscription resource
 		err = olmClientSet.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
 		if err != nil {
-			sublog.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			logger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
 			//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
 			return err
 		}
-		sublog.Info("Successfully deleted Subscription: %s", subscriptionName)
+		logger.Info("Successfully deleted Subscription: %s", subscriptionName)
+
+		// cleanup csv
+		csv, err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(ctx, csvName, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("CSV resource not found", "CSV", csvName)
+				return nil
+			}
+			logger.Error(err, "Error occurred when getting CSV", "CSV", csvName)
+			return err
+		}
+		if err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(csv.Namespace).Delete(ctx, csv.Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+		logger.Info("Successfully deleted CSV", "CSV", csvName)
 		return nil
 	}
 	return err
-}
-
-func cleanUpCSV(ctx context.Context, olmClientSet olmclientset.Interface, namespace, csvName string) error {
-	logger := log.FromContext(ctx)
-	// check csv exist
-	csv, err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(ctx, csvName, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("CSV resource not found", "CSV", csvName)
-			return nil
-		}
-		logger.Error(err, "Error occurred when getting CSV", "CSV", csvName)
-		return err
-	}
-	if err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(csv.Namespace).Delete(ctx, csv.Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	logger.Info("Successfully deleted CSV", "CSV", csvName)
-	return nil
 }

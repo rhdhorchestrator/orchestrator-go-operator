@@ -84,6 +84,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowClusterPlatformCRName,
 					Namespace: SonataFlowNamespace,
+					Labels:    AddLabel(),
 				},
 				Spec: getSonataFlowClusterSpec(),
 			}
@@ -144,6 +145,7 @@ func handleSonataFlowPlatformCR(
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowPlatformCRName,
 					Namespace: SonataFlowNamespace,
+					Labels:    AddLabel(),
 				},
 				Spec: getSonataFlowPlatformSpec(orchestrator),
 			}
@@ -203,11 +205,11 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 func handleSonataFlowCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	logger := log.FromContext(ctx)
 	// remove all namespace
-	if err := cleanUpNamespace(ctx, SonataFlowNamespace, client); err != nil {
+	if err := CleanUpNamespace(ctx, SonataFlowNamespace, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}
-	if err := cleanUpSubscriptionAndCSV(ctx, olmClientSet, SonataFlowSubscriptionName, SonataFlowNamespace); err != nil {
+	if err := CleanUpSubscriptionAndCSV(ctx, olmClientSet, SonataFlowSubscriptionName, SonataFlowNamespace); err != nil {
 		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", SonataFlowSubscriptionName)
 		return err
 	}

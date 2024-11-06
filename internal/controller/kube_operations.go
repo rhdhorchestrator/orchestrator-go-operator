@@ -36,6 +36,8 @@ const (
 	CatalogSourceNamespace               = "openshift-marketplace"
 	OpenshiftServerlessOperatorGroupName = "serverless-operator-group"
 	ServerlessOperatorGroupName          = "serverless-operator-group"
+	CreatedByLabelKey                    = "created-by"
+	CreatedByLabelValue                  = "orchestrator"
 )
 
 func checkNamespaceExist(ctx context.Context, client client.Client, namespace string) (bool, error) {
@@ -181,7 +183,7 @@ func checkCRDExists(ctx context.Context, client client.Client, name string, name
 	return true, nil
 }
 
-func cleanUpNamespace(ctx context.Context, namespaceName string, client client.Client) error {
+func CleanUpNamespace(ctx context.Context, namespaceName string, client client.Client) error {
 	logger := log.FromContext(ctx)
 	// check namespace exist
 	namespaceExist, _ := checkNamespaceExist(ctx, client, namespaceName)
@@ -203,7 +205,7 @@ func cleanUpNamespace(ctx context.Context, namespaceName string, client client.C
 	return nil
 }
 
-func cleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Clientset, subscriptionName, namespace string) error {
+func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Clientset, subscriptionName, namespace string) error {
 	logger := log.FromContext(ctx)
 	// check if subscription exists using olm client
 	subscriptionExists, subscription, err := checkSubscriptionExists(ctx, olmClientSet, namespace, subscriptionName)
@@ -241,4 +243,10 @@ func cleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Cl
 		return nil
 	}
 	return err
+}
+
+func AddLabel() map[string]string {
+	return map[string]string{
+		CreatedByLabelKey: CreatedByLabelValue,
+	}
 }

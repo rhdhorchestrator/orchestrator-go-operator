@@ -58,6 +58,7 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      KnativeEventingNamespacedName,
 					Namespace: KnativeEventingNamespacedName,
+					Labels:    AddLabel(),
 				},
 				Spec: knative.KnativeEventingSpec{},
 				//Status: knative.KnativeEventingStatus{},
@@ -90,6 +91,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      KnativeServingNamespacedName,
 				Namespace: KnativeServingNamespacedName,
+				Labels:    AddLabel(),
 			},
 			Spec: knative.KnativeServingSpec{},
 		}
@@ -104,15 +106,16 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	logger := log.FromContext(ctx)
 	// remove all namespace
-	if err := cleanUpNamespace(ctx, KnativeEventingNamespacedName, client); err != nil {
+	if err := CleanUpNamespace(ctx, KnativeEventingNamespacedName, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}
-	if err := cleanUpNamespace(ctx, KnativeServingNamespacedName, client); err != nil {
+	if err := CleanUpNamespace(ctx, KnativeServingNamespacedName, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeServingNamespacedName)
 		return err
 	}
-	if err := cleanUpSubscriptionAndCSV(ctx, olmClientSet, KnativeSubscriptionName, KnativeSubscriptionNamespace); err != nil {
+	// remove subscription and csv
+	if err := CleanUpSubscriptionAndCSV(ctx, olmClientSet, KnativeSubscriptionName, KnativeSubscriptionNamespace); err != nil {
 		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", KnativeSubscriptionName)
 		return err
 	}

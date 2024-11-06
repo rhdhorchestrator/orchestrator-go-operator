@@ -451,8 +451,10 @@ func (r *OrchestratorReconciler) handleCleanup(ctx context.Context) error {
 	if err := handleSonataFlowCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 		return err
 	}
-
 	// cleanup backstage
+	if err := rhdh.HandleBackstageCleanup(ctx, r.Client, r.OLMClient); err != nil {
+		return err
+	}
 	return nil
 }
 

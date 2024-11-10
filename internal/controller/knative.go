@@ -111,7 +111,7 @@ func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSe
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}
-	if err := CleanUpNamespace(ctx, KnativeServingNamespacedName, client); err != nil {
+	if err := kube.CleanUpNamespace(ctx, KnativeServingNamespacedName, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeServingNamespacedName)
 		return err
 	}

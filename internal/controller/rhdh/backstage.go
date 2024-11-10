@@ -5,7 +5,7 @@ import (
 	"fmt"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
-	operations "github.com/parodos-dev/orchestrator-operator/internal/controller"
+	operations "github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -67,6 +67,7 @@ func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
 				return err
 			}
 			logger.Info("Successfully created secret", "Secret", secretName)
+			return nil
 		}
 		logger.Error(err, "Error occurred when checking secret exist", "Secret", secretName)
 		return err
@@ -181,24 +182,32 @@ func CreateConfigMap(
 
 func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	logger := log.FromContext(ctx)
-	backstageCRList, err := listBackstageCRs(ctx, client, "rhdh-operator") // remove hardcoded namespace TODO
 
-	if err != nil || len(backstageCRList) != 1 {
-		logger.Error(err, "Failed to list backstage CRs or have multiple Backstage CRs created by Orchestrator Operator and cannot perform clean up process")
-		return err
-	}
+	rhdhNamespace := "rhdh-operator" // remove hardcoded TODO
+	subscriptionName := "rhdh"       // remove hardcoded TODO
 
-	// remove namespace
-	if err := operations.CleanUpNamespace(ctx, "namespace", client); err != nil {
-		logger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
-		return err
+	namespaceExist, _ := operations.CheckNamespaceExist(ctx, client, rhdhNamespace)
+	if namespaceExist {
+		backstageCRList, err := listBackstageCRs(ctx, client, rhdhNamespace)
+
+		if err != nil || len(backstageCRList) == 0 {
+			logger.Error(err, "Failed to list backstage CRs or have no Backstage CRs created by Orchestrator Operator and cannot perform clean up process")
+			return err
+		}
+		if len(backstageCRList) == 1 {
+			// remove namespace
+			if err := operations.CleanUpNamespace(ctx, rhdhNamespace, client); err != nil {
+				logger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
+				return err
+			}
+			// remove subscription and csv
+			if err := operations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, subscriptionName, rhdhNamespace); err != nil {
+				logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", subscriptionName)
+				return err
+			}
+			// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
+		}
 	}
-	// remove subscription and csv
-	if err := operations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, "subscriptionName", "namespace"); err != nil {
-		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", "namespace")
-		return err
-	}
-	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
 	return nil
 }
 

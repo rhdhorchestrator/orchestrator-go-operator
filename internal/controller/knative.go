@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -58,7 +59,7 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      KnativeEventingNamespacedName,
 					Namespace: KnativeEventingNamespacedName,
-					Labels:    AddLabel(),
+					Labels:    kube.AddLabel(),
 				},
 				Spec: knative.KnativeEventingSpec{},
 				//Status: knative.KnativeEventingStatus{},
@@ -91,7 +92,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      KnativeServingNamespacedName,
 				Namespace: KnativeServingNamespacedName,
-				Labels:    AddLabel(),
+				Labels:    kube.AddLabel(),
 			},
 			Spec: knative.KnativeServingSpec{},
 		}
@@ -106,7 +107,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	logger := log.FromContext(ctx)
 	// remove all namespace
-	if err := CleanUpNamespace(ctx, KnativeEventingNamespacedName, client); err != nil {
+	if err := kube.CleanUpNamespace(ctx, KnativeEventingNamespacedName, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}
@@ -115,7 +116,7 @@ func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSe
 		return err
 	}
 	// remove subscription and csv
-	if err := CleanUpSubscriptionAndCSV(ctx, olmClientSet, KnativeSubscriptionName, KnativeSubscriptionNamespace); err != nil {
+	if err := kube.CleanUpSubscriptionAndCSV(ctx, olmClientSet, KnativeSubscriptionName, KnativeSubscriptionNamespace); err != nil {
 		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", KnativeSubscriptionName)
 		return err
 	}

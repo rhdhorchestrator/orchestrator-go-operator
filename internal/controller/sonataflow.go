@@ -19,6 +19,7 @@ import (
 	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +85,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowClusterPlatformCRName,
 					Namespace: SonataFlowNamespace,
-					Labels:    AddLabel(),
+					Labels:    kube.AddLabel(),
 				},
 				Spec: getSonataFlowClusterSpec(),
 			}
@@ -145,7 +146,7 @@ func handleSonataFlowPlatformCR(
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowPlatformCRName,
 					Namespace: SonataFlowNamespace,
-					Labels:    AddLabel(),
+					Labels:    kube.AddLabel(),
 				},
 				Spec: getSonataFlowPlatformSpec(orchestrator),
 			}
@@ -191,12 +192,10 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 			DataIndex: &sonataapi.ServiceSpec{
 				Enabled:     util.MakePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
-				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},
 			JobService: &sonataapi.ServiceSpec{
 				Enabled:     util.MakePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
-				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},
 		},
 	}
@@ -205,11 +204,11 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 func handleSonataFlowCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	logger := log.FromContext(ctx)
 	// remove all namespace
-	if err := CleanUpNamespace(ctx, SonataFlowNamespace, client); err != nil {
+	if err := kube.CleanUpNamespace(ctx, SonataFlowNamespace, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}
-	if err := CleanUpSubscriptionAndCSV(ctx, olmClientSet, SonataFlowSubscriptionName, SonataFlowNamespace); err != nil {
+	if err := kube.CleanUpSubscriptionAndCSV(ctx, olmClientSet, SonataFlowSubscriptionName, SonataFlowNamespace); err != nil {
 		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", SonataFlowSubscriptionName)
 		return err
 	}

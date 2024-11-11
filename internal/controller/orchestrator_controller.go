@@ -42,11 +42,13 @@ import (
 
 // Definition to manage Orchestrator condition status.
 const (
-	TypeAvailable string = "Available"
+	TypeAvailable   string = "Available"
+	TypeProgressing string = "Progressing"
+	TypeDegrading   string = "Degrading"
 )
 
 const (
-	FinalizerCRCleanup = "cr-cleanup"
+	FinalizerCRCleanup = "rhdh.redhat.com/orchestrator-cleanup"
 )
 
 // OrchestratorReconciler reconciles an Orchestrator object
@@ -119,20 +121,13 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Set the status to Unknown when no status is available - usually initial reconciliation.
 	if orchestrator.Status.Conditions == nil || len(orchestrator.Status.Conditions) == 0 {
-		//corev1.PodRunning
-		meta.SetStatusCondition(
-			&orchestrator.Status.Conditions,
-			metav1.Condition{
-				Type:    TypeAvailable,
-				Status:  metav1.ConditionUnknown,
-				Reason:  "Reconciling",
-				Message: "Starting Reconciliation",
-				// lastTransitionTime - optional (research on it)
-				// lastProbe - optionally
-			},
-		)
-		if err = r.Status().Update(ctx, orchestrator); err != nil {
-			logger.Error(err, "Failed to update Orchestrator status")
+		if err := r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.RunningPhase, metav1.Condition{
+			Type:               TypeAvailable,
+			Status:             metav1.ConditionUnknown,
+			Reason:             "Reconciling",
+			Message:            "Starting Reconciliation",
+			LastTransitionTime: metav1.Now(),
+		}); err != nil {
 			return ctrl.Result{}, err
 		}
 		// Re-fetch orchestrator Custom Resource after updating the status
@@ -142,27 +137,64 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
-	//  handle sonataflow
+	// handle sonataflow
 	sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
 	if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
 		logger.Error(err, "Error occurred when installing SonataFlow resources")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+			Type:    TypeDegrading,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Failed to create SonataFlow Resources",
+			Message: err.Error(),
+		})
 		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
+		Type:    TypeProgressing,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Created SonataFlow Resources",
+		Message: "Completed SonataFlow Reconciliation",
+	})
 
 	//handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
-	if err = r.reconcileKnative(ctx, serverlessOperator); err != nil {
+	if err := r.reconcileKnative(ctx, serverlessOperator); err != nil {
 		logger.Error(err, "Error occurred when installing K-Native resources")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+			Type:    TypeDegrading,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Failed to create K-Native Resources",
+			Message: err.Error(),
+		})
 		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
+		Type:    TypeProgressing,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Created K-Native Resources",
+		Message: "Completed K-Native Reconciliation",
+	})
 
 	// handle backstage
 	rhdhOperator := orchestrator.Spec.RhdhOperator
 	rhdhPlugins := orchestrator.Spec.RhdhPlugins
 	if err = r.reconcileBackstage(ctx, rhdhOperator, rhdhPlugins); err != nil {
 		logger.Error(err, "Error occurred when installing Backstage resources")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+			Type:    TypeDegrading,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Failed to create Backstage Resources",
+			Message: err.Error(),
+		})
 		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
+		Type:    TypeProgressing,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Created Backstage Resources",
+		Message: "Completed Backstage Reconciliation",
+	})
+
 	return ctrl.Result{}, nil
 }
 
@@ -214,7 +246,7 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 			sfLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
 			return err
 		}
-		sfLogger.Info("Operator successfully installed", "SubscriptionName", subscriptionName)
+		sfLogger.Info("Operator successfully installed via Subscription", "SubscriptionName", subscriptionName)
 	}
 
 	// subscription exists; check if CRD exists;
@@ -244,7 +276,8 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 			return err
 		}
 	}
-	return err
+	sfLogger.Info("Successfully created SonataFlow Resources")
+	return nil
 }
 
 func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverlessOperator orchestratorv1alpha1.ServerlessOperator) error {
@@ -441,6 +474,21 @@ func (r *OrchestratorReconciler) handleCleanup(ctx context.Context) error {
 	}
 	// cleanup backstage
 	if err := rhdh.HandleBackstageCleanup(ctx, r.Client, r.OLMClient); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateStatus sets the status of orchestrator.
+func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator, phase orchestratorv1alpha1.OrchestratorPhase, condition metav1.Condition) error {
+	logger := log.FromContext(ctx)
+	orchestrator.Status.Phase = phase
+	meta.SetStatusCondition(&orchestrator.Status.Conditions, condition)
+	//orchestrator.Status.Conditions = []metav1.Condition{condition}
+
+	err := r.Status().Update(ctx, orchestrator)
+	if err != nil {
+		logger.Error(err, "Failed to update Orchestrator status")
 		return err
 	}
 	return nil

@@ -20,6 +20,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	RunningPhase   OrchestratorPhase = "Running"
+	CompletedPhase OrchestratorPhase = "Completed"
+	FailedPhase    OrchestratorPhase = "Failed"
+)
+
 // OrchestratorSpec defines the desired state of Orchestrator
 type OrchestratorSpec struct {
 	SonataFlowOperator   SonataFlowOperator   `json:"sonataFlowOperator,omitempty"`
@@ -160,11 +166,15 @@ type ArgoCD struct {
 	Namespace bool `json:"namespace,omitempty"`
 }
 
+type OrchestratorPhase string
+
 // OrchestratorStatus defines the observed state of Orchestrator
 type OrchestratorStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// +kubebuilder:validation:Enum={"Running","Completed", "Failed"}
+	Phase OrchestratorPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,casttype=OrchestratorPhase"`
 }
 
 //+kubebuilder:object:root=true

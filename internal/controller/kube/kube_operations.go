@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package kube
 
 import (
 	"context"
@@ -36,9 +36,11 @@ const (
 	CatalogSourceNamespace               = "openshift-marketplace"
 	OpenshiftServerlessOperatorGroupName = "serverless-operator-group"
 	ServerlessOperatorGroupName          = "serverless-operator-group"
+	CreatedByLabelKey                    = "created-by"
+	CreatedByLabelValue                  = "orchestrator"
 )
 
-func checkNamespaceExist(ctx context.Context, client client.Client, namespace string) (bool, error) {
+func CheckNamespaceExist(ctx context.Context, client client.Client, namespace string) (bool, error) {
 	nsLogger := log.FromContext(ctx)
 	nsLogger.Info("Checking namespace exist", "Namespace", namespace)
 	namespaceObj := &corev1.Namespace{}
@@ -49,7 +51,7 @@ func checkNamespaceExist(ctx context.Context, client client.Client, namespace st
 	return true, nil
 }
 
-func createNamespace(ctx context.Context, client client.Client, namespace string) error {
+func CreateNamespace(ctx context.Context, client client.Client, namespace string) error {
 	nsLogger := log.FromContext(ctx)
 	nsLogger.Info("Creating namespace", "Namespace", namespace)
 	// create new namespace
@@ -62,9 +64,9 @@ func createNamespace(ctx context.Context, client client.Client, namespace string
 	return nil
 }
 
-func installOperatorViaSubscription(
+func InstallOperatorViaSubscription(
 	ctx context.Context, client client.Client,
-	olmClientSet olmclientset.Interface,
+	olmClientSet olmclientset.Clientset,
 	operatorGroupName string,
 	subscription orchestratorv1alpha1.Subscription) error {
 
@@ -91,14 +93,14 @@ func installOperatorViaSubscription(
 	// Check the Subscription's status after installation
 	installedCSV := installedSubscription.Status.InstalledCSV
 	if installedCSV == "" {
-		logger.Info("Subscription has no installed CSV: Incorrectly installed subscription", "Subscription", subscriptionName)
+		logger.Info("Subscription has no installed CSV: CSV not ready or Incorrectly installed subscription", "Subscription", subscriptionName)
+		return err
 	}
 	// Get the ClusterServiceVersion (CSV) for the Subscription installed
 	sfcsv := &operatorsv1alpha1.ClusterServiceVersion{}
-	err = client.Get(ctx, types.NamespacedName{Name: installedCSV, Namespace: namespace}, sfcsv)
-	if err != nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: installedCSV, Namespace: namespace}, sfcsv); err != nil {
 		logger.Error(err, "Error occurred when retrieving CSV", "ClusterServiceVersion", installedCSV)
-
+		return err
 	}
 	// Check if the CSV's phase is "Succeeded"
 	if sfcsv.Status.Phase == operatorsv1alpha1.CSVPhaseSucceeded {
@@ -106,11 +108,11 @@ func installOperatorViaSubscription(
 		return nil
 	}
 	logger.Info("Successfully installed Operator Via Subscription", "SubscriptionName", installedSubscription.Name)
-	return err
+	return nil
 }
 
 func getOperatorGroup(ctx context.Context, client client.Client,
-	namespace string, operatorGroupName string) error {
+	namespace, operatorGroupName string) error {
 	logger := log.FromContext(ctx)
 	// check if operator group exists
 	operatorGroup := &operatorsv1.OperatorGroup{}
@@ -132,7 +134,7 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 }
 
 func createSubscriptionObject(
-	subscriptionName string, namespace string,
+	subscriptionName, namespace string,
 	subscription orchestratorv1alpha1.Subscription) *v1alpha1.Subscription {
 	logger := log.Log.WithName("subscriptionObject")
 	logger.Info("Creating subscription object")
@@ -151,32 +153,97 @@ func createSubscriptionObject(
 	return subscriptionObject
 }
 
-func checkSubscriptionExists(
-	ctx context.Context, olmClientSet olmclientset.Interface,
-	namespace string, subscriptionName string) (bool, error) {
+func CheckSubscriptionExists(
+	ctx context.Context, olmClientSet olmclientset.Clientset,
+	namespace, subscriptionName string) (bool, *v1alpha1.Subscription, error) {
 	logger := log.FromContext(ctx)
 
 	subscription, err := olmClientSet.OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, subscriptionName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Subscription resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
-			return false, nil
+			return false, subscription, nil
 		}
 		logger.Error(err, "Failed to check Subscription does not exists", "SubscriptionName", subscriptionName)
-		return false, err
+		return false, subscription, err
 	}
 	logger.Info("Subscription exists", "SubscriptionName", subscription.Name)
-	return true, nil
+	return true, subscription, nil
 }
 
-func checkCRDExists(ctx context.Context, client client.Client, name string, namespace string) (bool, error) {
+func CheckCRDExists(ctx context.Context, client client.Client, name string, namespace string) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
 	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, crd)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return false, nil
-		}
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
+}
+
+func CleanUpNamespace(ctx context.Context, namespaceName string, client client.Client) error {
+	logger := log.FromContext(ctx)
+	// check namespace exist
+	namespaceExist, _ := CheckNamespaceExist(ctx, client, namespaceName)
+
+	if !namespaceExist {
+		logger.Info("Namespace does not exist", "Namespace", namespaceName)
+		return nil
+	}
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespaceName,
+		},
+	}
+	// delete namespace
+	if err := client.Delete(ctx, namespace); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	logger.Info("Successfully deleted Namespace", "Namespace", namespaceName)
+	return nil
+}
+
+func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Clientset, subscriptionName, namespace string) error {
+	logger := log.FromContext(ctx)
+	// check if subscription exists using olm client
+	subscriptionExists, subscription, err := CheckSubscriptionExists(ctx, olmClientSet, namespace, subscriptionName)
+	if err != nil {
+		logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+		return err
+	}
+	if subscriptionExists {
+		// get name of csv before deletion
+		csvName := subscription.Status.InstalledCSV
+
+		// deleting subscription resource
+		err = olmClientSet.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
+		if err != nil {
+			logger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+			return err
+		}
+		logger.Info("Successfully deleted Subscription: %s", subscriptionName)
+
+		// cleanup csv
+		csv, err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(ctx, csvName, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("CSV resource not found", "CSV", csvName)
+				return nil
+			}
+			logger.Error(err, "Error occurred when getting CSV", "CSV", csvName)
+			return err
+		}
+		if err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(csv.Namespace).Delete(ctx, csv.Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+		logger.Info("Successfully deleted CSV", "CSV", csvName)
+		return nil
+	}
+	return err
+}
+
+func AddLabel() map[string]string {
+	return map[string]string{
+		CreatedByLabelKey: CreatedByLabelValue,
+	}
 }

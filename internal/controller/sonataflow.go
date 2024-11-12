@@ -17,7 +17,9 @@ package controller
 import (
 	"context"
 	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
+	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,11 +33,12 @@ import (
 const (
 	SonataFlowAPIVersion             = "sonataflow.org/v1alpha08"
 	SonataFlowPlatformCRName         = "sonataflow-platform"
-	SonataFlowCRNamespace            = "sonataflow-infra"
+	SonataFlowNamespace              = "sonataflow-infra"
 	SonataFlowPlatformKind           = "SonataFlowPlatform"
 	SonataFlowClusterPlatformKind    = "SonataFlowClusterPlatform"
 	SonataFlowClusterPlatformCRName  = "cluster-platform"
 	SonataFlowClusterPlatformCRDName = "sonataflowclusterplatforms.sonataflow.org"
+	SonataFlowSubscriptionName       = "logic-operator-rhel8"
 )
 
 func getSonataFlowPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) *sonataapi.PersistenceOptionsSpec {
@@ -62,10 +65,10 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 	// check sonataflowlusterplatform CR exists
 	sfcCR := &sonataapi.SonataFlowClusterPlatform{}
 
-	err := client.Get(ctx, types.NamespacedName{Name: crName, Namespace: SonataFlowCRNamespace}, sfcCR)
+	err := client.Get(ctx, types.NamespacedName{Name: crName, Namespace: SonataFlowNamespace}, sfcCR)
 	if err == nil {
 		// CR exists; check for CR updates
-		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowCRNamespace)
+		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowNamespace)
 		sfcCR.Spec = getSonataFlowClusterSpec()
 		if err = client.Update(ctx, sfcCR); err != nil {
 			logger.Error(err, "Failed to update CR", "CR-Name", sfcCR.Name)
@@ -81,7 +84,8 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowClusterPlatformCRName,
-					Namespace: SonataFlowCRNamespace,
+					Namespace: SonataFlowNamespace,
+					Labels:    kube.AddLabel(),
 				},
 				Spec: getSonataFlowClusterSpec(),
 			}
@@ -103,7 +107,7 @@ func getSonataFlowClusterSpec() sonataapi.SonataFlowClusterPlatformSpec {
 	return sonataapi.SonataFlowClusterPlatformSpec{
 		PlatformRef: sonataapi.SonataFlowPlatformRef{
 			Name:      SonataFlowClusterPlatformCRName,
-			Namespace: SonataFlowCRNamespace,
+			Namespace: SonataFlowNamespace,
 		},
 	}
 }
@@ -119,13 +123,13 @@ func handleSonataFlowPlatformCR(
 
 	sfpCR := &sonataapi.SonataFlowPlatform{}
 	err := client.Get(ctx, types.NamespacedName{
-		Namespace: SonataFlowCRNamespace,
+		Namespace: SonataFlowNamespace,
 		Name:      SonataFlowPlatformCRName,
 	}, sfpCR)
 
 	if err == nil {
 		// CR exists; check for CR updates
-		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowCRNamespace)
+		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowNamespace)
 		err = client.Update(ctx, sfpCR)
 
 		return nil
@@ -141,7 +145,8 @@ func handleSonataFlowPlatformCR(
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowPlatformCRName,
-					Namespace: SonataFlowCRNamespace,
+					Namespace: SonataFlowNamespace,
+					Labels:    kube.AddLabel(),
 				},
 				Spec: getSonataFlowPlatformSpec(orchestrator),
 			}
@@ -187,13 +192,26 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 			DataIndex: &sonataapi.ServiceSpec{
 				Enabled:     util.MakePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
-				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},
 			JobService: &sonataapi.ServiceSpec{
 				Enabled:     util.MakePointer(true),
 				Persistence: getSonataFlowPersistence(orchestrator),
-				//PodTemplate: sonataapi.PodTemplateSpec{},
 			},
 		},
 	}
+}
+
+func handleSonataFlowCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+	logger := log.FromContext(ctx)
+	// remove all namespace
+	if err := kube.CleanUpNamespace(ctx, SonataFlowNamespace, client); err != nil {
+		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
+		return err
+	}
+	if err := kube.CleanUpSubscriptionAndCSV(ctx, olmClientSet, SonataFlowSubscriptionName, SonataFlowNamespace); err != nil {
+		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", SonataFlowSubscriptionName)
+		return err
+	}
+	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
+	return nil
 }

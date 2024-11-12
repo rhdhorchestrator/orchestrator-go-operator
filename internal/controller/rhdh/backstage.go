@@ -3,7 +3,9 @@ package rhdh
 import (
 	"context"
 	"fmt"
+	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	operations "github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -52,6 +54,7 @@ func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      secretName,
 					Namespace: secretNamespace,
+					Labels:    operations.AddLabel(),
 				},
 				Type: corev1.SecretTypeOpaque,
 				StringData: map[string]string{
@@ -64,6 +67,7 @@ func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
 				return err
 			}
 			logger.Info("Successfully created secret", "Secret", secretName)
+			return nil
 		}
 		logger.Error(err, "Error occurred when checking secret exist", "Secret", secretName)
 		return err
@@ -98,6 +102,7 @@ func HandleCRCreation(
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      BackstageCRName,
 				Namespace: operator.Subscription.TargetNamespace,
+				Labels:    operations.AddLabel(),
 			},
 			Spec: rhdh.BackstageSpec{
 				Application: &rhdh.Application{
@@ -161,6 +166,7 @@ func CreateConfigMap(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+			Labels:    operations.AddLabel(),
 		},
 		Data: map[string]string{
 			configDataKey: configValue,
@@ -172,4 +178,55 @@ func CreateConfigMap(
 	}
 	logger.Info("Successfully created ConfigMap", "CM", name)
 	return nil
+}
+
+func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+	logger := log.FromContext(ctx)
+
+	rhdhNamespace := "rhdh-operator" // remove hardcoded TODO
+	subscriptionName := "rhdh"       // remove hardcoded TODO
+
+	namespaceExist, _ := operations.CheckNamespaceExist(ctx, client, rhdhNamespace)
+	if namespaceExist {
+		backstageCRList, err := listBackstageCRs(ctx, client, rhdhNamespace)
+
+		if err != nil || len(backstageCRList) == 0 {
+			logger.Error(err, "Failed to list backstage CRs or have no Backstage CRs created by Orchestrator Operator and cannot perform clean up process")
+			return err
+		}
+		if len(backstageCRList) == 1 {
+			// remove namespace
+			if err := operations.CleanUpNamespace(ctx, rhdhNamespace, client); err != nil {
+				logger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
+				return err
+			}
+			// remove subscription and csv
+			if err := operations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, subscriptionName, rhdhNamespace); err != nil {
+				logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", subscriptionName)
+				return err
+			}
+			// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
+		}
+	}
+	return nil
+}
+
+func listBackstageCRs(ctx context.Context, k8client client.Client, namespace string) ([]rhdh.Backstage, error) {
+	logger := log.FromContext(ctx)
+
+	crList := &rhdh.BackstageList{}
+
+	listOptions := []client.ListOption{
+		client.InNamespace(namespace),
+		client.MatchingLabels{operations.CreatedByLabelKey: operations.CreatedByLabelValue},
+	}
+
+	// List the CRs
+	if err := k8client.List(ctx, crList, listOptions...); err != nil {
+		logger.Error(err, "Error occurred when listing Backstage CRs")
+		return nil, err
+	}
+
+	logger.Info("Successfully listed Backstage CRs", "Total", len(crList.Items))
+	return crList.Items, nil
 }

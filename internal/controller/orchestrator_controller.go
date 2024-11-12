@@ -18,7 +18,9 @@ package controller
 
 import (
 	"context"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/rhdh"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -40,13 +42,19 @@ import (
 
 // Definition to manage Orchestrator condition status.
 const (
-	TypeAvailable string = "Available"
+	TypeAvailable   string = "Available"
+	TypeProgressing string = "Progressing"
+	TypeDegrading   string = "Degrading"
+)
+
+const (
+	FinalizerCRCleanup = "rhdh.redhat.com/orchestrator-cleanup"
 )
 
 // OrchestratorReconciler reconciles an Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
-	OLMClient olmclientset.Interface
+	OLMClient olmclientset.Clientset
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
 }
@@ -61,7 +69,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;watch;create;delete;patch;update
-//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list
+//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -86,7 +94,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if apierrors.IsNotFound(err) {
 			// If the custom resource is not found then it usually means that it was deleted or not created
 			// In this way, we will stop the reconciliation
-			logger.Info("orchestrator resource not found. Ignoring since object must be deleted")
+			logger.Info("Orchestrator resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -94,19 +102,32 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
+	if !orchestrator.DeletionTimestamp.IsZero() {
+		err := r.handleCleanup(ctx)
+		if err != nil {
+			return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+		}
+		// Remove the finalizer to complete deletion
+		controllerutil.RemoveFinalizer(orchestrator, FinalizerCRCleanup)
+		if err := r.Update(ctx, orchestrator); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// Add finalizer if not present
+	if err := r.addFinalizers(ctx, orchestrator); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// Set the status to Unknown when no status is available - usually initial reconciliation.
 	if orchestrator.Status.Conditions == nil || len(orchestrator.Status.Conditions) == 0 {
-		meta.SetStatusCondition(
-			&orchestrator.Status.Conditions,
-			metav1.Condition{
-				Type:    TypeAvailable,
-				Status:  metav1.ConditionUnknown,
-				Reason:  "Reconciling",
-				Message: "Starting Reconciliation",
-			},
-		)
-		if err = r.Status().Update(ctx, orchestrator); err != nil {
-			logger.Error(err, "Failed to update Orchestrator status")
+		if err := r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.RunningPhase, metav1.Condition{
+			Type:               TypeAvailable,
+			Status:             metav1.ConditionUnknown,
+			Reason:             "Reconciling",
+			Message:            "Starting Reconciliation",
+			LastTransitionTime: metav1.Now(),
+		}); err != nil {
 			return ctrl.Result{}, err
 		}
 		// Re-fetch orchestrator Custom Resource after updating the status
@@ -116,27 +137,64 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
-	//  handle sonataflow
+	// handle sonataflow
 	sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
 	if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
 		logger.Error(err, "Error occurred when installing SonataFlow resources")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+			Type:    TypeDegrading,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Failed to create SonataFlow Resources",
+			Message: err.Error(),
+		})
 		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
+		Type:    TypeProgressing,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Created SonataFlow Resources",
+		Message: "Completed SonataFlow Reconciliation",
+	})
 
 	//handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
-	if err = r.reconcileKnative(ctx, serverlessOperator); err != nil {
+	if err := r.reconcileKnative(ctx, serverlessOperator); err != nil {
 		logger.Error(err, "Error occurred when installing K-Native resources")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+			Type:    TypeDegrading,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Failed to create K-Native Resources",
+			Message: err.Error(),
+		})
 		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
+		Type:    TypeProgressing,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Created K-Native Resources",
+		Message: "Completed K-Native Reconciliation",
+	})
 
 	// handle backstage
 	rhdhOperator := orchestrator.Spec.RhdhOperator
 	rhdhPlugins := orchestrator.Spec.RhdhPlugins
 	if err = r.reconcileBackstage(ctx, rhdhOperator, rhdhPlugins); err != nil {
 		logger.Error(err, "Error occurred when installing Backstage resources")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+			Type:    TypeDegrading,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Failed to create Backstage Resources",
+			Message: err.Error(),
+		})
 		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
+		Type:    TypeProgressing,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Created Backstage Resources",
+		Message: "Completed Backstage Reconciliation",
+	})
+
 	return ctrl.Result{}, nil
 }
 
@@ -152,32 +210,19 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !sonataFlowOperator.Enabled {
-		// check if subscription exists using olm client
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
-		if err != nil {
-			sfLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+		// handle clean up
+		if err := handleSonataFlowCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 			return err
-		}
-		if subscriptionExists {
-			// deleting subscription resource
-			err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
-			if err != nil {
-				sfLogger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
-				//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
-				return err
-			}
-			sfLogger.Info("Successfully deleted Subscription: %s", subscriptionName)
-			return nil
 		}
 	}
 	// Subscription is enabled;
 
 	// check namespace exist
-	_, err := checkNamespaceExist(ctx, r.Client, namespace)
+	_, err := kube.CheckNamespaceExist(ctx, r.Client, namespace)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			sfLogger.Info("Creating namespace", "NS", namespace)
-			if err := createNamespace(ctx, r.Client, namespace); err != nil {
+			if err := kube.CreateNamespace(ctx, r.Client, namespace); err != nil {
 				sfLogger.Error(err, "Error occurred when creating namespace", "NS", namespace)
 				return err
 			}
@@ -187,21 +232,21 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 	}
 
 	// check if subscription exist
-	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+	subscriptionExists, _, err := kube.CheckSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 	if err != nil {
 		sfLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 		return err
 	}
 	if !subscriptionExists {
-		err := installOperatorViaSubscription(
+		err := kube.InstallOperatorViaSubscription(
 			ctx, r.Client, r.OLMClient,
-			OpenshiftServerlessOperatorGroupName,
+			kube.OpenshiftServerlessOperatorGroupName,
 			sonataFlowOperator.Subscription)
 		if err != nil {
 			sfLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
 			return err
 		}
-		sfLogger.Info("Operator successfully installed", "SubscriptionName", subscriptionName)
+		sfLogger.Info("Operator successfully installed via Subscription", "SubscriptionName", subscriptionName)
 	}
 
 	// subscription exists; check if CRD exists;
@@ -231,13 +276,11 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 			return err
 		}
 	}
-	return err
+	sfLogger.Info("Successfully created SonataFlow Resources")
+	return nil
 }
 
-func (r *OrchestratorReconciler) reconcileKnative(
-	ctx context.Context,
-	serverlessOperator orchestratorv1alpha1.ServerlessOperator) error {
-
+func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverlessOperator orchestratorv1alpha1.ServerlessOperator) error {
 	knativeLogger := log.FromContext(ctx)
 	knativeLogger.Info("Starting Reconciliation for K-Native Serverless")
 
@@ -247,32 +290,19 @@ func (r *OrchestratorReconciler) reconcileKnative(
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !serverlessOperator.Enabled {
-		// check if subscription exists using olm client
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
-		if err != nil {
-			knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
+		// handle cleanup
+		if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 			return err
-		}
-		if subscriptionExists {
-			// deleting subscription resource
-			err = r.OLMClient.OperatorsV1alpha1().Subscriptions(namespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
-			if err != nil {
-				knativeLogger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", namespace)
-				//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
-				return err
-			}
-			knativeLogger.Info("Successfully deleted Subscription: %s", subscriptionName)
-			return nil
 		}
 	}
 	// Subscription is enabled;
 
 	// check namespace exist
-	_, err := checkNamespaceExist(ctx, r.Client, namespace)
+	_, err := kube.CheckNamespaceExist(ctx, r.Client, namespace)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			knativeLogger.Info("Creating namespace", "NS", namespace)
-			if err := createNamespace(ctx, r.Client, namespace); err != nil {
+			if err := kube.CreateNamespace(ctx, r.Client, namespace); err != nil {
 				knativeLogger.Error(err, "Error occurred when creating namespace", "NS", namespace)
 				return err
 			}
@@ -282,53 +312,53 @@ func (r *OrchestratorReconciler) reconcileKnative(
 	}
 
 	// check if subscription exists
-	subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+	subscriptionExists, _, err := kube.CheckSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 	if err != nil {
 		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 		return err
 	}
 
 	if !subscriptionExists {
-		err := installOperatorViaSubscription(
-			ctx, r.Client, r.OLMClient,
-			ServerlessOperatorGroupName, knativeSubscription)
-		if err != nil {
+		if err := kube.InstallOperatorViaSubscription(ctx, r.Client, r.OLMClient, kube.ServerlessOperatorGroupName, knativeSubscription); err != nil {
 			knativeLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
 			return err
 		}
 		knativeLogger.Info("Operator successfully installed", "SubscriptionName", subscriptionName)
 	}
 
-	if subscriptionExists {
-		// subscription exists; check if CRD exists knative eventing;
-		knativeEventingCrdExists, err := checkCRDExists(ctx, r.Client, KnativeEventingCRDName, namespace)
-		if err != nil {
-			knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeEventingCRDName)
-		} else if !knativeEventingCrdExists && (err == nil) {
-			knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
-			return nil // do we want to re-attempt subscription installation?
-		} else if knativeEventingCrdExists {
-			// CRD exist; check and handle knative eventing CR
-			if err = handleKnativeEventingCR(ctx, r.Client); err != nil {
-				knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeEventingNamespacedName)
-			}
+	// subscription exists; check if CRD exists for knative eventing;
+	err = kube.CheckCRDExists(ctx, r.Client, KnativeEventingCRDName, namespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", subscriptionName)
+			return err
 		}
-
-		// subscription exists; check if CRD exists knative serving;
-		knativeServingCrdExists, err := checkCRDExists(ctx, r.Client, KnativeServingCRDName, namespace)
-		if err != nil {
-			knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeServingCRDName)
-		} else if !knativeServingCrdExists && (err == nil) {
-			knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
-			return nil // do we want to re-attempt subscription installation?
-		} else if knativeServingCrdExists {
-			// CRD exist; check and handle knative eventing CR
-			if err = handleKnativeServingCR(ctx, r.Client); err != nil {
-				knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeServingNamespacedName)
-			}
-		}
+		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeEventingCRDName)
+		return err
 	}
-	return err
+	// CRD exist; check and handle knative eventing CR
+	if err = handleKnativeEventingCR(ctx, r.Client); err != nil {
+		knativeLogger.Error(err, "Error occurred when creating Knative EventingCR", "CR-Name", KnativeEventingNamespacedName)
+		return err
+	}
+
+	// subscription exists; check if CRD exists knative serving;
+	err = kube.CheckCRDExists(ctx, r.Client, KnativeServingCRDName, namespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", subscriptionName)
+			return nil
+		}
+		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeServingCRDName)
+		return err
+
+	}
+	// CRD exist; check and handle knative eventing CR
+	if err = handleKnativeServingCR(ctx, r.Client); err != nil {
+		knativeLogger.Error(err, "Error occurred when creating Knative ServingCR", "CR-Name", KnativeServingNamespacedName)
+		return err
+	}
+	return nil
 }
 
 func (r *OrchestratorReconciler) reconcileBackstage(
@@ -345,7 +375,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !rhdhOperator.Enabled {
 		// check if subscription exists using olm client
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		subscriptionExists, _, err := kube.CheckSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 		if err != nil {
 			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 			return err
@@ -363,7 +393,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 		}
 	}
 
-	nsExist, err := checkNamespaceExist(ctx, r.Client, namespace)
+	nsExist, err := kube.CheckNamespaceExist(ctx, r.Client, namespace)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Error(err, "Ensure namespace already exist", "NS", namespace)
@@ -373,13 +403,13 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	}
 	if nsExist {
 		// Subscription is enabled; check if subscription exists
-		subscriptionExists, err := checkSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
+		subscriptionExists, _, err := kube.CheckSubscriptionExists(ctx, r.OLMClient, namespace, subscriptionName)
 		if err != nil {
 			logger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", subscriptionName)
 			return err
 		}
 		if !subscriptionExists {
-			err := installOperatorViaSubscription(
+			err := kube.InstallOperatorViaSubscription(
 				ctx, r.Client, r.OLMClient,
 				rhdh.BackstageOperatorGroup, rhdhSubscription)
 			if err != nil {
@@ -423,6 +453,47 @@ func (r *OrchestratorReconciler) getClusterDomain(ctx context.Context) (string, 
 	return clusterDomain, nil
 }
 
+func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+	if !controllerutil.ContainsFinalizer(orchestrator, FinalizerCRCleanup) {
+		controllerutil.AddFinalizer(orchestrator, FinalizerCRCleanup)
+		if err := r.Update(ctx, orchestrator); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *OrchestratorReconciler) handleCleanup(ctx context.Context) error {
+	// cleanup knative
+	if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+		return err
+	}
+	// cleanup sonataflow
+	if err := handleSonataFlowCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+		return err
+	}
+	// cleanup backstage
+	if err := rhdh.HandleBackstageCleanup(ctx, r.Client, r.OLMClient); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateStatus sets the status of orchestrator.
+func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator, phase orchestratorv1alpha1.OrchestratorPhase, condition metav1.Condition) error {
+	logger := log.FromContext(ctx)
+	orchestrator.Status.Phase = phase
+	meta.SetStatusCondition(&orchestrator.Status.Conditions, condition)
+	//orchestrator.Status.Conditions = []metav1.Condition{condition}
+
+	err := r.Status().Update(ctx, orchestrator)
+	if err != nil {
+		logger.Error(err, "Failed to update Orchestrator status")
+		return err
+	}
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	config := mgr.GetConfig()
@@ -430,9 +501,9 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Create the OLM clientset using the config
 	olmClient, err := olmclientset.NewForConfig(config)
 	if err != nil {
-		return nil
+		return err
 	}
-	r.OLMClient = olmClient
+	r.OLMClient = *olmClient
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha1.Orchestrator{}).

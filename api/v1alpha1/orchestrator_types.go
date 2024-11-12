@@ -32,10 +32,6 @@ type OrchestratorSpec struct {
 	ArgoCd               ArgoCD               `json:"argocd,omitempty"`
 }
 
-// reuse from the subscription - check from the api/compare with the subscription object
-// do we want to expose all the spec within the inherent subscription
-// inline embedding to add field in the subscription object
-// ask Moti to confirm - breaking changes
 type Subscription struct {
 	Namespace           string `json:"namespace,omitempty"`
 	Channel             string `json:"channel,omitempty"`
@@ -111,7 +107,7 @@ type PluginDetails struct {
 
 type NotificationConfig struct {
 	Enabled   bool   `json:"enabled,omitempty"`
-	Port      int64  `json:"port,omitempty"`
+	Port      int    `json:"port,omitempty"`
 	Sender    string `json:"sender,omitempty"`
 	Recipient string `json:"replyTo,omitempty"`
 }

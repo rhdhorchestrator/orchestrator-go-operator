@@ -18,18 +18,18 @@ package controller
 
 import (
 	"context"
+	"github.com/parodos-dev/orchestrator-operator/internal/controller/rhdh"
 	"time"
 
-	//corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	configv1 "github.com/openshift/api/config/v1"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,7 +47,6 @@ const (
 type OrchestratorReconciler struct {
 	client.Client
 	OLMClient olmclientset.Interface
-	ClientSet *kubernetes.Clientset
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
 }
@@ -62,6 +61,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;watch;create;delete;patch;update
+//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -117,11 +117,11 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	//  handle sonataflow
-	//sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
-	//if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
-	//	logger.Error(err, "Error occurred when installing SonataFlow resources")
-	//	return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
-	//}
+	sonataFlowOperator := orchestrator.Spec.SonataFlowOperator
+	if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
+		logger.Error(err, "Error occurred when installing SonataFlow resources")
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
+	}
 
 	//handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
@@ -135,7 +135,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	rhdhPlugins := orchestrator.Spec.RhdhPlugins
 	if err = r.reconcileBackstage(ctx, rhdhOperator, rhdhPlugins); err != nil {
 		logger.Error(err, "Error occurred when installing Backstage resources")
-		return ctrl.Result{Requeue: true}, err
+		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
 	return ctrl.Result{}, nil
 }
@@ -314,17 +314,18 @@ func (r *OrchestratorReconciler) reconcileKnative(
 			}
 		}
 
-	// subscription exists; check if CRD exists knative serving;
-	knativeServingCrdExists, err := checkCRDExists(ctx, r.Client, "", namespace)
-	if err != nil {
-		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", "")
-	} else if knativeServingCrdExists && (err == nil) {
-		knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
-		return nil // do we want to re-attempt subscription installation?
-	} else if knativeServingCrdExists {
-		// CRD exist; check and handle knative eventing CR
-		if err = handleKnativeServingCR(ctx, r.Client); err != nil {
-			knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeServingNamespacedName)
+		// subscription exists; check if CRD exists knative serving;
+		knativeServingCrdExists, err := checkCRDExists(ctx, r.Client, KnativeServingCRDName, namespace)
+		if err != nil {
+			knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeServingCRDName)
+		} else if !knativeServingCrdExists && (err == nil) {
+			knativeLogger.Info("CRD resource not found.", "SubscriptionName", subscriptionName, "Namespace", namespace)
+			return nil // do we want to re-attempt subscription installation?
+		} else if knativeServingCrdExists {
+			// CRD exist; check and handle knative eventing CR
+			if err = handleKnativeServingCR(ctx, r.Client); err != nil {
+				knativeLogger.Error(err, "Error occurred when creating KnativeEventingCR", "CR-Name", KnativeServingNamespacedName)
+			}
 		}
 	}
 	return err
@@ -335,7 +336,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	rhdhOperator orchestratorv1alpha1.RHDHOperator,
 	plugins orchestratorv1alpha1.RHDHPlugins) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Starting Reconciliation for K-Native Serverless")
+	logger.Info("Starting Reconciliation for Backstage")
 
 	rhdhSubscription := rhdhOperator.Subscription
 	subscriptionName := rhdhSubscription.Name
@@ -380,7 +381,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 		if !subscriptionExists {
 			err := installOperatorViaSubscription(
 				ctx, r.Client, r.OLMClient,
-				BackstageOperatorGroup, rhdhSubscription)
+				rhdh.BackstageOperatorGroup, rhdhSubscription)
 			if err != nil {
 				logger.Error(err, "Error occurred when installing operator", "SubscriptionName", subscriptionName)
 				return err
@@ -391,15 +392,35 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 
 	targetNamespace := rhdhSubscription.TargetNamespace
 	npmRegistry := plugins.NpmRegistry
+	clusterDomain, _ := r.getClusterDomain(ctx)
 	// create secret
-	if err := createBSSecret(RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
+	if err := rhdh.CreateBSSecret(rhdh.RegistrySecretName, targetNamespace, npmRegistry, ctx, r.Client); err != nil {
 		return err
 	}
 	// create backstage CR
-	if err := handleCRCreation(rhdhOperator, ctx, r.Client); err != nil {
+	if err := rhdh.HandleCRCreation(rhdhOperator, plugins, clusterDomain, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil
+}
+
+// getClusterDomain retrieves the OpenShift cluster domain from the Ingress resource
+func (r *OrchestratorReconciler) getClusterDomain(ctx context.Context) (string, error) {
+	gcdLogger := log.FromContext(ctx)
+	ingress := &configv1.Ingress{}
+	err := r.Get(ctx, client.ObjectKey{Name: "cluster"}, ingress)
+	if err != nil {
+		gcdLogger.Error(err, "Unable to retrieve OpenShift Ingress resource")
+		return "", err
+	}
+
+	clusterDomain := ingress.Spec.Domain
+	if ingress.Spec.Domain == "" {
+		gcdLogger.Error(err, "Cluster domain not set in Ingress resource")
+		return "", err
+	}
+	gcdLogger.Info("Successfully retrieved cluster domain", "Domain", clusterDomain)
+	return clusterDomain, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -18,6 +18,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
+	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -57,6 +58,7 @@ func init() {
 	utilruntime.Must(v1alpha08.AddToScheme(scheme))
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(configv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 }

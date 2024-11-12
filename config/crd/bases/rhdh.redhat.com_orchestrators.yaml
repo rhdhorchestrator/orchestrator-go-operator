@@ -148,11 +148,6 @@ spec:
                         type: object
                     type: object
                   subscription:
-                    description: |-
-                      reuse from the subscription - check from the api/compare with the subscription object
-                      do we want to expose all the spec within the inherent subscription
-                      inline embedding to add field in the subscription object
-                      ask Moti to confirm - breaking changes
                     properties:
                       channel:
                         type: string
@@ -177,7 +172,6 @@ spec:
                       enabled:
                         type: boolean
                       port:
-                        format: int64
                         type: integer
                       replyTo:
                         type: string
@@ -203,11 +197,6 @@ spec:
                   enabled:
                     type: boolean
                   subscription:
-                    description: |-
-                      reuse from the subscription - check from the api/compare with the subscription object
-                      do we want to expose all the spec within the inherent subscription
-                      inline embedding to add field in the subscription object
-                      ask Moti to confirm - breaking changes
                     properties:
                       channel:
                         type: string
@@ -232,11 +221,6 @@ spec:
                   isReleaseCandidate:
                     type: boolean
                   subscription:
-                    description: |-
-                      reuse from the subscription - check from the api/compare with the subscription object
-                      do we want to expose all the spec within the inherent subscription
-                      inline embedding to add field in the subscription object
-                      ask Moti to confirm - breaking changes
                     properties:
                       channel:
                         type: string

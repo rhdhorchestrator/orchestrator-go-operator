@@ -28,35 +28,22 @@ var (
 
 // OrchestratorSpec defines the desired state of Orchestrator
 type OrchestratorSpec struct {
-	SonataFlowOperator   SonataFlowOperator   `json:"sonataFlowOperator,omitempty"`
-	ServerlessOperator   ServerlessOperator   `json:"serverlessOperator,omitempty"`
-	RhdhOperator         RHDHOperator         `json:"rhdhOperator,omitempty"`
-	RhdhPlugins          RHDHPlugins          `json:"rhdhPlugins,omitempty"`
-	PostgresDB           Postgres             `json:"postgres,omitempty"`
-	OrchestratorPlatform OrchestratorPlatform `json:"orchestrator,omitempty"`
-	Tekton               Tekton               `json:"tekton,omitempty"`
-	ArgoCd               ArgoCD               `json:"argocd,omitempty"`
+	ServerlessLogicOperator ServerlessLogicOperator `json:"serverlessLogicOperator,omitempty"`
+	ServerlessOperator      ServerlessOperator      `json:"serverlessOperator,omitempty"`
+	RHDHConfig              RHDHConfig              `json:"rhdh,omitempty"`
+	RhdhPlugins             RHDHPlugins             `json:"rhdhPlugins,omitempty"`
+	PostgresDB              Postgres                `json:"postgres,omitempty"`
+	OrchestratorPlatform    OrchestratorPlatform    `json:"orchestrator,omitempty"`
+	Tekton                  Tekton                  `json:"tekton,omitempty"`
+	ArgoCd                  ArgoCD                  `json:"argocd,omitempty"`
 }
 
-type Subscription struct {
-	Namespace           string `json:"namespace,omitempty"`
-	Channel             string `json:"channel,omitempty"`
-	InstallPlanApproval string `json:"installPlanApproval,omitempty"`
-	Name                string `json:"name,omitempty"`
-	SourceName          string `json:"sourceName,omitempty"`
-	StartingCSV         string `json:"startingCSV,omitempty"`
-	TargetNamespace     string `json:"targetNamespace,omitempty"`
-}
-
-type SonataFlowOperator struct {
-	IsReleaseCandidate bool         `json:"isReleaseCandidate,omitempty"`
-	Enabled            bool         `json:"enabled,omitempty"`
-	Subscription       Subscription `json:"subscription,omitempty"`
+type ServerlessLogicOperator struct {
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type ServerlessOperator struct {
-	Enabled      bool         `json:"enabled,omitempty"`
-	Subscription Subscription `json:"subscription,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type BackstageSecret struct {
@@ -97,13 +84,13 @@ type SecretRefBS struct {
 	NotificationsEmail NotificationEmailBS `json:"notificationsEmail,omitempty"`
 }
 
-type RHDHOperator struct {
-	IsReleaseCandidate  bool         `json:"isReleaseCandidate,omitempty"`
-	Enabled             bool         `json:"enabled,omitempty"`
-	EnableGuestProvider bool         `json:"enableGuestProvider,omitempty"`
-	CatalogBranch       string       `json:"catalogBranch,omitempty"`
-	Subscription        Subscription `json:"subscription,omitempty"`
-	SecretRef           SecretRefBS  `json:"secretRef,omitempty"`
+type RHDHConfig struct {
+	RHDHName            string      `json:"name,omitempty"`
+	RHDHNamespace       string      `json:"namespace,omitempty"`
+	DeployOperator      bool        `json:"deployOperator,omitempty"`
+	EnableGuestProvider bool        `json:"enableGuestProvider,omitempty"`
+	CatalogBranch       string      `json:"catalogBranch,omitempty"`
+	SecretRef           SecretRefBS `json:"secretRef,omitempty"`
 }
 
 type PluginDetails struct {

@@ -9,11 +9,11 @@ import (
 
 func ConfigMapTemplateFactory(
 	cmTemplateType string, clusterDomain string,
-	operator v1alpha1.RHDHOperator, plugins v1alpha1.RHDHPlugins) (string, error) {
+	operator v1alpha1.RHDHConfig, plugins v1alpha1.RHDHPlugins) (string, error) {
 	switch cmTemplateType {
 	case AppConfigRHDHName:
 		configData := RHDHConfig{
-			TargetNamespace: operator.Subscription.TargetNamespace,
+			TargetNamespace: operator.RHDHNamespace,
 			ArgoCDUsername:  operator.SecretRef.ArgoCD.Username,
 			ArgoCDPassword:  operator.SecretRef.ArgoCD.Password,
 			ArgoCDUrl:       operator.SecretRef.ArgoCD.Url,

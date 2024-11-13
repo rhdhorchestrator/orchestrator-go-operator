@@ -5,13 +5,14 @@ import (
 	"fmt"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
-	operations "github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
+	kubeoperations "github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	rhdh "redhat-developer/red-hat-developer-hub-operator/api/v1alpha1"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -27,6 +28,8 @@ const (
 	AppConfigRHDHAuthName                = "app-config-rhdh-auth"
 	AppConfigRHDHCatalogName             = "app-config-rhdh-catalog"
 	AppConfigRHDHDynamicPluginName       = "dynamic-plugins-rhdh"
+	BackstageSubscriptionName            = "rhdh"
+	BackstageSubscriptionChannel         = "fast-1.3"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{
@@ -34,6 +37,48 @@ var ConfigMapNameAndConfigDataKey = map[string]string{
 	AppConfigRHDHAuthName:          "app-config-auth.gh.yaml",
 	AppConfigRHDHCatalogName:       "app-config-catalog.yaml",
 	AppConfigRHDHDynamicPluginName: "dynamic-plugins.yaml",
+}
+
+func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, namespace string) error {
+	knativeLogger := log.FromContext(ctx)
+
+	// check if subscription exist
+	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
+		BackstageSubscriptionName,
+		namespace,
+		BackstageSubscriptionChannel,
+		"")
+
+	// check if subscription exists
+	subscriptionExists, existingSubscription, err := kubeoperations.CheckSubscriptionExists(ctx, olmClientSet, rhdhSubscription)
+	if err != nil {
+		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", BackstageSubscriptionName)
+		return err
+	}
+	if !subscriptionExists {
+		if err := kubeoperations.InstallOperatorViaSubscription(ctx, client, olmClientSet, BackstageOperatorGroup, rhdhSubscription); err != nil {
+			knativeLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", BackstageSubscriptionName)
+			return err
+		}
+		knativeLogger.Info("Operator successfully installed", "SubscriptionName", BackstageSubscriptionName)
+	}
+
+	if subscriptionExists {
+		// Compare the current and desired state
+		if !reflect.DeepEqual(existingSubscription.Spec, rhdhSubscription.Spec) {
+			// Set owner reference for proper garbage collection
+			//if err := controllerutil.SetControllerReference(&orchestrator, oslSubscription, r.Scheme); err != nil {
+			//	return err
+			//}
+
+			// Update the existing subscription with the new Spec
+			existingSubscription.Spec = rhdhSubscription.Spec
+			if err := client.Update(ctx, existingSubscription); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
@@ -54,7 +99,7 @@ func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      secretName,
 					Namespace: secretNamespace,
-					Labels:    operations.AddLabel(),
+					Labels:    kubeoperations.AddLabel(),
 				},
 				Type: corev1.SecretTypeOpaque,
 				StringData: map[string]string{
@@ -77,7 +122,7 @@ func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
 }
 
 func HandleCRCreation(
-	operator orchestratorv1alpha1.RHDHOperator,
+	operator orchestratorv1alpha1.RHDHConfig,
 	pluginsDetails orchestratorv1alpha1.RHDHPlugins,
 	clusterDomain string,
 	ctx context.Context, client client.Client) error {
@@ -88,8 +133,8 @@ func HandleCRCreation(
 	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, operator, pluginsDetails)
 
 	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: operator.Subscription.TargetNamespace,
-		Name:      BackstageCRName,
+		Namespace: operator.RHDHNamespace,
+		Name:      operator.RHDHName,
 	}, &rhdh.Backstage{}); apierrors.IsNotFound(err) {
 		secret := rhdh.ObjectKeyRef{
 			Name: operator.SecretRef.Name,
@@ -101,8 +146,8 @@ func HandleCRCreation(
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      BackstageCRName,
-				Namespace: operator.Subscription.TargetNamespace,
-				Labels:    operations.AddLabel(),
+				Namespace: operator.RHDHNamespace,
+				Labels:    kubeoperations.AddLabel(),
 			},
 			Spec: rhdh.BackstageSpec{
 				Application: &rhdh.Application{
@@ -125,14 +170,14 @@ func HandleCRCreation(
 }
 
 func GetConfigmapList(ctx context.Context, client client.Client, clusterDomain string,
-	operator orchestratorv1alpha1.RHDHOperator,
+	operator orchestratorv1alpha1.RHDHConfig,
 	rhdhPlugins orchestratorv1alpha1.RHDHPlugins) []rhdh.ObjectKeyRef {
 
 	cmLogger := log.FromContext(ctx)
 	cmLogger.Info("Creating configmaps")
 
 	configmapList := make([]rhdh.ObjectKeyRef, 0)
-	namespace := operator.Subscription.TargetNamespace
+	namespace := operator.RHDHNamespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
 		if err := client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
@@ -166,7 +211,7 @@ func CreateConfigMap(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    operations.AddLabel(),
+			Labels:    kubeoperations.AddLabel(),
 		},
 		Data: map[string]string{
 			configDataKey: configValue,
@@ -180,13 +225,15 @@ func CreateConfigMap(
 	return nil
 }
 
-func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, rhdhNamespace string) error {
 	logger := log.FromContext(ctx)
+	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
+		BackstageSubscriptionName,
+		rhdhNamespace,
+		BackstageSubscriptionChannel,
+		"")
 
-	rhdhNamespace := "rhdh-operator" // remove hardcoded TODO
-	subscriptionName := "rhdh"       // remove hardcoded TODO
-
-	namespaceExist, _ := operations.CheckNamespaceExist(ctx, client, rhdhNamespace)
+	namespaceExist, _ := kubeoperations.CheckNamespaceExist(ctx, client, rhdhNamespace)
 	if namespaceExist {
 		backstageCRList, err := listBackstageCRs(ctx, client, rhdhNamespace)
 
@@ -196,13 +243,13 @@ func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClient
 		}
 		if len(backstageCRList) == 1 {
 			// remove namespace
-			if err := operations.CleanUpNamespace(ctx, rhdhNamespace, client); err != nil {
+			if err := kubeoperations.CleanUpNamespace(ctx, rhdhNamespace, client); err != nil {
 				logger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
 				return err
 			}
 			// remove subscription and csv
-			if err := operations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, subscriptionName, rhdhNamespace); err != nil {
-				logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", subscriptionName)
+			if err := kubeoperations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, rhdhSubscription); err != nil {
+				logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", rhdhSubscription.Name)
 				return err
 			}
 			// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
@@ -218,7 +265,7 @@ func listBackstageCRs(ctx context.Context, k8client client.Client, namespace str
 
 	listOptions := []client.ListOption{
 		client.InNamespace(namespace),
-		client.MatchingLabels{operations.CreatedByLabelKey: operations.CreatedByLabelValue},
+		client.MatchingLabels{kubeoperations.CreatedByLabelKey: kubeoperations.CreatedByLabelValue},
 	}
 
 	// List the CRs

@@ -216,15 +216,15 @@ func handleSonataFlowPlatformCR(
 func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) sonataapi.SonataFlowPlatformSpec {
 	limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
-	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Cpu)
-	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Limits.Memory)
+	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Limits.Cpu)
+	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Limits.Memory)
 	limitResourceMap[corev1.ResourceCPU] = cpuQuantity
 	limitResourceMap[corev1.ResourceMemory] = memoryQuantity
 	//logger.Info("Limit Map", "Map", limitResourceMap)
 
 	requestResourceMap := make(map[corev1.ResourceName]resource.Quantity)
-	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Cpu)
-	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorPlatform.SonataFlowPlatform.Resources.Requests.Memory)
+	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Requests.Cpu)
+	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Requests.Memory)
 	requestResourceMap[corev1.ResourceCPU] = requestCpuQuantity
 	requestResourceMap[corev1.ResourceMemory] = requestMemoryQuantity
 	//logger.Info("Request Map", "Map", requestResourceMap)

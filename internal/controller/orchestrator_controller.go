@@ -136,6 +136,9 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
+	argoCDEnabled := orchestrator.Spec.ArgoCd.Enabled
+	tektonEnabled := orchestrator.Spec.Tekton.Enabled
+	wfNamespace := orchestrator.Spec.OrchestratorConfig.Namespace
 
 	// handle sonataflow
 	sonataFlowOperator := orchestrator.Spec.ServerlessLogicOperator
@@ -176,9 +179,8 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	})
 
 	// handle backstage
-	rhdhOperator := orchestrator.Spec.RHDHConfig
-	rhdhPlugins := orchestrator.Spec.RhdhPlugins
-	if err = r.reconcileBackstage(ctx, rhdhOperator, rhdhPlugins); err != nil {
+	rhdhConfig := orchestrator.Spec.RHDHConfig
+	if err = r.reconcileBackstage(ctx, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
 		logger.Error(err, "Error occurred when installing Backstage resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
 			Type:    TypeDegrading,
@@ -206,7 +208,7 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Starting reconciliation for SonataFlow")
 
-	sonataflowNamespace := orchestrator.Spec.OrchestratorPlatform.Namespace
+	sonataflowNamespace := orchestrator.Spec.OrchestratorConfig.Namespace
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !sonataFlowOperator.Enabled {
@@ -329,9 +331,9 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 }
 
 func (r *OrchestratorReconciler) reconcileBackstage(
-	ctx context.Context,
-	rhdhConfig orchestratorv1alpha1.RHDHConfig,
-	plugins orchestratorv1alpha1.RHDHPlugins) error {
+	ctx context.Context, wfNamespace string,
+	argoCDEnabled, tektonEnabled bool,
+	rhdhConfig orchestratorv1alpha1.RHDHConfig) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Reconciliation for Backstage")
 
@@ -339,7 +341,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	namespace := rhdhConfig.RHDHNamespace
 
 	// if subscription is disabled; check if subscription exists and handle delete
-	if !rhdhConfig.DeployOperator {
+	if !rhdhConfig.InstallOperator {
 		if err := rhdh.HandleBackstageCleanup(ctx, r.Client, r.OLMClient, namespace); err != nil {
 			logger.Error(err, "Error occurred when cleaning up backstage", "SubscriptionName", subscriptionName)
 			return err
@@ -359,14 +361,13 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 		return err
 	}
 
-	npmRegistry := plugins.NpmRegistry
 	clusterDomain, _ := r.getClusterDomain(ctx)
 	// create secret
-	if err := rhdh.CreateBSSecret(rhdh.RegistrySecretName, namespace, npmRegistry, ctx, r.Client); err != nil {
+	if err := rhdh.CreateBSSecret(namespace, ctx, r.Client); err != nil {
 		return err
 	}
 	// create backstage CR
-	if err := rhdh.HandleCRCreation(rhdhConfig, plugins, clusterDomain, ctx, r.Client); err != nil {
+	if err := rhdh.HandleCRCreation(rhdhConfig, argoCDEnabled, tektonEnabled, wfNamespace, clusterDomain, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil

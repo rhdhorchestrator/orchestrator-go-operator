@@ -31,9 +31,8 @@ type OrchestratorSpec struct {
 	ServerlessLogicOperator ServerlessLogicOperator `json:"serverlessLogicOperator,omitempty"`
 	ServerlessOperator      ServerlessOperator      `json:"serverlessOperator,omitempty"`
 	RHDHConfig              RHDHConfig              `json:"rhdh,omitempty"`
-	RhdhPlugins             RHDHPlugins             `json:"rhdhPlugins,omitempty"`
 	PostgresDB              Postgres                `json:"postgres,omitempty"`
-	OrchestratorPlatform    OrchestratorPlatform    `json:"orchestrator,omitempty"`
+	OrchestratorConfig      OrchestratorConfig      `json:"orchestrator,omitempty"`
 	Tekton                  Tekton                  `json:"tekton,omitempty"`
 	ArgoCd                  ArgoCD                  `json:"argocd,omitempty"`
 }
@@ -46,56 +45,16 @@ type ServerlessOperator struct {
 	Enabled bool `json:"enabled,omitempty"`
 }
 
-type BackstageSecret struct {
-	BackendSecret string `json:"backendSecret,omitempty"`
-}
-
-type ClusterTokenUrl struct {
-	ClusterToken string `json:"clusterToken,omitempty"`
-	ClusterUrl   string `json:"clusterUrl,omitempty"`
-}
-
-type GithubBS struct {
-	Token        string `json:"token,omitempty"`
-	ClientID     string `json:"clientId,omitempty"`
-	ClientSecret string `json:"clientSecret,omitempty"`
-}
-
-type ArgoCDBS struct {
-	Enabled   bool   `json:"enabled,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-	Url       string `json:"url,omitempty"`
-	Username  string `json:"username,omitempty"`
-	Password  string `json:"password,omitempty"`
-}
-
-type NotificationEmailBS struct {
-	Hostname string `json:"hostname,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-}
-
-type SecretRefBS struct {
-	Name               string              `json:"name,omitempty"`
-	Backstage          BackstageSecret     `json:"backstage,omitempty"`
-	Github             GithubBS            `json:"github,omitempty"`
-	ClusterTokenUrl    ClusterTokenUrl     `json:"k8s,omitempty"`
-	ArgoCD             ArgoCDBS            `json:"argocd,omitempty"`
-	NotificationsEmail NotificationEmailBS `json:"notificationsEmail,omitempty"`
-}
-
 type RHDHConfig struct {
-	RHDHName            string      `json:"name,omitempty"`
-	RHDHNamespace       string      `json:"namespace,omitempty"`
-	DeployOperator      bool        `json:"deployOperator,omitempty"`
-	EnableGuestProvider bool        `json:"enableGuestProvider,omitempty"`
-	CatalogBranch       string      `json:"catalogBranch,omitempty"`
-	SecretRef           SecretRefBS `json:"secretRef,omitempty"`
+	RHDHName        string      `json:"name,omitempty"`
+	RHDHNamespace   string      `json:"namespace,omitempty"`
+	InstallOperator bool        `json:"installOperator,omitempty"`
+	DevMode         bool        `json:"devMode,omitempty"`
+	RHDHPlugins     RHDHPlugins `json:"plugins,omitempty"`
 }
 
-type PluginDetails struct {
-	Package   string `json:"package,omitempty"`
-	Integrity string `json:"integrity,omitempty"`
+type RHDHPlugins struct {
+	NotificationsConfig NotificationConfig `json:"notificationsEmail,omitempty"`
 }
 
 type NotificationConfig struct {
@@ -105,12 +64,10 @@ type NotificationConfig struct {
 	Recipient string `json:"replyTo,omitempty"`
 }
 
-type RHDHPlugins struct {
-	NpmRegistry         string                   `json:"npmRegistry,omitempty"`
-	Scope               string                   `json:"scope,omitempty"`
-	Plugins             map[string]PluginDetails `json:"plugins,omitempty"`
-	NotificationsConfig NotificationConfig       `json:"notificationsConfig,omitempty"`
-}
+//type PluginDetails struct {
+//	Package   string `json:"package,omitempty"`
+//	Integrity string `json:"integrity,omitempty"`
+//}
 
 type Postgres struct {
 	ServiceName      string             `json:"serviceName,omitempty"`
@@ -125,7 +82,7 @@ type PostgresAuthSecret struct {
 	PasswordKey string `json:"passwordKey,omitempty"`
 }
 
-type OrchestratorPlatform struct {
+type OrchestratorConfig struct {
 	Namespace          string             `json:"namespace,omitempty"`
 	SonataFlowPlatform SonataFlowPlatform `json:"sonataFlowPlatform,omitempty"`
 }

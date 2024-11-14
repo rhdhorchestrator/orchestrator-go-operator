@@ -18,18 +18,13 @@ import (
 )
 
 const (
-	BackstageOperatorGroup               = "rhdh-operator-group"
-	BackstageAPIVersion                  = "rhdh.redhat.com/v1alpha1"
-	BackstageKind                        = "Backstage"
-	BackstageCRName                      = "backstage"
-	BackstageReplica               int32 = 1
-	RegistrySecretName                   = "dynamic-plugins-npmrc"
-	AppConfigRHDHName                    = "app-config-rhdh"
-	AppConfigRHDHAuthName                = "app-config-rhdh-auth"
-	AppConfigRHDHCatalogName             = "app-config-rhdh-catalog"
-	AppConfigRHDHDynamicPluginName       = "dynamic-plugins-rhdh"
-	BackstageSubscriptionName            = "rhdh"
-	BackstageSubscriptionChannel         = "fast-1.3"
+	BackstageOperatorGroup             = "rhdh-operator-group"
+	BackstageAPIVersion                = "rhdh.redhat.com/v1alpha1"
+	BackstageKind                      = "Backstage"
+	BackstageCRName                    = "backstage"
+	BackstageReplica             int32 = 1
+	BackstageSubscriptionName          = "rhdh"
+	BackstageSubscriptionChannel       = "fast-1.3"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{
@@ -81,63 +76,62 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 	return nil
 }
 
-func CreateBSSecret(secretName string, secretNamespace, npmRegistry string,
-	ctx context.Context, client client.Client) error {
+func CreateBSSecret(secretNamespace string, ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Creating Backstage NPMrc Secret")
 
 	secret := &corev1.Secret{}
 	err := client.Get(ctx, types.NamespacedName{
 		Namespace: secretNamespace,
-		Name:      secretName,
+		Name:      RegistrySecretName,
 	}, secret)
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Info("Secret does not exist. Creating secret", "Secret", secretName)
+			logger.Info("Secret does not exist. Creating secret", "Secret", RegistrySecretName)
 			newSecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretName,
+					Name:      RegistrySecretName,
 					Namespace: secretNamespace,
 					Labels:    kubeoperations.AddLabel(),
 				},
 				Type: corev1.SecretTypeOpaque,
 				StringData: map[string]string{
-					".npmrc": fmt.Sprintf("registry=%s", npmRegistry),
+					".npmrc": fmt.Sprintf("registry=%s", NpmRegistry),
 				},
 			}
 
 			if err := client.Create(ctx, newSecret); err != nil {
-				logger.Error(err, "Error occurred when creating secret", "Secret", secretName)
+				logger.Error(err, "Error occurred when creating secret", "Secret", RegistrySecretName)
 				return err
 			}
-			logger.Info("Successfully created secret", "Secret", secretName)
+			logger.Info("Successfully created secret", "Secret", RegistrySecretName)
 			return nil
 		}
-		logger.Error(err, "Error occurred when checking secret exist", "Secret", secretName)
+		logger.Error(err, "Error occurred when checking secret exist", "Secret", RegistrySecretName)
 		return err
 	}
-	logger.Info("Secret already exist", "Secret", secretName)
+	logger.Info("Secret already exist", "Secret", RegistrySecretName)
 	return nil
 }
 
 func HandleCRCreation(
-	operator orchestratorv1alpha1.RHDHConfig,
-	pluginsDetails orchestratorv1alpha1.RHDHPlugins,
-	clusterDomain string,
+	rhdhConfig orchestratorv1alpha1.RHDHConfig,
+	argoCDEnabled, tektonEnabled bool,
+	clusterDomain, wfNamespace string,
 	ctx context.Context, client client.Client) error {
 	bsLogger := log.FromContext(ctx)
 
 	bsLogger.Info("Handling Backstage resources")
 
-	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, operator, pluginsDetails)
+	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 
 	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: operator.RHDHNamespace,
-		Name:      operator.RHDHName,
+		Namespace: rhdhConfig.RHDHNamespace,
+		Name:      rhdhConfig.RHDHName,
 	}, &rhdh.Backstage{}); apierrors.IsNotFound(err) {
 		secret := rhdh.ObjectKeyRef{
-			Name: operator.SecretRef.Name,
+			Name: BackendAuthSecretName,
 		}
 		backstageCR := &rhdh.Backstage{
 			TypeMeta: metav1.TypeMeta{
@@ -146,7 +140,7 @@ func HandleCRCreation(
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      BackstageCRName,
-				Namespace: operator.RHDHNamespace,
+				Namespace: rhdhConfig.RHDHNamespace,
 				Labels:    kubeoperations.AddLabel(),
 			},
 			Spec: rhdh.BackstageSpec{
@@ -169,21 +163,22 @@ func HandleCRCreation(
 	return nil
 }
 
-func GetConfigmapList(ctx context.Context, client client.Client, clusterDomain string,
-	operator orchestratorv1alpha1.RHDHConfig,
-	rhdhPlugins orchestratorv1alpha1.RHDHPlugins) []rhdh.ObjectKeyRef {
+func GetConfigmapList(ctx context.Context, client client.Client,
+	clusterDomain, wfNamespace string,
+	tektonEnabled, argoCDEnabled bool,
+	rhdhConfig orchestratorv1alpha1.RHDHConfig) []rhdh.ObjectKeyRef {
 
 	cmLogger := log.FromContext(ctx)
 	cmLogger.Info("Creating configmaps")
 
 	configmapList := make([]rhdh.ObjectKeyRef, 0)
-	namespace := operator.RHDHNamespace
+	namespace := rhdhConfig.RHDHNamespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
 		if err := client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      cmName,
 		}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
-			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, operator, rhdhPlugins)
+			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 			if err != nil {
 				cmLogger.Error(err, "Error occurred when parsing config data for configmap", "CM", cmName)
 				continue

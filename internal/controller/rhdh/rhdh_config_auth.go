@@ -15,7 +15,7 @@ auth:
         clientId: {{ printf "${%s}" .GitHubClientId }}
         clientSecret: {{ printf "${%s}" .GitHubClientSecret }}
     {{- end }}
-    {{- if .EnableGuestProvider }}
+    {{- if .DevMode }}
     guest:
       dangerouslyAllowOutsideDevelopment: true
       userEntityRef: user:default/guest

@@ -89,154 +89,40 @@ spec:
                   serviceNamespace:
                     type: string
                 type: object
-              rhdhOperator:
+              rhdh:
                 properties:
-                  catalogBranch:
+                  devMode:
+                    type: boolean
+                  installOperator:
+                    type: boolean
+                  name:
                     type: string
-                  enableGuestProvider:
-                    type: boolean
-                  enabled:
-                    type: boolean
-                  isReleaseCandidate:
-                    type: boolean
-                  secretRef:
+                  namespace:
+                    type: string
+                  plugins:
                     properties:
-                      argocd:
+                      notificationsEmail:
                         properties:
                           enabled:
                             type: boolean
-                          namespace:
+                          port:
+                            type: integer
+                          replyTo:
                             type: string
-                          password:
-                            type: string
-                          url:
-                            type: string
-                          username:
+                          sender:
                             type: string
                         type: object
-                      backstage:
-                        properties:
-                          backendSecret:
-                            type: string
-                        type: object
-                      github:
-                        properties:
-                          clientId:
-                            type: string
-                          clientSecret:
-                            type: string
-                          token:
-                            type: string
-                        type: object
-                      k8s:
-                        properties:
-                          clusterToken:
-                            type: string
-                          clusterUrl:
-                            type: string
-                        type: object
-                      name:
-                        type: string
-                      notificationsEmail:
-                        properties:
-                          hostname:
-                            type: string
-                          password:
-                            type: string
-                          username:
-                            type: string
-                        type: object
-                    type: object
-                  subscription:
-                    properties:
-                      channel:
-                        type: string
-                      installPlanApproval:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                      sourceName:
-                        type: string
-                      startingCSV:
-                        type: string
-                      targetNamespace:
-                        type: string
                     type: object
                 type: object
-              rhdhPlugins:
+              serverlessLogicOperator:
                 properties:
-                  notificationsConfig:
-                    properties:
-                      enabled:
-                        type: boolean
-                      port:
-                        type: integer
-                      replyTo:
-                        type: string
-                      sender:
-                        type: string
-                    type: object
-                  npmRegistry:
-                    type: string
-                  plugins:
-                    additionalProperties:
-                      properties:
-                        integrity:
-                          type: string
-                        package:
-                          type: string
-                      type: object
-                    type: object
-                  scope:
-                    type: string
+                  enabled:
+                    type: boolean
                 type: object
               serverlessOperator:
                 properties:
                   enabled:
                     type: boolean
-                  subscription:
-                    properties:
-                      channel:
-                        type: string
-                      installPlanApproval:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                      sourceName:
-                        type: string
-                      startingCSV:
-                        type: string
-                      targetNamespace:
-                        type: string
-                    type: object
-                type: object
-              sonataFlowOperator:
-                properties:
-                  enabled:
-                    type: boolean
-                  isReleaseCandidate:
-                    type: boolean
-                  subscription:
-                    properties:
-                      channel:
-                        type: string
-                      installPlanApproval:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                      sourceName:
-                        type: string
-                      startingCSV:
-                        type: string
-                      targetNamespace:
-                        type: string
-                    type: object
                 type: object
               tekton:
                 properties:

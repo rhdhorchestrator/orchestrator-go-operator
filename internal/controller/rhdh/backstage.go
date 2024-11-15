@@ -11,7 +11,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	rhdh "redhat-developer/red-hat-developer-hub-operator/api/v1alpha1"
+	rhdhv1alpha2 "redhat-developer/red-hat-developer-hub-operator/api/v1alpha2"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -129,11 +129,11 @@ func HandleCRCreation(
 	if err := client.Get(ctx, types.NamespacedName{
 		Namespace: rhdhConfig.RHDHNamespace,
 		Name:      rhdhConfig.RHDHName,
-	}, &rhdh.Backstage{}); apierrors.IsNotFound(err) {
-		secret := rhdh.ObjectKeyRef{
+	}, &rhdhv1alpha2.Backstage{}); apierrors.IsNotFound(err) {
+		secret := rhdhv1alpha2.ObjectKeyRef{
 			Name: BackendAuthSecretName,
 		}
-		backstageCR := &rhdh.Backstage{
+		backstageCR := &rhdhv1alpha2.Backstage{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: BackstageAPIVersion,
 				Kind:       BackstageKind,
@@ -143,12 +143,12 @@ func HandleCRCreation(
 				Namespace: rhdhConfig.RHDHNamespace,
 				Labels:    kubeoperations.AddLabel(),
 			},
-			Spec: rhdh.BackstageSpec{
-				Application: &rhdh.Application{
-					AppConfig:                   &rhdh.AppConfig{ConfigMaps: bsConfigMapList},
+			Spec: rhdhv1alpha2.BackstageSpec{
+				Application: &rhdhv1alpha2.Application{
+					AppConfig:                   &rhdhv1alpha2.AppConfig{ConfigMaps: bsConfigMapList},
 					DynamicPluginsConfigMapName: AppConfigRHDHDynamicPluginName,
-					ExtraEnvs: &rhdh.ExtraEnvs{
-						Secrets: []rhdh.ObjectKeyRef{secret},
+					ExtraEnvs: &rhdhv1alpha2.ExtraEnvs{
+						Secrets: []rhdhv1alpha2.ObjectKeyRef{secret},
 					},
 					Replicas: util.MakePointer(BackstageReplica),
 				},
@@ -166,12 +166,12 @@ func HandleCRCreation(
 func GetConfigmapList(ctx context.Context, client client.Client,
 	clusterDomain, wfNamespace string,
 	tektonEnabled, argoCDEnabled bool,
-	rhdhConfig orchestratorv1alpha1.RHDHConfig) []rhdh.ObjectKeyRef {
+	rhdhConfig orchestratorv1alpha1.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
 
 	cmLogger := log.FromContext(ctx)
 	cmLogger.Info("Creating configmaps")
 
-	configmapList := make([]rhdh.ObjectKeyRef, 0)
+	configmapList := make([]rhdhv1alpha2.ObjectKeyRef, 0)
 	namespace := rhdhConfig.RHDHNamespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
 		if err := client.Get(ctx, types.NamespacedName{
@@ -185,7 +185,7 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 			} else {
 				if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err == nil {
 					if cmName != AppConfigRHDHDynamicPluginName {
-						configmapList = append(configmapList, rhdh.ObjectKeyRef{Name: cmName})
+						configmapList = append(configmapList, rhdhv1alpha2.ObjectKeyRef{Name: cmName})
 					}
 				}
 			}
@@ -253,10 +253,10 @@ func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClient
 	return nil
 }
 
-func listBackstageCRs(ctx context.Context, k8client client.Client, namespace string) ([]rhdh.Backstage, error) {
+func listBackstageCRs(ctx context.Context, k8client client.Client, namespace string) ([]rhdhv1alpha2.Backstage, error) {
 	logger := log.FromContext(ctx)
 
-	crList := &rhdh.BackstageList{}
+	crList := &rhdhv1alpha2.BackstageList{}
 
 	listOptions := []client.ListOption{
 		client.InNamespace(namespace),

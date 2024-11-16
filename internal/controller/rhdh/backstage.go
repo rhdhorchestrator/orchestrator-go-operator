@@ -126,39 +126,43 @@ func HandleCRCreation(
 
 	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 
-	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: rhdhConfig.RHDHNamespace,
-		Name:      rhdhConfig.RHDHName,
-	}, &rhdhv1alpha2.Backstage{}); apierrors.IsNotFound(err) {
-		secret := rhdhv1alpha2.ObjectKeyRef{
-			Name: BackendAuthSecretName,
-		}
-		backstageCR := &rhdhv1alpha2.Backstage{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: BackstageAPIVersion,
-				Kind:       BackstageKind,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      BackstageCRName,
-				Namespace: rhdhConfig.RHDHNamespace,
-				Labels:    kubeoperations.AddLabel(),
-			},
-			Spec: rhdhv1alpha2.BackstageSpec{
-				Application: &rhdhv1alpha2.Application{
-					AppConfig:                   &rhdhv1alpha2.AppConfig{ConfigMaps: bsConfigMapList},
-					DynamicPluginsConfigMapName: AppConfigRHDHDynamicPluginName,
-					ExtraEnvs: &rhdhv1alpha2.ExtraEnvs{
-						Secrets: []rhdhv1alpha2.ObjectKeyRef{secret},
-					},
-					Replicas: util.MakePointer(BackstageReplica),
+	rhdhNamespace := rhdhConfig.RHDHNamespace
+	rhdhName := rhdhConfig.RHDHName
+
+	if err := client.Get(ctx, types.NamespacedName{Namespace: rhdhNamespace, Name: rhdhName}, &rhdhv1alpha2.Backstage{}); err != nil {
+		if apierrors.IsNotFound(err) {
+			secret := rhdhv1alpha2.ObjectKeyRef{
+				Name: BackendAuthSecretName,
+			}
+			backstageCR := &rhdhv1alpha2.Backstage{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: BackstageAPIVersion,
+					Kind:       BackstageKind,
 				},
-			},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      BackstageCRName,
+					Namespace: rhdhConfig.RHDHNamespace,
+					Labels:    kubeoperations.AddLabel(),
+				},
+				Spec: rhdhv1alpha2.BackstageSpec{
+					Application: &rhdhv1alpha2.Application{
+						AppConfig:                   &rhdhv1alpha2.AppConfig{ConfigMaps: bsConfigMapList},
+						DynamicPluginsConfigMapName: AppConfigRHDHDynamicPluginName,
+						ExtraEnvs: &rhdhv1alpha2.ExtraEnvs{
+							Secrets: []rhdhv1alpha2.ObjectKeyRef{secret},
+						},
+						Replicas: util.MakePointer(BackstageReplica),
+					},
+				},
+			}
+			if err := client.Create(ctx, backstageCR); err != nil {
+				bsLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
+				return err
+			}
+			bsLogger.Info("Successfully created Backstage resource", "CR-Name", rhdhName)
 		}
-		if err := client.Create(ctx, backstageCR); err != nil {
-			bsLogger.Error(err, "Error occurred when creating Backstage resource")
-			return err
-		}
-		bsLogger.Info("Successfully created Backstage resource")
+		bsLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
+		return err
 	}
 	return nil
 }

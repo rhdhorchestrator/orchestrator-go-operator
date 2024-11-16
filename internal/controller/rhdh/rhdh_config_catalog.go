@@ -16,7 +16,7 @@ catalog:
           Domain,
         ]
   locations:
-    {{- if .DevMode }}
+    {{- if .EnableGuestProvider }}
     - type: url
       target: https://github.com/parodos-dev/orchestrator-helm-chart/blob/main/resources/users.yaml
     {{- end }}

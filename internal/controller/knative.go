@@ -45,6 +45,18 @@ const (
 func handleKNativeOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	knativeLogger := log.FromContext(ctx)
 
+	if _, err := kube.CheckNamespaceExist(ctx, client, KnativeSubscriptionNamespace); err != nil {
+		if apierrors.IsNotFound(err) {
+			knativeLogger.Info("Creating namespace", "NS", KnativeSubscriptionNamespace)
+			if err := kube.CreateNamespace(ctx, client, KnativeSubscriptionNamespace); err != nil {
+				knativeLogger.Error(err, "Error occurred when creating namespace", "NS", KnativeSubscriptionNamespace)
+				return nil
+			}
+		}
+		knativeLogger.Error(err, "Error occurred when checking namespace exist", "NS", KnativeSubscriptionNamespace)
+		return err
+	}
+
 	serverlessSubscription := kube.CreateSubscriptionObject(
 		KnativeSubscriptionName,
 		KnativeSubscriptionNamespace,
@@ -83,6 +95,43 @@ func handleKNativeOperatorInstallation(ctx context.Context, client client.Client
 	return nil
 }
 
+func handleServerlessCR(ctx context.Context, client client.Client) error {
+	knativeLogger := log.FromContext(ctx)
+	knativeLogger.Info("Handling Serverless Custom Resources...")
+
+	// subscription exists; check if CRD exists for knative eventing;
+	if err := kube.CheckCRDExists(ctx, client, KnativeEventingCRDName, KnativeSubscriptionNamespace); err != nil {
+		if apierrors.IsNotFound(err) {
+			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", KnativeSubscriptionName)
+			return err
+		}
+		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeEventingCRDName)
+		return err
+	}
+	// CRD exist; check and handle knative eventing CR
+	if err := handleKnativeEventingCR(ctx, client); err != nil {
+		knativeLogger.Error(err, "Error occurred when creating Knative EventingCR", "CR-Name", KnativeEventingNamespacedName)
+		return err
+	}
+
+	// subscription exists; check if CRD exists knative serving;
+	if err := kube.CheckCRDExists(ctx, client, KnativeServingCRDName, KnativeSubscriptionNamespace); err != nil {
+		if apierrors.IsNotFound(err) {
+			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", KnativeSubscriptionName)
+			return nil
+		}
+		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeServingCRDName)
+		return err
+
+	}
+	// CRD exist; check and handle knative eventing CR
+	if err := handleKnativeServingCR(ctx, client); err != nil {
+		knativeLogger.Error(err, "Error occurred when creating Knative ServingCR", "CR-Name", KnativeServingNamespacedName)
+		return err
+	}
+	return nil
+}
+
 func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Handling K-Native Eventing CR")
@@ -105,7 +154,6 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 					Labels:    kube.AddLabel(),
 				},
 				Spec: knative.KnativeEventingSpec{},
-				//Status: knative.KnativeEventingStatus{},
 			}
 			if err = client.Create(ctx, knEventing); err != nil {
 				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knEventing.Name)

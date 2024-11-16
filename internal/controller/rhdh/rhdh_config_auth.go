@@ -15,12 +15,11 @@ auth:
         clientId: {{ printf "${%s}" .GitHubClientId }}
         clientSecret: {{ printf "${%s}" .GitHubClientSecret }}
     {{- end }}
-    {{- if .DevMode }}
+    {{- if .EnableGuestProvider }}
     guest:
       dangerouslyAllowOutsideDevelopment: true
       userEntityRef: user:default/guest
     {{- end }}
-
 `
 
 type RHDHConfigAuth struct {

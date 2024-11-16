@@ -48,6 +48,18 @@ const (
 func handleOSLOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	sfLogger := log.FromContext(ctx)
 
+	// create namespace for operator
+	if _, err := kube.CheckNamespaceExist(ctx, client, ServerlessLogicOperatorNamespace); err != nil {
+		if apierrors.IsNotFound(err) {
+			if err := kube.CreateNamespace(ctx, client, ServerlessLogicOperatorNamespace); err != nil {
+				sfLogger.Error(err, "Error occurred when creating namespace", "NS", ServerlessLogicOperatorNamespace)
+				return nil
+			}
+		}
+		sfLogger.Error(err, "Error occurred when checking namespace exist", "NS", ServerlessLogicOperatorNamespace)
+		return err
+	}
+
 	// check if subscription exist
 	oslSubscription := kube.CreateSubscriptionObject(
 		ServerlessLogicSubscriptionName,
@@ -86,6 +98,23 @@ func handleOSLOperatorInstallation(ctx context.Context, client client.Client, ol
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+	sfLogger := log.FromContext(ctx)
+	sfLogger.Info("Handling ServerlessLogic CR...")
+
+	if err := handleSonataFlowClusterCR(ctx, client, SonataFlowClusterPlatformCRName); err != nil {
+		sfLogger.Error(err, "Error occurred when creating SonataFlowClusterCR", "CR-Name", SonataFlowClusterPlatformCRName)
+		return err
+
+	}
+	// create sonataflowplatform  CR
+	if err := handleSonataFlowPlatformCR(ctx, client, orchestrator, SonataFlowClusterPlatformCRName); err != nil {
+		sfLogger.Error(err, "Error occurred when creating SonataFlowPlatform", "CR-Name", SonataFlowClusterPlatformCRName)
+		return err
 	}
 	return nil
 }

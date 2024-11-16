@@ -10,7 +10,7 @@ spec:
     enabled: true # whether the operator should be deployed by the operator
   serverlessOperator:
     enabled: true # whether the operator should be deployed by the chart
-  rhdhOperator:
+  rhdh:
     installOperator: true # whether the operator should be deployed by the chart
     devMode: false # whether to enable guest provider
     name: "backstage"

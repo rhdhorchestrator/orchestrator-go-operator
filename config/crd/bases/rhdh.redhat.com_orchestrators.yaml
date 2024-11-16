@@ -186,9 +186,11 @@ spec:
                             description: SMTP server port
                             type: integer
                           replyTo:
+                            default: ""
                             description: Email address of the Recipient
                             type: string
                           sender:
+                            default: ""
                             description: Email address of the Sender
                             type: string
                         type: object

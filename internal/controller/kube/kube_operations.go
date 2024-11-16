@@ -126,8 +126,7 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 	sfog := &operatorsv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{Name: operatorGroupName, Namespace: namespace},
 	}
-	err = client.Create(ctx, sfog)
-	if err != nil {
+	if err = client.Create(ctx, sfog); err != nil {
 		logger.Error(err, "Error occurred when creating OperatorGroup resource", "Namespace", namespace)
 		return err
 	}

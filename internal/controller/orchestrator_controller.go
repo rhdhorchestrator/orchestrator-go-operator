@@ -136,6 +136,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
+
 	argoCDEnabled := orchestrator.Spec.ArgoCd.Enabled
 	tektonEnabled := orchestrator.Spec.Tekton.Enabled
 	wfNamespace := orchestrator.Spec.OrchestratorConfig.Namespace
@@ -250,14 +251,7 @@ func (r *OrchestratorReconciler) reconcileSonataFlow(
 	}
 
 	// CRD exist; check and handle sonataflowclusterplatform CR
-	if err := handleSonataFlowClusterCR(ctx, r.Client, SonataFlowClusterPlatformCRName); err != nil {
-		sfLogger.Error(err, "Error occurred when creating SonataFlowClusterCR", "CR-Name", SonataFlowClusterPlatformCRName)
-		return err
-
-	}
-	// create sonataflowplatform  CR
-	if err := handleSonataFlowPlatformCR(ctx, r.Client, orchestrator, SonataFlowClusterPlatformCRName); err != nil {
-		sfLogger.Error(err, "Error occurred when creating SonataFlowPlatform", "CR-Name", SonataFlowClusterPlatformCRName)
+	if err := handleServerlessLogicCR(ctx, r.Client, orchestrator); err != nil {
 		return err
 	}
 	sfLogger.Info("Successfully created SonataFlow Resources")
@@ -275,58 +269,18 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 			return err
 		}
 	}
+
 	// Subscription is enabled;
-
-	// check namespace exist
-	_, err := kube.CheckNamespaceExist(ctx, r.Client, KnativeSubscriptionNamespace)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			knativeLogger.Info("Creating namespace", "NS", KnativeSubscriptionNamespace)
-			if err := kube.CreateNamespace(ctx, r.Client, KnativeSubscriptionNamespace); err != nil {
-				knativeLogger.Error(err, "Error occurred when creating namespace", "NS", KnativeSubscriptionNamespace)
-				return err
-			}
-		}
-		knativeLogger.Error(err, "Error occurred when checking namespace exists", "NS", KnativeSubscriptionNamespace)
-		return err
-	}
-
 	if err := handleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
 		knativeLogger.Error(err, "Error occurred when installing Knative Operator resources")
 		return err
 	}
 
-	// subscription exists; check if CRD exists for knative eventing;
-	if err := kube.CheckCRDExists(ctx, r.Client, KnativeEventingCRDName, KnativeSubscriptionNamespace); err != nil {
-		if apierrors.IsNotFound(err) {
-			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", KnativeSubscriptionName)
-			return err
-		}
-		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeEventingCRDName)
-		return err
-	}
-	// CRD exist; check and handle knative eventing CR
-	if err := handleKnativeEventingCR(ctx, r.Client); err != nil {
-		knativeLogger.Error(err, "Error occurred when creating Knative EventingCR", "CR-Name", KnativeEventingNamespacedName)
+	if err := handleServerlessCR(ctx, r.Client); err != nil {
+		knativeLogger.Error(err, "Error occurred when handling Knative custom resources")
 		return err
 	}
 
-	// subscription exists; check if CRD exists knative serving;
-	err = kube.CheckCRDExists(ctx, r.Client, KnativeServingCRDName, KnativeSubscriptionNamespace)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", KnativeSubscriptionName)
-			return nil
-		}
-		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", KnativeServingCRDName)
-		return err
-
-	}
-	// CRD exist; check and handle knative eventing CR
-	if err = handleKnativeServingCR(ctx, r.Client); err != nil {
-		knativeLogger.Error(err, "Error occurred when creating Knative ServingCR", "CR-Name", KnativeServingNamespacedName)
-		return err
-	}
 	return nil
 }
 
@@ -334,6 +288,7 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 	ctx context.Context, wfNamespace string,
 	argoCDEnabled, tektonEnabled bool,
 	rhdhConfig orchestratorv1alpha1.RHDHConfig) error {
+
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Reconciliation for Backstage")
 

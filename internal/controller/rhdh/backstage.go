@@ -169,7 +169,7 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 	rhdhConfig orchestratorv1alpha1.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
 
 	cmLogger := log.FromContext(ctx)
-	cmLogger.Info("Creating configmaps")
+	cmLogger.Info("Creating ConfigMaps...")
 
 	configmapList := make([]rhdhv1alpha2.ObjectKeyRef, 0)
 	namespace := rhdhConfig.RHDHNamespace
@@ -190,7 +190,6 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 				}
 			}
 		}
-
 	}
 	return configmapList
 }

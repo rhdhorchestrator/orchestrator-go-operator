@@ -135,64 +135,111 @@ func handleServerlessCR(ctx context.Context, client client.Client) error {
 func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Handling K-Native Eventing CR")
-	// check CR exists
-	knativeEventingCR := &knative.KnativeEventing{}
-	err := client.Get(ctx, types.NamespacedName{Name: KnativeEventingNamespacedName, Namespace: KnativeEventingNamespacedName}, knativeEventingCR)
-	if err == nil {
-		// update CR TODO
-		return nil
-	} else {
-		if apierrors.IsNotFound(err) {
-			knEventing := &knative.KnativeEventing{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: KnativeAPIVersion,
-					Kind:       KnativeEventingKind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      KnativeEventingNamespacedName,
-					Namespace: KnativeEventingNamespacedName,
-					Labels:    kube.AddLabel(),
-				},
-				Spec: knative.KnativeEventingSpec{},
-			}
-			if err = client.Create(ctx, knEventing); err != nil {
-				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knEventing.Name)
-			}
-			logger.Info("Successfully created Knative Eventing resource", "CR-Name", knEventing.Name)
+
+	// check namespace exist; else create namespace
+	namespaceExist, _ := kube.CheckNamespaceExist(ctx, client, KnativeEventingNamespacedName)
+	if !namespaceExist {
+		if err := kube.CreateNamespace(ctx, client, KnativeEventingNamespacedName); err != nil {
+			logger.Error(err, "Error occurred when creating namespace", "NS", KnativeEventingNamespacedName)
+			return err
 		}
 	}
-	return err
+
+	desiredKnEventingCR := &knative.KnativeEventing{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: KnativeAPIVersion,
+			Kind:       KnativeEventingKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      KnativeEventingNamespacedName,
+			Namespace: KnativeEventingNamespacedName,
+			Labels:    kube.AddLabel(),
+		},
+		Spec: knative.KnativeEventingSpec{},
+	}
+	currentKnEventingCR := &knative.KnativeEventing{}
+
+	// check CR exists
+	err := client.Get(ctx, types.NamespacedName{Name: KnativeEventingNamespacedName, Namespace: KnativeEventingNamespacedName}, currentKnEventingCR)
+
+	// CR exist. check desired state is same as current state
+	//if err == nil {
+	//	if !reflect.DeepEqual(currentKnEventingCR, desiredKnEventingCR) {
+	//		if err := client.Update(ctx, desiredKnEventingCR); err != nil {
+	//			logger.Error(err, "Error occurred when updating CR resource", "CR-Name", currentKnEventingCR.Name)
+	//			return err
+	//		}
+	//	}
+	//}
+
+	if err != nil {
+		// CR does not exist. Create CR
+		if apierrors.IsNotFound(err) {
+			if err = client.Create(ctx, desiredKnEventingCR); err != nil {
+				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", desiredKnEventingCR.Name)
+			}
+			logger.Info("Successfully created Knative Eventing resource", "CR-Name", desiredKnEventingCR.Name)
+			return nil
+		}
+		logger.Error(err, "Error occurred when checking CR resource exist", "CR-Name", desiredKnEventingCR.Name)
+		return err
+	}
+	return nil
 }
 
 func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Handling K-Native Serving CR")
+
+	// check namespace exist; else create namespace
+	namespaceExist, _ := kube.CheckNamespaceExist(ctx, client, KnativeServingNamespacedName)
+	if !namespaceExist {
+		if err := kube.CreateNamespace(ctx, client, KnativeServingNamespacedName); err != nil {
+			logger.Error(err, "Error occurred when creating namespace", "NS", KnativeEventingNamespacedName)
+			return err
+		}
+	}
+
+	desiredKnServingCR := &knative.KnativeServing{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: KnativeAPIVersion,
+			Kind:       KnativeServingKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      KnativeServingNamespacedName,
+			Namespace: KnativeServingNamespacedName,
+			Labels:    kube.AddLabel(),
+		},
+		Spec: knative.KnativeServingSpec{},
+	}
+	currentKnServingCR := &knative.KnativeServing{}
+
 	// check CR exists
-	knativeServingCR := &knative.KnativeServing{}
-	err := client.Get(ctx, types.NamespacedName{Name: KnativeServingNamespacedName, Namespace: KnativeServingNamespacedName}, knativeServingCR)
-	if err == nil {
-		// update CR TODO
-		return nil
-	}
-	if apierrors.IsNotFound(err) {
-		knServing := &knative.KnativeServing{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: KnativeAPIVersion,
-				Kind:       KnativeServingKind,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      KnativeServingNamespacedName,
-				Namespace: KnativeServingNamespacedName,
-				Labels:    kube.AddLabel(),
-			},
-			Spec: knative.KnativeServingSpec{},
+	err := client.Get(ctx, types.NamespacedName{Name: KnativeServingNamespacedName, Namespace: KnativeServingNamespacedName}, currentKnServingCR)
+
+	// CR exist. check desired state is same as current state
+	//if err == nil {
+	//	if !reflect.DeepEqual(currentKnServingCR, desiredKnServingCR) {
+	//		if err := client.Update(ctx, desiredKnServingCR); err != nil {
+	//			logger.Error(err, "Error occurred when updating CR resource", "CR-Name", currentKnServingCR.Name)
+	//			return err
+	//		}
+	//	}
+	//}
+
+	if err != nil {
+		// CR does not exist. Create CR
+		if apierrors.IsNotFound(err) {
+			if err = client.Create(ctx, desiredKnServingCR); err != nil {
+				logger.Error(err, "Error occurred when creating CR resource", "CR-Name", desiredKnServingCR.Name)
+			}
+			logger.Info("Successfully created Knative Eventing resource", "CR-Name", desiredKnServingCR.Name)
+			return nil
 		}
-		if err = client.Create(ctx, knServing); err != nil {
-			logger.Error(err, "Error occurred when creating CR resource", "CR-Name", knServing.Name)
-		}
-		logger.Info("Successfully created Knative Serving resource", "CR-Name", knServing.Name)
+		logger.Error(err, "Error occurred when checking CR resource exist", "CR-Name", desiredKnServingCR.Name)
+		return err
 	}
-	return err
+	return nil
 }
 
 func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
@@ -217,7 +264,9 @@ func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSe
 		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", KnativeSubscriptionName)
 		return err
 	}
-	// remove operarator group
+	//TODO
+	// remove operator group
+	// remove namespace for subscription/operator installation
 	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
 	return nil
 }

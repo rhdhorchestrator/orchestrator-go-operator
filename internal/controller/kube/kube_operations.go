@@ -222,10 +222,9 @@ func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Cl
 		err = olmClientSet.OperatorsV1alpha1().Subscriptions(subscriptionNamespace).Delete(ctx, subscriptionName, metav1.DeleteOptions{})
 		if err != nil {
 			logger.Error(err, "Error occurred while deleting Subscription", "SubscriptionName", subscriptionName, "Namespace", subscriptionNamespace)
-			//return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
 			return err
 		}
-		logger.Info("Successfully deleted Subscription: %s", subscriptionName)
+		logger.Info("Successfully deleted Subscription", "SubscriptionName", subscriptionName)
 
 		// cleanup csv
 		csv, err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(subscriptionNamespace).Get(ctx, csvName, metav1.GetOptions{})

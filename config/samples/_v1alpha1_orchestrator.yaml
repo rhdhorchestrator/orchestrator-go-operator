@@ -7,28 +7,28 @@ metadata:
   name: orchestrator-sample
 spec:
   serverlessLogicOperator:
-    enabled: true # whether the operator should be deployed by the operator
+    enabled: true # Determines whether to install the ServerlessLogic operator. Defaults to True. Optional
   serverlessOperator:
-    enabled: true # whether the operator should be deployed by the chart
+    enabled: true # Determines whether to install the Serverless operator. Defaults to True. Optional
   rhdh:
-    installOperator: true # whether the operator should be deployed by the chart
-    devMode: false # whether to enable guest provider
-    name: "backstage"
-    namespace: "rhdh"
-    plugins: # RHDH plugins required for the Orchestrator
+    installOperator: true # Determines whether the RHDH operator should be installed.This determines the deployment of the RHDH instance. Defaults to False. Optional
+    devMode: false # Determines whether to enable the guest provider in RHDH. This should be used for development purposes ONLY and should not be enabled in production. Defaults to False. Optional
+    name: "backstage" # Name of RHDH CR, whether existing or to be installed. Required
+    namespace: "rhdh-operator" # Namespace of RHDH Instance, whether existing or to be installed. Required
+    plugins:
       notificationsEmail:
-        enabled: false # whether to install the notifications email plugin. requires setting of hostname and credentials in backstage secret to enable. See value backstage-backend-auth-secret. See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
-        port: 587 # SMTP server port
-        sender: "" # the email sender address
-        replyTo: "" # reply-to address
+        enabled: false # Determines whether to install the Notifications Email plugin. Requires setting of hostname and credentials in backstage secret. The secret, backstage-backend-auth-secret, is created as a pre-requisite. See value backstage-backend-auth-secret. See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
+        port: 587 # SMTP server port. Defaults to 587. Optional
+        sender: "" # Email address of the Sender. Defaults to empty string. Optional
+        replyTo: "" # Email address of the Recipient. Defaults to empty string. Optional
   postgres:
     serviceName: "sonataflow-psql-postgresql" # The name of the Postgres DB service to be used by platform services. Cannot be empty.
     serviceNamespace: "sonataflow-infra" # The namespace of the Postgres DB service to be used by platform services.
     authSecret:
-      name: "sonataflow-psql-postgresql" # name of existing secret to use for PostgreSQL credentials.
-      userKey: postgres-username # name of key in existing secret to use for PostgreSQL credentials.
-      passwordKey: postgres-password # name of key in existing secret to use for PostgreSQL credentials.
-    database: sonataflow # existing database instance used by data index and job service
+      name: "sonataflow-psql-postgresql" # Name of existing secret to use for PostgreSQL credentials. Required
+      userKey: postgres-username # Name of key in existing secret to use for PostgreSQL credentials. Required
+      passwordKey: postgres-password # Name of key in existing secret to use for PostgreSQL credentials. Required
+    database: sonataflow # Name of key in existing secret to use for PostgreSQL credentials. Required
   orchestrator:
     namespace: "sonataflow-infra"
     sonataFlowPlatform:
@@ -39,3 +39,8 @@ spec:
         limits:
           memory: "1Gi"
           cpu: "500m"
+  tekton:
+    enabled: false # Determines whether to create the Tekton pipeline. Defaults to false. Optional
+  argocd:
+    enabled: false # Determines whether to install the ArgoCD plugin and create the orchestrator AppProject. Defaults to False. Optional
+    namespace: "my-argocd" # Namespace where the ArgoCD operator is installed and watching for argoapp CR instances. Optional

@@ -19,7 +19,7 @@ import (
 
 const (
 	BackstageOperatorGroup             = "rhdh-operator-group"
-	BackstageAPIVersion                = "rhdh.redhat.com/v1alpha1"
+	BackstageAPIVersion                = "rhdh.redhat.com/v1alpha2"
 	BackstageKind                      = "Backstage"
 	BackstageCRName                    = "backstage"
 	BackstageReplica             int32 = 1

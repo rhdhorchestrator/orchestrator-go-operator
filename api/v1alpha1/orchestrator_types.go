@@ -68,7 +68,7 @@ type ServerlessOperator struct {
 }
 
 type RHDHConfig struct {
-	// Name of RHDH CR, whether existing or to be created
+	// Name of RHDH CR, whether existing or to be installed
 	// +kubebuilder:validation:Required
 	RHDHName string `json:"name"`
 
@@ -82,7 +82,7 @@ type RHDHConfig struct {
 	// +kubebuilder:default=false
 	InstallOperator bool `json:"installOperator,omitempty"`
 
-	// DevMode determines whether to enable the guest provider in RHDH.
+	// Determines whether to enable the guest provider in RHDH.
 	// This should be used for development purposes ONLY and should not be enabled in production.
 	// Defaults to false.
 	// +kubebuilder:default=false

@@ -56,23 +56,16 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 			return err
 		}
 		rhdhLogger.Info("Operator successfully installed", "SubscriptionName", BackstageSubscriptionName)
-	}
-
-	if subscriptionExists {
+	} else {
 		// Compare the current and desired state
 		if !reflect.DeepEqual(existingSubscription.Spec, rhdhSubscription.Spec) {
-			// Set owner reference for proper garbage collection
-			//if err := controllerutil.SetControllerReference(&orchestrator, oslSubscription, r.Scheme); err != nil {
-			//	return err
-			//}
-
 			// Update the existing subscription with the new Spec
 			existingSubscription.Spec = rhdhSubscription.Spec
 			if err := client.Update(ctx, existingSubscription); err != nil {
 				rhdhLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", BackstageSubscriptionName)
-
 				return err
 			}
+			rhdhLogger.Info("Successfully updated subscription spec", "SubscriptionName", BackstageSubscriptionName)
 		}
 	}
 	return nil

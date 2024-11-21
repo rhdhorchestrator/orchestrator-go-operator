@@ -81,18 +81,16 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 			return err
 		}
 		sfLogger.Info("Operator successfully installed via Subscription", "SubscriptionName", ServerlessLogicSubscriptionName)
-	}
-
-	if subscriptionExists {
+	} else {
 		// Compare the current and desired state
 		if !reflect.DeepEqual(existingSubscription.Spec, oslSubscription.Spec) {
-
 			// Update the existing subscription with the desired spec
 			existingSubscription.Spec = oslSubscription.Spec
 			if err := client.Update(ctx, existingSubscription); err != nil {
 				sfLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", ServerlessLogicSubscriptionName)
 				return err
 			}
+			sfLogger.Info("Successfully updated updating subscription spec", "SubscriptionName", ServerlessLogicSubscriptionName)
 		}
 	}
 	return nil

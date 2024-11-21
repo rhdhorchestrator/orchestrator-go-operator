@@ -40,15 +40,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// Definition to manage Orchestrator condition status.
 const (
+	// Definition to manage Orchestrator condition status.
 	TypeAvailable   string = "Available"
 	TypeProgressing string = "Progressing"
 	TypeDegrading   string = "Degrading"
-)
 
-const (
+	// Finalizer Definition
 	FinalizerCRCleanup = "rhdh.redhat.com/orchestrator-cleanup"
+
+	RequeueAfterTime = 5
 )
 
 // OrchestratorReconciler reconciles an Orchestrator object
@@ -103,15 +104,16 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if !orchestrator.DeletionTimestamp.IsZero() {
-		err := r.handleCleanup(ctx, orchestrator)
+		err := r.handleCleanUp(ctx, orchestrator)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+			return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
 		}
 		// Remove the finalizer to complete deletion
 		controllerutil.RemoveFinalizer(orchestrator, FinalizerCRCleanup)
 		if err := r.Update(ctx, orchestrator); err != nil {
 			return ctrl.Result{}, err
 		}
+		logger.Info("Successfully removed Orchestrator Custom Resource")
 	}
 
 	// Add finalizer if not present
@@ -139,12 +141,12 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	argoCDEnabled := orchestrator.Spec.ArgoCd.Enabled
 	tektonEnabled := orchestrator.Spec.Tekton.Enabled
-	wfNamespace := orchestrator.Spec.OrchestratorConfig.Namespace
+	serverlessWorkflowNamespace := orchestrator.Spec.ServerlessWorkflow.Namespace
 
-	// handle sonataflow
-	sonataFlowOperator := orchestrator.Spec.ServerlessLogicOperator
-	if err = r.reconcileSonataFlow(ctx, sonataFlowOperator, orchestrator); err != nil {
-		logger.Error(err, "Error occurred when installing SonataFlow resources")
+	// handle serverless logic
+	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
+	if err = r.reconcileServerlessLogic(ctx, serverlessLogicOperator, orchestrator); err != nil {
+		logger.Error(err, "Error occurred when installing Serverless Logic resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
@@ -152,15 +154,8 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
-		return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+		return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
 	}
-	//_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
-	//	Type:               TypeProgressing,
-	//	Status:             metav1.ConditionTrue,
-	//	Reason:             "ReconcilingSonatflowResourcesCompleted",
-	//	Message:            "Completed SonataFlow Reconciliation",
-	//	LastTransitionTime: metav1.Now(),
-	//})
 
 	//handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
@@ -173,92 +168,78 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
-		return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+		return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
 	}
-	//_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
-	//	Type:               TypeProgressing,
-	//	Status:             metav1.ConditionTrue,
-	//	Reason:             "ReconcilingKNativeResourcesCompleted",
-	//	Message:            "Completed K-Native Reconciliation",
-	//	LastTransitionTime: metav1.Now(),
-	//})
 
-	// handle backstage
+	// handle RHDH
 	rhdhConfig := orchestrator.Spec.RHDHConfig
-	if err = r.reconcileBackstage(ctx, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
-		logger.Error(err, "Error occurred when installing Backstage resources")
+	if err = r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
+		logger.Error(err, "Error occurred when installing RHDH resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
-			Reason:             "ReconcilingBackstageResourcesFailed",
+			Reason:             "ReconcilingRHDHResourcesFailed",
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
 		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
-	//_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.CompletedPhase, metav1.Condition{
-	//	Type:               TypeProgressing,
-	//	Status:             metav1.ConditionTrue,
-	//	Reason:             "ReconcilingBackstageResourcesCompleted",
-	//	Message:            "Completed Backstage Reconciliation",
-	//	LastTransitionTime: metav1.Now(),
-	//})
 	return ctrl.Result{}, nil
 }
 
-func (r *OrchestratorReconciler) reconcileSonataFlow(
+func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	ctx context.Context,
-	sonataFlowOperator orchestratorv1alpha1.ServerlessLogicOperator,
+	serverlessLogicOperator orchestratorv1alpha1.ServerlessLogicOperator,
 	orchestrator *orchestratorv1alpha1.Orchestrator) error {
 
 	sfLogger := log.FromContext(ctx)
-	sfLogger.Info("Starting reconciliation for SonataFlow")
+	sfLogger.Info("Starting reconciliation for Serverless Logic")
 
-	sonataflowNamespace := orchestrator.Spec.OrchestratorConfig.Namespace
+	serverlessWorkflowNamespace := orchestrator.Spec.ServerlessWorkflow.Namespace
 
 	// if subscription is disabled;
 	// check if subscription exists and handle clean up if necessary
-	if !sonataFlowOperator.Enabled {
+	if !serverlessLogicOperator.Enabled {
 		// handle clean up
-		if err := handleSonataFlowCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+		if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace); err != nil {
 			return err
 		}
 	}
 	// Subscription is enabled; check namespace exist
-	if _, err := kube.CheckNamespaceExist(ctx, r.Client, sonataflowNamespace); err != nil {
+	if _, err := kube.CheckNamespaceExist(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
 		if apierrors.IsNotFound(err) {
-			sfLogger.Info("Creating namespace", "NS", sonataflowNamespace)
-			if err := kube.CreateNamespace(ctx, r.Client, sonataflowNamespace); err != nil {
-				sfLogger.Error(err, "Error occurred when creating namespace", "NS", sonataflowNamespace)
+			sfLogger.Info("Creating namespace", "NS", serverlessWorkflowNamespace)
+			if err := kube.CreateNamespace(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
+				sfLogger.Error(err, "Error occurred when creating namespace", "NS", serverlessWorkflowNamespace)
 				return err
 			}
 		}
-		sfLogger.Error(err, "Error occurred when checking namespace exists", "NS", sonataflowNamespace)
+		sfLogger.Error(err, "Error occurred when checking namespace exists", "NS", serverlessWorkflowNamespace)
 		return err
 	}
 
-	if err := handleOSLOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
+	if err := handleServerlessLogicOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
 		sfLogger.Error(err, "Error occurred when installing OSL Operator resources")
 		return err
 	}
 
 	// subscription exists; check if CRD exists;
 	sonataFlowClusterPlatformCRD := &apiextensionsv1.CustomResourceDefinition{}
-	if err := r.Get(ctx, types.NamespacedName{Name: SonataFlowClusterPlatformCRDName, Namespace: SonataFlowNamespace}, sonataFlowClusterPlatformCRD); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: SonataFlowClusterPlatformCRDName, Namespace: serverlessWorkflowNamespace}, sonataFlowClusterPlatformCRD); err != nil {
 		if apierrors.IsNotFound(err) {
 			// CRD does not exist
-			sfLogger.Info("CRD resource not found.", "SubscriptionName", ServerlessLogicSubscriptionName, "Namespace", SonataFlowNamespace)
+			sfLogger.Info("CRD resource not found.", "SubscriptionName", ServerlessLogicSubscriptionName, "Namespace", serverlessWorkflowNamespace)
 			return err
 		}
 		sfLogger.Error(err, "Error occurred when retrieving CRD", "CRD", SonataFlowClusterPlatformCRDName)
 		return err
 	}
 
-	// CRD exist; check and handle sonataflowclusterplatform CR
+	// handle serveless logic CRs
 	if err := handleServerlessLogicCR(ctx, r.Client, orchestrator); err != nil {
 		return err
 	}
-	sfLogger.Info("Successfully created SonataFlow Resources")
+	sfLogger.Info("Successfully created ServerlessLogic Resources")
 	return nil
 }
 
@@ -280,29 +261,30 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 		return err
 	}
 
-	if err := handleServerlessCR(ctx, r.Client); err != nil {
-		knativeLogger.Error(err, "Error occurred when handling Knative custom resources")
+	// handle knative CRs
+	if err := handleKnativeCR(ctx, r.Client); err != nil {
+		knativeLogger.Error(err, "Error occurred when handling Knative Custom Resources")
 		return err
 	}
-
+	knativeLogger.Info("Successfully created Knative Custom Resources")
 	return nil
 }
 
-func (r *OrchestratorReconciler) reconcileBackstage(
+func (r *OrchestratorReconciler) reconcileRHDH(
 	ctx context.Context, wfNamespace string,
 	argoCDEnabled, tektonEnabled bool,
 	rhdhConfig orchestratorv1alpha1.RHDHConfig) error {
 
 	logger := log.FromContext(ctx)
-	logger.Info("Starting Reconciliation for Backstage")
+	logger.Info("Starting Reconciliation for RHDH")
 
 	subscriptionName := rhdhConfig.RHDHName
 	namespace := rhdhConfig.RHDHNamespace
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !rhdhConfig.InstallOperator {
-		if err := rhdh.HandleBackstageCleanup(ctx, r.Client, r.OLMClient, namespace); err != nil {
-			logger.Error(err, "Error occurred when cleaning up backstage", "SubscriptionName", subscriptionName)
+		if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, namespace); err != nil {
+			logger.Error(err, "Error occurred when cleaning up RHDH", "SubscriptionName", subscriptionName)
 			return err
 		}
 	}
@@ -322,11 +304,11 @@ func (r *OrchestratorReconciler) reconcileBackstage(
 
 	clusterDomain, _ := r.getClusterDomain(ctx)
 	// create secret
-	if err := rhdh.CreateBSSecret(namespace, ctx, r.Client); err != nil {
+	if err := rhdh.CreateRHDHSecret(namespace, ctx, r.Client); err != nil {
 		return err
 	}
-	// create backstage CR
-	if err := rhdh.HandleCRCreation(rhdhConfig, argoCDEnabled, tektonEnabled, wfNamespace, clusterDomain, ctx, r.Client); err != nil {
+	// create RHDH CR
+	if err := rhdh.HandleRHDHCR(rhdhConfig, argoCDEnabled, tektonEnabled, wfNamespace, clusterDomain, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil
@@ -361,17 +343,17 @@ func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator
 	return nil
 }
 
-func (r *OrchestratorReconciler) handleCleanup(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
-	// cleanup knative
+func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+	// cleanup Knative
 	if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 		return err
 	}
-	// cleanup sonataflow
-	if err := handleSonataFlowCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+	// cleanup Serverless Logic
+	if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.ServerlessWorkflow.Namespace); err != nil {
 		return err
 	}
-	// cleanup backstage
-	if err := rhdh.HandleBackstageCleanup(ctx, r.Client, r.OLMClient, orchestrator.Spec.RHDHConfig.RHDHNamespace); err != nil {
+	// cleanup RHDH
+	if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.RHDHConfig.RHDHNamespace); err != nil {
 		return err
 	}
 	return nil
@@ -382,7 +364,6 @@ func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator 
 	logger := log.FromContext(ctx)
 	orchestrator.Status.Phase = phase
 	meta.SetStatusCondition(&orchestrator.Status.Conditions, condition)
-	//orchestrator.Status.Conditions = append(orchestrator.Status.Conditions, condition)
 
 	err := r.Status().Update(ctx, orchestrator)
 	if err != nil {

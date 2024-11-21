@@ -44,7 +44,7 @@ type OrchestratorSpec struct {
 	PostgresDB Postgres `json:"postgres"`
 
 	// Configuration for Orchestrator. Optional
-	OrchestratorConfig OrchestratorConfig `json:"orchestrator,omitempty"`
+	ServerlessWorkflow ServerlessWorkflow `json:"orchestrator,omitempty"`
 
 	// Configuration for Tekton. Optional
 	Tekton Tekton `json:"tekton,omitempty"`
@@ -150,7 +150,7 @@ type PostgresAuthSecret struct {
 	PasswordKey string `json:"passwordKey"`
 }
 
-type OrchestratorConfig struct {
+type ServerlessWorkflow struct {
 	// Namespace to run sonataflow's workflows
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`

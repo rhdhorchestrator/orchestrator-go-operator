@@ -34,7 +34,6 @@ import (
 const (
 	SonataFlowAPIVersion                   = "sonataflow.org/v1alpha08"
 	SonataFlowPlatformCRName               = "sonataflow-platform"
-	SonataFlowNamespace                    = "sonataflow-infra"
 	SonataFlowPlatformKind                 = "SonataFlowPlatform"
 	SonataFlowClusterPlatformKind          = "SonataFlowClusterPlatform"
 	SonataFlowClusterPlatformCRName        = "cluster-platform"
@@ -45,7 +44,7 @@ const (
 	ServerlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.34.0"
 )
 
-func handleOSLOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func handleServerlessLogicOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	sfLogger := log.FromContext(ctx)
 
 	// create namespace for operator
@@ -78,7 +77,7 @@ func handleOSLOperatorInstallation(ctx context.Context, client client.Client, ol
 			kube.OpenshiftServerlessOperatorGroupName,
 			oslSubscription)
 		if err != nil {
-			sfLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", ServerlessLogicSubscriptionName)
+			sfLogger.Error(err, "Error occurred when installing operator via Subscription", "SubscriptionName", ServerlessLogicSubscriptionName)
 			return err
 		}
 		sfLogger.Info("Operator successfully installed via Subscription", "SubscriptionName", ServerlessLogicSubscriptionName)
@@ -87,14 +86,11 @@ func handleOSLOperatorInstallation(ctx context.Context, client client.Client, ol
 	if subscriptionExists {
 		// Compare the current and desired state
 		if !reflect.DeepEqual(existingSubscription.Spec, oslSubscription.Spec) {
-			// Set owner reference for proper garbage collection
-			//if err := controllerutil.SetControllerReference(&orchestrator, oslSubscription, r.Scheme); err != nil {
-			//	return err
-			//}
 
-			// Update the existing subscription with the new Spec
+			// Update the existing subscription with the desired spec
 			existingSubscription.Spec = oslSubscription.Spec
 			if err := client.Update(ctx, existingSubscription); err != nil {
+				sfLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", ServerlessLogicSubscriptionName)
 				return err
 			}
 		}
@@ -106,20 +102,21 @@ func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestr
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Handling ServerlessLogic CR...")
 
-	if err := handleSonataFlowClusterCR(ctx, client, SonataFlowClusterPlatformCRName); err != nil {
+	serverlessWorkflowNamespace := orchestrator.Spec.ServerlessWorkflow.Namespace
+	if err := handleSonataFlowClusterCR(ctx, client, SonataFlowClusterPlatformCRName, serverlessWorkflowNamespace); err != nil {
 		sfLogger.Error(err, "Error occurred when creating SonataFlowClusterCR", "CR-Name", SonataFlowClusterPlatformCRName)
 		return err
 
 	}
 	// create sonataflowplatform  CR
-	if err := handleSonataFlowPlatformCR(ctx, client, orchestrator, SonataFlowClusterPlatformCRName); err != nil {
+	if err := handleSonataFlowPlatformCR(ctx, client, orchestrator, SonataFlowClusterPlatformCRName, serverlessWorkflowNamespace); err != nil {
 		sfLogger.Error(err, "Error occurred when creating SonataFlowPlatform", "CR-Name", SonataFlowClusterPlatformCRName)
 		return err
 	}
 	return nil
 }
 
-func getSonataFlowPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) *sonataapi.PersistenceOptionsSpec {
+func getServerlessLogicPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) *sonataapi.PersistenceOptionsSpec {
 	return &sonataapi.PersistenceOptionsSpec{
 		PostgreSQL: &sonataapi.PersistencePostgreSQL{
 			SecretRef: sonataapi.PostgreSQLSecretOptions{
@@ -138,16 +135,16 @@ func getSonataFlowPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) *
 	}
 }
 
-func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName string) error {
+func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName, namespace string) error {
 	logger := log.FromContext(ctx)
 	// check sonataflowlusterplatform CR exists
 	sfcCR := &sonataapi.SonataFlowClusterPlatform{}
 
-	err := client.Get(ctx, types.NamespacedName{Name: crName, Namespace: SonataFlowNamespace}, sfcCR)
+	err := client.Get(ctx, types.NamespacedName{Name: crName, Namespace: namespace}, sfcCR)
 	if err == nil {
 		// CR exists; check for CR updates
-		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowNamespace)
-		sfcCR.Spec = getSonataFlowClusterSpec()
+		logger.Info("CR resource  found.", "CR-Name", crName, "NS", namespace)
+		sfcCR.Spec = getSonataFlowClusterSpec(namespace)
 		if err = client.Update(ctx, sfcCR); err != nil {
 			logger.Error(err, "Failed to update CR", "CR-Name", sfcCR.Name)
 		}
@@ -162,10 +159,10 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowClusterPlatformCRName,
-					Namespace: SonataFlowNamespace,
+					Namespace: namespace,
 					Labels:    kube.AddLabel(),
 				},
-				Spec: getSonataFlowClusterSpec(),
+				Spec: getSonataFlowClusterSpec(namespace),
 			}
 
 			// Create sonataflow cluster CR
@@ -173,7 +170,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				logger.Error(err, "Error occurred when creating Custom Resource", "CR-Name", crName)
 				return err
 			}
-			logger.Info("Successfully created SonataFlowClusterPlatform resource %s", sonataFlowClusterCR.Name)
+			logger.Info("Successfully created SonataFlowClusterPlatform resource", "CR-Name", sonataFlowClusterCR.Name)
 			return nil
 		}
 		logger.Error(err, "Error occurred when retrieving SonataFlowClusterPlatform CR", "CR-Name", crName)
@@ -181,41 +178,39 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 	return err
 }
 
-func getSonataFlowClusterSpec() sonataapi.SonataFlowClusterPlatformSpec {
+func getSonataFlowClusterSpec(namespace string) sonataapi.SonataFlowClusterPlatformSpec {
 	return sonataapi.SonataFlowClusterPlatformSpec{
 		PlatformRef: sonataapi.SonataFlowPlatformRef{
 			Name:      SonataFlowClusterPlatformCRName,
-			Namespace: SonataFlowNamespace,
+			Namespace: namespace,
 		},
 	}
 }
 
 func handleSonataFlowPlatformCR(
-	ctx context.Context,
-	client client.Client,
-	orchestrator *orchestratorv1alpha1.Orchestrator,
-	crName string) error {
+	ctx context.Context, client client.Client,
+	orchestrator *orchestratorv1alpha1.Orchestrator, crName, namespace string) error {
 	logger := log.FromContext(ctx)
 
 	logger.Info("Starting CR creation for SonataFlowPlatform...")
 
 	sfpCR := &sonataapi.SonataFlowPlatform{}
 	err := client.Get(ctx, types.NamespacedName{
-		Namespace: SonataFlowNamespace,
+		Namespace: namespace,
 		Name:      SonataFlowPlatformCRName,
 	}, sfpCR)
 
 	if err == nil {
 		// CR exists; check for CR updates
-		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", SonataFlowNamespace)
+		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", namespace)
 		err = client.Update(ctx, sfpCR)
 
 		return nil
 	} else {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SonataFlowPlatform not found. Proceed to creating CR...")
-			// Create sonataflow platform CR object
 
+			// Create sonataflow platform CR object
 			sonataFlowPlatformCR := &sonataapi.SonataFlowPlatform{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: SonataFlowAPIVersion,
@@ -223,18 +218,18 @@ func handleSonataFlowPlatformCR(
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      SonataFlowPlatformCRName,
-					Namespace: SonataFlowNamespace,
+					Namespace: namespace,
 					Labels:    kube.AddLabel(),
 				},
 				Spec: getSonataFlowPlatformSpec(orchestrator),
 			}
-			logger.Info("Persistence function", "Persistent", getSonataFlowPersistence(orchestrator))
+			logger.Info("Persistence function", "Persistent", getServerlessLogicPersistence(orchestrator))
 			// Create sonataflowplatform CR
 			if err := client.Create(ctx, sonataFlowPlatformCR); err != nil {
 				logger.Error(err, "Failed to create Custom Resource", "CR-Name", crName)
 				return err
 			}
-			logger.Info("Successfully created CR", "CR-Name", sonataFlowPlatformCR.Name)
+			logger.Info("Successfully created SonataFlowPlatform CR", "CR-Name", sonataFlowPlatformCR.Name)
 			return nil
 		}
 		logger.Error(err, "Error occurred when retrieving SonataFlowPlatform CR", "CR-Name", crName)
@@ -245,18 +240,16 @@ func handleSonataFlowPlatformCR(
 func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) sonataapi.SonataFlowPlatformSpec {
 	limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
-	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Limits.Cpu)
-	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Limits.Memory)
+	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Limits.Cpu)
+	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Limits.Memory)
 	limitResourceMap[corev1.ResourceCPU] = cpuQuantity
 	limitResourceMap[corev1.ResourceMemory] = memoryQuantity
-	//logger.Info("Limit Map", "Map", limitResourceMap)
 
 	requestResourceMap := make(map[corev1.ResourceName]resource.Quantity)
-	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Requests.Cpu)
-	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.OrchestratorConfig.SonataFlowPlatform.Resources.Requests.Memory)
+	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Requests.Cpu)
+	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Requests.Memory)
 	requestResourceMap[corev1.ResourceCPU] = requestCpuQuantity
 	requestResourceMap[corev1.ResourceMemory] = requestMemoryQuantity
-	//logger.Info("Request Map", "Map", requestResourceMap)
 
 	return sonataapi.SonataFlowPlatformSpec{
 		Build: sonataapi.BuildPlatformSpec{
@@ -269,20 +262,21 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) 
 		Services: &sonataapi.ServicesPlatformSpec{
 			DataIndex: &sonataapi.ServiceSpec{
 				Enabled:     util.MakePointer(true),
-				Persistence: getSonataFlowPersistence(orchestrator),
+				Persistence: getServerlessLogicPersistence(orchestrator),
 			},
 			JobService: &sonataapi.ServiceSpec{
 				Enabled:     util.MakePointer(true),
-				Persistence: getSonataFlowPersistence(orchestrator),
+				Persistence: getServerlessLogicPersistence(orchestrator),
 			},
 		},
 	}
 }
 
-func handleSonataFlowCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, namespace string) error {
 	logger := log.FromContext(ctx)
+
 	// remove all namespace
-	if err := kube.CleanUpNamespace(ctx, SonataFlowNamespace, client); err != nil {
+	if err := kube.CleanUpNamespace(ctx, namespace, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", KnativeEventingNamespacedName)
 		return err
 	}

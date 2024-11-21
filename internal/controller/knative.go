@@ -95,7 +95,7 @@ func handleKNativeOperatorInstallation(ctx context.Context, client client.Client
 	return nil
 }
 
-func handleServerlessCR(ctx context.Context, client client.Client) error {
+func handleKnativeCR(ctx context.Context, client client.Client) error {
 	knativeLogger := log.FromContext(ctx)
 	knativeLogger.Info("Handling Serverless Custom Resources...")
 

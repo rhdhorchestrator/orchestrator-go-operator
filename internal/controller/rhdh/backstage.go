@@ -35,7 +35,7 @@ var ConfigMapNameAndConfigDataKey = map[string]string{
 }
 
 func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, namespace string) error {
-	knativeLogger := log.FromContext(ctx)
+	rhdhLogger := log.FromContext(ctx)
 
 	// check if subscription exist
 	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
@@ -47,15 +47,15 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 	// check if subscription exists
 	subscriptionExists, existingSubscription, err := kubeoperations.CheckSubscriptionExists(ctx, olmClientSet, rhdhSubscription)
 	if err != nil {
-		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", BackstageSubscriptionName)
+		rhdhLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", BackstageSubscriptionName)
 		return err
 	}
 	if !subscriptionExists {
 		if err := kubeoperations.InstallOperatorViaSubscription(ctx, client, olmClientSet, BackstageOperatorGroup, rhdhSubscription); err != nil {
-			knativeLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", BackstageSubscriptionName)
+			rhdhLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", BackstageSubscriptionName)
 			return err
 		}
-		knativeLogger.Info("Operator successfully installed", "SubscriptionName", BackstageSubscriptionName)
+		rhdhLogger.Info("Operator successfully installed", "SubscriptionName", BackstageSubscriptionName)
 	}
 
 	if subscriptionExists {
@@ -69,6 +69,8 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 			// Update the existing subscription with the new Spec
 			existingSubscription.Spec = rhdhSubscription.Spec
 			if err := client.Update(ctx, existingSubscription); err != nil {
+				rhdhLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", BackstageSubscriptionName)
+
 				return err
 			}
 		}
@@ -76,7 +78,7 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 	return nil
 }
 
-func CreateBSSecret(secretNamespace string, ctx context.Context, client client.Client) error {
+func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Creating Backstage NPMrc Secret")
 
@@ -115,14 +117,14 @@ func CreateBSSecret(secretNamespace string, ctx context.Context, client client.C
 	return nil
 }
 
-func HandleCRCreation(
+func HandleRHDHCR(
 	rhdhConfig orchestratorv1alpha1.RHDHConfig,
 	argoCDEnabled, tektonEnabled bool,
 	clusterDomain, wfNamespace string,
 	ctx context.Context, client client.Client) error {
-	bsLogger := log.FromContext(ctx)
+	rhdhLogger := log.FromContext(ctx)
 
-	bsLogger.Info("Handling Backstage resources")
+	rhdhLogger.Info("Handling Backstage resources")
 
 	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 
@@ -156,12 +158,12 @@ func HandleCRCreation(
 				},
 			}
 			if err := client.Create(ctx, backstageCR); err != nil {
-				bsLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
+				rhdhLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
 				return err
 			}
-			bsLogger.Info("Successfully created Backstage resource", "CR-Name", rhdhName)
+			rhdhLogger.Info("Successfully created Backstage resource", "CR-Name", rhdhName)
 		}
-		bsLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
+		rhdhLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
 		return err
 	}
 	return nil
@@ -223,8 +225,8 @@ func CreateConfigMap(
 	return nil
 }
 
-func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, rhdhNamespace string) error {
-	logger := log.FromContext(ctx)
+func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, rhdhNamespace string) error {
+	rhdhLogger := log.FromContext(ctx)
 	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
 		BackstageSubscriptionName,
 		rhdhNamespace,
@@ -236,18 +238,18 @@ func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClient
 		backstageCRList, err := listBackstageCRs(ctx, client, rhdhNamespace)
 
 		if err != nil || len(backstageCRList) == 0 {
-			logger.Error(err, "Failed to list backstage CRs or have no Backstage CRs created by Orchestrator Operator and cannot perform clean up process")
+			rhdhLogger.Error(err, "Failed to list backstage CRs or have no Backstage CRs created by Orchestrator Operator and cannot perform clean up process")
 			return err
 		}
 		if len(backstageCRList) == 1 {
 			// remove namespace
 			if err := kubeoperations.CleanUpNamespace(ctx, rhdhNamespace, client); err != nil {
-				logger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
+				rhdhLogger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
 				return err
 			}
 			// remove subscription and csv
 			if err := kubeoperations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, rhdhSubscription); err != nil {
-				logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", rhdhSubscription.Name)
+				rhdhLogger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", rhdhSubscription.Name)
 				return err
 			}
 			// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
@@ -257,7 +259,7 @@ func HandleBackstageCleanup(ctx context.Context, client client.Client, olmClient
 }
 
 func listBackstageCRs(ctx context.Context, k8client client.Client, namespace string) ([]rhdhv1alpha2.Backstage, error) {
-	logger := log.FromContext(ctx)
+	rhdhLogger := log.FromContext(ctx)
 
 	crList := &rhdhv1alpha2.BackstageList{}
 
@@ -268,10 +270,10 @@ func listBackstageCRs(ctx context.Context, k8client client.Client, namespace str
 
 	// List the CRs
 	if err := k8client.List(ctx, crList, listOptions...); err != nil {
-		logger.Error(err, "Error occurred when listing Backstage CRs")
+		rhdhLogger.Error(err, "Error occurred when listing Backstage CRs")
 		return nil, err
 	}
 
-	logger.Info("Successfully listed Backstage CRs", "Total", len(crList.Items))
+	rhdhLogger.Info("Successfully listed Backstage CRs", "Total", len(crList.Items))
 	return crList.Items, nil
 }

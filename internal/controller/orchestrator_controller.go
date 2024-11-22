@@ -271,7 +271,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 }
 
 func (r *OrchestratorReconciler) reconcileRHDH(
-	ctx context.Context, wfNamespace string,
+	ctx context.Context, serverlessWorkflowNamespace string,
 	argoCDEnabled, tektonEnabled bool,
 	rhdhConfig orchestratorv1alpha1.RHDHConfig) error {
 
@@ -308,7 +308,7 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 		return err
 	}
 	// create RHDH CR
-	if err := rhdh.HandleRHDHCR(rhdhConfig, argoCDEnabled, tektonEnabled, wfNamespace, clusterDomain, ctx, r.Client); err != nil {
+	if err := rhdh.HandleRHDHCR(rhdhConfig, argoCDEnabled, tektonEnabled, serverlessWorkflowNamespace, clusterDomain, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil

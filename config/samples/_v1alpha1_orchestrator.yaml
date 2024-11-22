@@ -3,7 +3,6 @@ kind: Orchestrator
 metadata:
   labels:
     app.kubernetes.io/name: orchestrator-operator
-    app.kubernetes.io/managed-by: kustomize
   name: orchestrator-sample
 spec:
   serverlessLogicOperator:
@@ -22,8 +21,8 @@ spec:
         sender: "" # Email address of the Sender. Defaults to empty string. Optional
         replyTo: "" # Email address of the Recipient. Defaults to empty string. Optional
   postgres:
-    serviceName: "sonataflow-psql-postgresql" # The name of the Postgres DB service to be used by platform services. Cannot be empty.
-    serviceNamespace: "sonataflow-infra" # The namespace of the Postgres DB service to be used by platform services.
+    name: "sonataflow-psql-postgresql" # The name of the Postgres DB service to be used by platform services. Cannot be empty.
+    namespace: "sonataflow-infra" # The namespace of the Postgres DB service to be used by platform services.
     authSecret:
       name: "sonataflow-psql-postgresql" # Name of existing secret to use for PostgreSQL credentials. Required
       userKey: postgres-username # Name of key in existing secret to use for PostgreSQL credentials. Required

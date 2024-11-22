@@ -99,7 +99,7 @@ type RHDHPlugins struct {
 
 type NotificationConfig struct {
 	// Determines whether to install the Notifications Email plugin
-	// Requires setting the hostname and credentials in backstage secret
+	// Requires setting the hostname and credentials in RHDH secret
 	// The secret backstage-backend-auth-secret is created as pre-requisite
 	// See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
 	// +kubebuilder:default=false

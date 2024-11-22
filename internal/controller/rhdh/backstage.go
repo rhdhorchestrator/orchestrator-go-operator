@@ -18,14 +18,13 @@ import (
 )
 
 const (
-	BackstageOperatorGroup             = "rhdh-operator-group"
-	BackstageAPIVersion                = "rhdh.redhat.com/v1alpha2"
-	BackstageKind                      = "Backstage"
-	BackstageCRName                    = "backstage"
-	BackstageReplica             int32 = 1
-	BackstageSubscriptionName          = "rhdh"
-	BackstageSubscriptionChannel       = "fast-1.3"
-	rhdhOperatorNamespace              = "rhdh-operator"
+	rhdhOperatorGroup             = "rhdh-operator-group"
+	rhdhAPIVersion                = "rhdh.redhat.com/v1alpha2"
+	rhdhKind                      = "Backstage"
+	rhdhReplica             int32 = 1
+	rhdhSubscriptionName          = "rhdh"
+	rhdhSubscriptionChannel       = "fast-1.3"
+	rhdhOperatorNamespace         = "rhdh-operator"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{
@@ -51,33 +50,33 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 
 	// check if subscription exist
 	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
-		BackstageSubscriptionName,
+		rhdhSubscriptionName,
 		rhdhOperatorNamespace,
-		BackstageSubscriptionChannel,
+		rhdhSubscriptionChannel,
 		"")
 
 	// check if subscription exists
 	subscriptionExists, existingSubscription, err := kubeoperations.CheckSubscriptionExists(ctx, olmClientSet, rhdhSubscription)
 	if err != nil {
-		rhdhLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", BackstageSubscriptionName)
+		rhdhLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", rhdhSubscriptionName)
 		return err
 	}
 	if !subscriptionExists {
-		if err := kubeoperations.InstallOperatorViaSubscription(ctx, client, olmClientSet, BackstageOperatorGroup, rhdhSubscription); err != nil {
-			rhdhLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", BackstageSubscriptionName)
+		if err := kubeoperations.InstallOperatorViaSubscription(ctx, client, olmClientSet, rhdhOperatorGroup, rhdhSubscription); err != nil {
+			rhdhLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", rhdhSubscriptionName)
 			return err
 		}
-		rhdhLogger.Info("Operator successfully installed", "SubscriptionName", BackstageSubscriptionName)
+		rhdhLogger.Info("Operator successfully installed", "SubscriptionName", rhdhSubscriptionName)
 	} else {
 		// Compare the current and desired state
 		if !reflect.DeepEqual(existingSubscription.Spec, rhdhSubscription.Spec) {
 			// Update the existing subscription with the new Spec
 			existingSubscription.Spec = rhdhSubscription.Spec
 			if err := client.Update(ctx, existingSubscription); err != nil {
-				rhdhLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", BackstageSubscriptionName)
+				rhdhLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", rhdhSubscriptionName)
 				return err
 			}
-			rhdhLogger.Info("Successfully updated subscription spec", "SubscriptionName", BackstageSubscriptionName)
+			rhdhLogger.Info("Successfully updated subscription spec", "SubscriptionName", rhdhSubscriptionName)
 		}
 	}
 	return nil
@@ -143,11 +142,11 @@ func HandleRHDHCR(
 			}
 			backstageCR := &rhdhv1alpha2.Backstage{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: BackstageAPIVersion,
-					Kind:       BackstageKind,
+					APIVersion: rhdhAPIVersion,
+					Kind:       rhdhKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      BackstageCRName,
+					Name:      rhdhName,
 					Namespace: rhdhConfig.Namespace,
 					Labels:    kubeoperations.AddLabel(),
 				},
@@ -158,7 +157,7 @@ func HandleRHDHCR(
 						ExtraEnvs: &rhdhv1alpha2.ExtraEnvs{
 							Secrets: []rhdhv1alpha2.ObjectKeyRef{secret},
 						},
-						Replicas: util.MakePointer(BackstageReplica),
+						Replicas: util.MakePointer(rhdhReplica),
 					},
 				},
 			}
@@ -233,9 +232,9 @@ func CreateConfigMap(
 func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, rhdhNamespace string) error {
 	rhdhLogger := log.FromContext(ctx)
 	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
-		BackstageSubscriptionName,
+		rhdhSubscriptionName,
 		rhdhNamespace,
-		BackstageSubscriptionChannel,
+		rhdhSubscriptionChannel,
 		"")
 
 	namespaceExist, _ := kubeoperations.CheckNamespaceExist(ctx, client, rhdhNamespace)
@@ -243,7 +242,7 @@ func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet o
 		backstageCRList, err := listBackstageCRs(ctx, client, rhdhNamespace)
 
 		if err != nil || len(backstageCRList) == 0 {
-			rhdhLogger.Error(err, "Failed to list backstage CRs or have no Backstage CRs created by Orchestrator Operator and cannot perform clean up process")
+			rhdhLogger.Error(err, "Failed to list RHDH CRs or have no RHDH CRs created by Orchestrator Operator and cannot perform clean up process")
 			return err
 		}
 		if len(backstageCRList) == 1 {

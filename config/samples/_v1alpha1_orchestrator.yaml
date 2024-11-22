@@ -13,7 +13,7 @@ spec:
     installOperator: true # Determines whether the RHDH operator should be installed.This determines the deployment of the RHDH instance. Defaults to False. Optional
     devMode: false # Determines whether to enable the guest provider in RHDH. This should be used for development purposes ONLY and should not be enabled in production. Defaults to False. Optional
     name: "backstage" # Name of RHDH CR, whether existing or to be installed. Required
-    namespace: "rhdh-operator" # Namespace of RHDH Instance, whether existing or to be installed. Required
+    namespace: "rhdh" # Namespace of RHDH Instance, whether existing or to be installed. Required
     plugins:
       notificationsEmail:
         enabled: false # Determines whether to install the Notifications Email plugin. Requires setting of hostname and credentials in backstage secret. The secret, backstage-backend-auth-secret, is created as a pre-requisite. See value backstage-backend-auth-secret. See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts

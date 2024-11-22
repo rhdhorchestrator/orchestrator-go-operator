@@ -289,15 +289,7 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 		}
 	}
 
-	if _, err := kube.CheckNamespaceExist(ctx, r.Client, namespace); err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Error(err, "Ensure namespace already exist", "NS", namespace)
-		}
-		logger.Error(err, "Error occurred when checking namespace exists", "NS", namespace)
-		return err
-	}
-
-	if err := rhdh.HandleRHDHOperatorInstallation(ctx, r.Client, r.OLMClient, namespace); err != nil {
+	if err := rhdh.HandleRHDHOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
 		logger.Error(err, "Error occurred when installing RHDH Operator resources")
 		return err
 	}
@@ -307,7 +299,7 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	if err := rhdh.CreateRHDHSecret(namespace, ctx, r.Client); err != nil {
 		return err
 	}
-	// create RHDH CR
+	// handle RHDH CR
 	if err := rhdh.HandleRHDHCR(rhdhConfig, argoCDEnabled, tektonEnabled, serverlessWorkflowNamespace, clusterDomain, ctx, r.Client); err != nil {
 		return err
 	}

@@ -51,11 +51,11 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 	if _, err := kube.CheckNamespaceExist(ctx, client, serverlessLogicOperatorNamespace); err != nil {
 		if apierrors.IsNotFound(err) {
 			if err := kube.CreateNamespace(ctx, client, serverlessLogicOperatorNamespace); err != nil {
-				sfLogger.Error(err, "Error occurred when creating namespace", "NS", serverlessLogicOperatorNamespace)
+				sfLogger.Error(err, "Error occurred when creating namespace for Serverless Logic operator", "NS", serverlessLogicOperatorNamespace)
 				return nil
 			}
 		}
-		sfLogger.Error(err, "Error occurred when checking namespace exist", "NS", serverlessLogicOperatorNamespace)
+		sfLogger.Error(err, "Error occurred when checking namespace exist for Serverless Logic operator", "NS", serverlessLogicOperatorNamespace)
 		return err
 	}
 

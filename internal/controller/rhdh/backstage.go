@@ -25,6 +25,7 @@ const (
 	BackstageReplica             int32 = 1
 	BackstageSubscriptionName          = "rhdh"
 	BackstageSubscriptionChannel       = "fast-1.3"
+	rhdhOperatorNamespace              = "rhdh-operator"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{
@@ -34,13 +35,24 @@ var ConfigMapNameAndConfigDataKey = map[string]string{
 	AppConfigRHDHDynamicPluginName: "dynamic-plugins.yaml",
 }
 
-func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, namespace string) error {
+func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	rhdhLogger := log.FromContext(ctx)
+
+	if _, err := kubeoperations.CheckNamespaceExist(ctx, client, rhdhOperatorNamespace); err != nil {
+		if apierrors.IsNotFound(err) {
+			if err := kubeoperations.CreateNamespace(ctx, client, rhdhOperatorNamespace); err != nil {
+				rhdhLogger.Error(err, "Error occurred when creating namespace for RHDH operator", "NS", rhdhOperatorNamespace)
+				return nil
+			}
+		}
+		rhdhLogger.Error(err, "Error occurred when checking namespace exists for RHDH operator", "NS", rhdhOperatorNamespace)
+		return err
+	}
 
 	// check if subscription exist
 	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
 		BackstageSubscriptionName,
-		namespace,
+		rhdhOperatorNamespace,
 		BackstageSubscriptionChannel,
 		"")
 

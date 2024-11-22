@@ -28,7 +28,7 @@ spec:
       name: "sonataflow-psql-postgresql" # Name of existing secret to use for PostgreSQL credentials. Required
       userKey: postgres-username # Name of key in existing secret to use for PostgreSQL credentials. Required
       passwordKey: postgres-password # Name of key in existing secret to use for PostgreSQL credentials. Required
-    database: sonataflow # Name of key in existing secret to use for PostgreSQL credentials. Required
+    database: sonataflow # Name of existing database instance used by data index and job service. Required
   orchestrator:
     namespace: "sonataflow-infra"
     sonataFlowPlatform:

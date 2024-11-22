@@ -8,13 +8,13 @@ import (
 )
 
 func ConfigMapTemplateFactory(
-	cmTemplateType, clusterDomain, wfNamespace string,
+	cmTemplateType, clusterDomain, serverlessWorkflowNamespace string,
 	argoCDEnabled, tektonEnabled bool,
 	rhdhConfig v1alpha1.RHDHConfig) (string, error) {
 	switch cmTemplateType {
 	case AppConfigRHDHName:
 		configData := RHDHConfig{
-			TargetNamespace: rhdhConfig.RHDHNamespace,
+			TargetNamespace: rhdhConfig.Namespace,
 			ArgoCDUsername:  ArgoCDUsername,
 			ArgoCDPassword:  ArgoCDPassword,
 			ArgoCDUrl:       ArgoCDUrl,
@@ -82,7 +82,7 @@ func ConfigMapTemplateFactory(
 			NotificationEmailSender:      rhdhConfig.RHDHPlugins.NotificationsConfig.Sender,
 			NotificationEmailReplyTo:     rhdhConfig.RHDHPlugins.NotificationsConfig.Recipient,
 			NotificationEmailPort:        rhdhConfig.RHDHPlugins.NotificationsConfig.Port,
-			WorkflowNamespace:            wfNamespace,
+			WorkflowNamespace:            serverlessWorkflowNamespace,
 		}
 		formattedConfig, err := parseConfigTemplate(RHDHDynamicPluginTempl, configData)
 		if err != nil {

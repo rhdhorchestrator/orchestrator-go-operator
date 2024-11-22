@@ -73,7 +73,7 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 
 func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Creating Backstage NPMrc Secret")
+	logger.Info("Creating RHDH NPMrc Secret")
 
 	secret := &corev1.Secret{}
 	err := client.Get(ctx, types.NamespacedName{
@@ -113,16 +113,16 @@ func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client
 func HandleRHDHCR(
 	rhdhConfig orchestratorv1alpha1.RHDHConfig,
 	argoCDEnabled, tektonEnabled bool,
-	clusterDomain, wfNamespace string,
+	clusterDomain, serverlessWorkflowNamespace string,
 	ctx context.Context, client client.Client) error {
 	rhdhLogger := log.FromContext(ctx)
 
-	rhdhLogger.Info("Handling Backstage resources")
+	rhdhLogger.Info("Handling RHDH resources")
 
-	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 
-	rhdhNamespace := rhdhConfig.RHDHNamespace
-	rhdhName := rhdhConfig.RHDHName
+	rhdhNamespace := rhdhConfig.Namespace
+	rhdhName := rhdhConfig.Name
 
 	if err := client.Get(ctx, types.NamespacedName{Namespace: rhdhNamespace, Name: rhdhName}, &rhdhv1alpha2.Backstage{}); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -136,7 +136,7 @@ func HandleRHDHCR(
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      BackstageCRName,
-					Namespace: rhdhConfig.RHDHNamespace,
+					Namespace: rhdhConfig.Namespace,
 					Labels:    kubeoperations.AddLabel(),
 				},
 				Spec: rhdhv1alpha2.BackstageSpec{
@@ -151,19 +151,19 @@ func HandleRHDHCR(
 				},
 			}
 			if err := client.Create(ctx, backstageCR); err != nil {
-				rhdhLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
+				rhdhLogger.Error(err, "Error occurred when creating RHDH resource", "CR-Name", rhdhName)
 				return err
 			}
-			rhdhLogger.Info("Successfully created Backstage resource", "CR-Name", rhdhName)
+			rhdhLogger.Info("Successfully created RHDH resource", "CR-Name", rhdhName)
 		}
-		rhdhLogger.Error(err, "Error occurred when creating Backstage resource", "CR-Name", rhdhName)
+		rhdhLogger.Error(err, "Error occurred when creating RHDH resource", "CR-Name", rhdhName)
 		return err
 	}
 	return nil
 }
 
 func GetConfigmapList(ctx context.Context, client client.Client,
-	clusterDomain, wfNamespace string,
+	clusterDomain, serverlessWorkflowNamespace string,
 	tektonEnabled, argoCDEnabled bool,
 	rhdhConfig orchestratorv1alpha1.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
 
@@ -171,13 +171,13 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 	cmLogger.Info("Creating ConfigMaps...")
 
 	configmapList := make([]rhdhv1alpha2.ObjectKeyRef, 0)
-	namespace := rhdhConfig.RHDHNamespace
+	namespace := rhdhConfig.Namespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
 		if err := client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      cmName,
 		}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
-			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, wfNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 			if err != nil {
 				cmLogger.Error(err, "Error occurred when parsing config data for configmap", "CM", cmName)
 				continue
@@ -263,10 +263,10 @@ func listBackstageCRs(ctx context.Context, k8client client.Client, namespace str
 
 	// List the CRs
 	if err := k8client.List(ctx, crList, listOptions...); err != nil {
-		rhdhLogger.Error(err, "Error occurred when listing Backstage CRs")
+		rhdhLogger.Error(err, "Error occurred when listing RHDH CRs")
 		return nil, err
 	}
 
-	rhdhLogger.Info("Successfully listed Backstage CRs", "Total", len(crList.Items))
+	rhdhLogger.Info("Successfully listed RHDH CRs", "Total", len(crList.Items))
 	return crList.Items, nil
 }

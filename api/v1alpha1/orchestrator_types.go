@@ -41,7 +41,7 @@ type OrchestratorSpec struct {
 	// Configuration for existing database instance
 	// Used by Data index and Job service
 	// +kubebuilder:validation:Required
-	PostgresDB Postgres `json:"postgres"`
+	PostgresDB PostgresConfig `json:"postgres"`
 
 	// Configuration for Orchestrator. Optional
 	ServerlessWorkflow ServerlessWorkflow `json:"orchestrator,omitempty"`
@@ -70,11 +70,11 @@ type ServerlessOperator struct {
 type RHDHConfig struct {
 	// Name of RHDH CR, whether existing or to be installed
 	// +kubebuilder:validation:Required
-	RHDHName string `json:"name"`
+	Name string `json:"name"`
 
 	// Namespace of RHDH Instance, whether existing or to be installed
 	// +kubebuilder:validation:Required
-	RHDHNamespace string `json:"namespace"`
+	Namespace string `json:"namespace"`
 
 	// Determines whether the RHDH operator should be installed
 	// This determines the deployment of the RHDH instance.
@@ -118,14 +118,14 @@ type NotificationConfig struct {
 	Recipient string `json:"replyTo,omitempty"`
 }
 
-type Postgres struct {
-	// Name of the Postgres DB service to be used by platform services
+type PostgresConfig struct {
+	// Name of the PostgresConfig DB service to be used by platform services
 	// +kubebuilder:validation:Required
-	ServiceName string `json:"serviceName"`
+	Name string `json:"name"`
 
-	// Namespace of the Postgres DB service to be used by platform services
+	// Namespace of the PostgresConfig DB service to be used by platform services
 	// +kubebuilder:validation:Required
-	ServiceNameSpace string `json:"serviceNamespace"`
+	Namespace string `json:"namespace"`
 
 	// PostgreSQL connection credentials details
 	// +kubebuilder:validation:Required
@@ -196,7 +196,7 @@ type ArgoCD struct {
 
 	// Namespace where the ArgoCD operator is installed and watching for argoapp CR instances
 	// Ensure to add the Namespace if ArgoCD is installed
-	Namespace bool `json:"namespace,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type OrchestratorPhase string

@@ -225,13 +225,13 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 
 	// subscription exists; check if CRD exists;
 	sonataFlowClusterPlatformCRD := &apiextensionsv1.CustomResourceDefinition{}
-	if err := r.Get(ctx, types.NamespacedName{Name: SonataFlowClusterPlatformCRDName, Namespace: serverlessWorkflowNamespace}, sonataFlowClusterPlatformCRD); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: sonataFlowClusterPlatformCRDName, Namespace: serverlessWorkflowNamespace}, sonataFlowClusterPlatformCRD); err != nil {
 		if apierrors.IsNotFound(err) {
 			// CRD does not exist
-			sfLogger.Info("CRD resource not found.", "SubscriptionName", ServerlessLogicSubscriptionName, "Namespace", serverlessWorkflowNamespace)
+			sfLogger.Info("CRD resource not found.", "SubscriptionName", serverlessLogicSubscriptionName, "Namespace", serverlessWorkflowNamespace)
 			return err
 		}
-		sfLogger.Error(err, "Error occurred when retrieving CRD", "CRD", SonataFlowClusterPlatformCRDName)
+		sfLogger.Error(err, "Error occurred when retrieving CRD", "CRD", sonataFlowClusterPlatformCRDName)
 		return err
 	}
 
@@ -278,8 +278,8 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Reconciliation for RHDH")
 
-	subscriptionName := rhdhConfig.RHDHName
-	namespace := rhdhConfig.RHDHNamespace
+	subscriptionName := rhdhConfig.Name
+	namespace := rhdhConfig.Namespace
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !rhdhConfig.InstallOperator {
@@ -353,7 +353,7 @@ func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator
 		return err
 	}
 	// cleanup RHDH
-	if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.RHDHConfig.RHDHNamespace); err != nil {
+	if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.RHDHConfig.Namespace); err != nil {
 		return err
 	}
 	return nil

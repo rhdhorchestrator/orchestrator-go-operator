@@ -51,7 +51,7 @@ spec:
                     description: |-
                       Namespace where the ArgoCD operator is installed and watching for argoapp CR instances
                       Ensure to add the Namespace if ArgoCD is installed
-                    type: boolean
+                    type: string
                 type: object
               orchestrator:
                 description: Configuration for Orchestrator. Optional
@@ -129,19 +129,19 @@ spec:
                     description: Existing database instance used by data index and
                       job service
                     type: string
-                  serviceName:
-                    description: Name of the Postgres DB service to be used by platform
-                      services
+                  name:
+                    description: Name of the PostgresConfig DB service to be used
+                      by platform services
                     type: string
-                  serviceNamespace:
-                    description: Namespace of the Postgres DB service to be used by
-                      platform services
+                  namespace:
+                    description: Namespace of the PostgresConfig DB service to be
+                      used by platform services
                     type: string
                 required:
                 - authSecret
                 - database
-                - serviceName
-                - serviceNamespace
+                - name
+                - namespace
                 type: object
               rhdh:
                 description: Configuration for RHDH (Backstage).

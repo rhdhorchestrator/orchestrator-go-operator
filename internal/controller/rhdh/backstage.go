@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	kubeoperations "github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
@@ -122,7 +122,7 @@ func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client
 }
 
 func HandleRHDHCR(
-	rhdhConfig orchestratorv1alpha1.RHDHConfig,
+	rhdhConfig orchestratorv1alpha2.RHDHConfig,
 	argoCDEnabled, tektonEnabled bool,
 	clusterDomain, serverlessWorkflowNamespace string,
 	ctx context.Context, client client.Client) error {
@@ -176,7 +176,7 @@ func HandleRHDHCR(
 func GetConfigmapList(ctx context.Context, client client.Client,
 	clusterDomain, serverlessWorkflowNamespace string,
 	tektonEnabled, argoCDEnabled bool,
-	rhdhConfig orchestratorv1alpha1.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
+	rhdhConfig orchestratorv1alpha2.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
 
 	cmLogger := log.FromContext(ctx)
 	cmLogger.Info("Creating ConfigMaps...")

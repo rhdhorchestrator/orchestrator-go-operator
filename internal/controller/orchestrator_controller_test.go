@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 )
 
 var _ = Describe("Orchestrator Controller", func() {
@@ -40,13 +40,13 @@ var _ = Describe("Orchestrator Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		orchestrator := &orchestratorv1alpha1.Orchestrator{}
+		orchestrator := &orchestratorv1alpha2.Orchestrator{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind Orchestrator")
 			err := k8sClient.Get(ctx, typeNamespacedName, orchestrator)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &orchestratorv1alpha1.Orchestrator{
+				resource := &orchestratorv1alpha2.Orchestrator{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,7 +59,7 @@ var _ = Describe("Orchestrator Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &orchestratorv1alpha1.Orchestrator{}
+			resource := &orchestratorv1alpha2.Orchestrator{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 

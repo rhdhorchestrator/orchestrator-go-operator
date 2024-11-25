@@ -18,7 +18,7 @@ import (
 	"context"
 	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
@@ -96,7 +96,7 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 	return nil
 }
 
-func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Handling ServerlessLogic CR...")
 
@@ -114,7 +114,7 @@ func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestr
 	return nil
 }
 
-func getServerlessLogicPersistence(orchestrator *orchestratorv1alpha1.Orchestrator) *sonataapi.PersistenceOptionsSpec {
+func getServerlessLogicPersistence(orchestrator *orchestratorv1alpha2.Orchestrator) *sonataapi.PersistenceOptionsSpec {
 	return &sonataapi.PersistenceOptionsSpec{
 		PostgreSQL: &sonataapi.PersistencePostgreSQL{
 			SecretRef: sonataapi.PostgreSQLSecretOptions{
@@ -187,7 +187,7 @@ func getSonataFlowClusterSpec(namespace string) sonataapi.SonataFlowClusterPlatf
 
 func handleSonataFlowPlatformCR(
 	ctx context.Context, client client.Client,
-	orchestrator *orchestratorv1alpha1.Orchestrator, crName, namespace string) error {
+	orchestrator *orchestratorv1alpha2.Orchestrator, crName, namespace string) error {
 	logger := log.FromContext(ctx)
 
 	logger.Info("Starting CR creation for SonataFlowPlatform...")
@@ -235,7 +235,7 @@ func handleSonataFlowPlatformCR(
 	return err
 }
 
-func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha1.Orchestrator) sonataapi.SonataFlowPlatformSpec {
+func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) sonataapi.SonataFlowPlatformSpec {
 	limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
 	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Limits.Cpu)

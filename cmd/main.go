@@ -39,7 +39,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
@@ -54,7 +54,7 @@ func init() {
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(orchestratorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(orchestratorv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(v1alpha08.AddToScheme(scheme))
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha2.AddToScheme(scheme))

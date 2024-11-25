@@ -33,7 +33,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -88,7 +88,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Fetch the Orchestrator instance
 	// The purpose is to check if the Custom Resource for the Kind Orchestrator
 	// is applied on the cluster if not we return nil to stop the reconciliation
-	orchestrator := &orchestratorv1alpha1.Orchestrator{}
+	orchestrator := &orchestratorv1alpha2.Orchestrator{}
 
 	err := r.Get(ctx, req.NamespacedName, orchestrator) // Lookup the Orchestrator instance for this reconcile request
 	if err != nil {
@@ -123,7 +123,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Set the status to Unknown when no status is available - usually initial reconciliation.
 	if orchestrator.Status.Conditions == nil || len(orchestrator.Status.Conditions) == 0 {
-		if err := r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.RunningPhase, metav1.Condition{
+		if err := r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.RunningPhase, metav1.Condition{
 			Type:               TypeAvailable,
 			Status:             metav1.ConditionUnknown,
 			Reason:             "Reconciling",
@@ -147,7 +147,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
 	if err = r.reconcileServerlessLogic(ctx, serverlessLogicOperator, orchestrator); err != nil {
 		logger.Error(err, "Error occurred when installing Serverless Logic resources")
-		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
 			Reason:             "ReconcilingSonatflowResourcesFailed",
@@ -161,7 +161,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
 	if err := r.reconcileKnative(ctx, serverlessOperator); err != nil {
 		logger.Error(err, "Error occurred when installing K-Native resources")
-		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
 			Reason:             "ReconcilingKNativeResourcesFailed",
@@ -175,7 +175,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	rhdhConfig := orchestrator.Spec.RHDHConfig
 	if err = r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
 		logger.Error(err, "Error occurred when installing RHDH resources")
-		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha1.FailedPhase, metav1.Condition{
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
 			Reason:             "ReconcilingRHDHResourcesFailed",
@@ -189,8 +189,8 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	ctx context.Context,
-	serverlessLogicOperator orchestratorv1alpha1.ServerlessLogicOperator,
-	orchestrator *orchestratorv1alpha1.Orchestrator) error {
+	serverlessLogicOperator orchestratorv1alpha2.ServerlessLogicOperator,
+	orchestrator *orchestratorv1alpha2.Orchestrator) error {
 
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Starting reconciliation for Serverless Logic")
@@ -243,7 +243,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	return nil
 }
 
-func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverlessOperator orchestratorv1alpha1.ServerlessOperator) error {
+func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverlessOperator orchestratorv1alpha2.ServerlessOperator) error {
 	knativeLogger := log.FromContext(ctx)
 	knativeLogger.Info("Starting Reconciliation for K-Native Serverless")
 
@@ -273,7 +273,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 func (r *OrchestratorReconciler) reconcileRHDH(
 	ctx context.Context, serverlessWorkflowNamespace string,
 	argoCDEnabled, tektonEnabled bool,
-	rhdhConfig orchestratorv1alpha1.RHDHConfig) error {
+	rhdhConfig orchestratorv1alpha2.RHDHConfig) error {
 
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Reconciliation for RHDH")
@@ -325,7 +325,7 @@ func (r *OrchestratorReconciler) getClusterDomain(ctx context.Context) (string, 
 	return clusterDomain, nil
 }
 
-func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	if !controllerutil.ContainsFinalizer(orchestrator, FinalizerCRCleanup) {
 		controllerutil.AddFinalizer(orchestrator, FinalizerCRCleanup)
 		if err := r.Update(ctx, orchestrator); err != nil {
@@ -335,7 +335,7 @@ func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator
 	return nil
 }
 
-func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator) error {
+func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	// cleanup Knative
 	if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 		return err
@@ -352,7 +352,7 @@ func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator
 }
 
 // UpdateStatus sets the status of orchestrator.
-func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator *orchestratorv1alpha1.Orchestrator, phase orchestratorv1alpha1.OrchestratorPhase, condition metav1.Condition) error {
+func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator, phase orchestratorv1alpha2.OrchestratorPhase, condition metav1.Condition) error {
 	logger := log.FromContext(ctx)
 	orchestrator.Status.Phase = phase
 	meta.SetStatusCondition(&orchestrator.Status.Conditions, condition)
@@ -377,8 +377,8 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.OLMClient = *olmClient
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&orchestratorv1alpha1.Orchestrator{}).
-		Owns(&orchestratorv1alpha1.Orchestrator{}).
+		For(&orchestratorv1alpha2.Orchestrator{}).
+		Owns(&orchestratorv1alpha2.Orchestrator{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 2}).
 		Complete(r)
 }

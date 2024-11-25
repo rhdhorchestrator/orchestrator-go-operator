@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +41,7 @@ type OrchestratorSpec struct {
 	// Configuration for existing database instance
 	// Used by Data index and Job service
 	// +kubebuilder:validation:Required
-	PostgresDB PostgresConfig `json:"postgres"`
+	PostgresConfig PostgresConfig `json:"postgres"`
 
 	// Configuration for Orchestrator. Optional
 	ServerlessWorkflow ServerlessWorkflow `json:"orchestrator,omitempty"`

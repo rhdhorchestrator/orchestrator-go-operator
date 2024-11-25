@@ -1,18 +1,18 @@
-apiVersion: rhdh.redhat.com/v1alpha1
+apiVersion: rhdh.redhat.com/v1alpha2
 kind: Orchestrator
 metadata:
   labels:
-    app.kubernetes.io/name: orchestrator-operator
+    app.kubernetes.io/name: orchestrator-sample
   name: orchestrator-sample
 spec:
   serverlessLogicOperator:
     enabled: true # Determines whether to install the ServerlessLogic operator. Defaults to True. Optional
   serverlessOperator:
-    enabled: true # Determines whether to install the Serverless operator. Defaults to True. Optional
+    installOperator: true # Determines whether to install the Serverless operator. Defaults to True. Optional
   rhdh:
     installOperator: true # Determines whether the RHDH operator should be installed.This determines the deployment of the RHDH instance. Defaults to False. Optional
     devMode: false # Determines whether to enable the guest provider in RHDH. This should be used for development purposes ONLY and should not be enabled in production. Defaults to False. Optional
-    name: "backstage" # Name of RHDH CR, whether existing or to be installed. Required
+    name: "my-rhdh" # Name of RHDH CR, whether existing or to be installed. Required
     namespace: "rhdh" # Namespace of RHDH Instance, whether existing or to be installed. Required
     plugins:
       notificationsEmail:
@@ -39,7 +39,7 @@ spec:
           memory: "1Gi"
           cpu: "500m"
   tekton:
-    enabled: false # Determines whether to create the Tekton pipeline. Defaults to false. Optional
+    enabled: false # Determines whether to create the Tekton pipeline and install the Tekton plugin on RHDH. Defaults to false. Optional
   argocd:
     enabled: false # Determines whether to install the ArgoCD plugin and create the orchestrator AppProject. Defaults to False. Optional
     namespace: "my-argocd" # Namespace where the ArgoCD operator is installed and watching for argoapp CR instances. Optional

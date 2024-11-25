@@ -14,7 +14,7 @@ spec:
     singular: orchestrator
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1alpha2
     schema:
       openAPIV3Schema:
         description: Orchestrator is the Schema for the orchestrators API
@@ -177,7 +177,7 @@ spec:
                             default: false
                             description: |-
                               Determines whether to install the Notifications Email plugin
-                              Requires setting the hostname and credentials in backstage secret
+                              Requires setting the hostname and credentials in RHDH secret
                               The secret backstage-backend-auth-secret is created as pre-requisite
                               See plugin configuration at https://github.com/backstage/backstage/blob/master/plugins/notifications-backend-module-email/config.d.ts
                             type: boolean

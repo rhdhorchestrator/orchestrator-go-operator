@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	//+kubebuilder:scaffold:imports
 )
 

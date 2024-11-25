@@ -18,7 +18,7 @@ import (
 	"context"
 	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
@@ -118,15 +118,15 @@ func getServerlessLogicPersistence(orchestrator *orchestratorv1alpha1.Orchestrat
 	return &sonataapi.PersistenceOptionsSpec{
 		PostgreSQL: &sonataapi.PersistencePostgreSQL{
 			SecretRef: sonataapi.PostgreSQLSecretOptions{
-				Name:        orchestrator.Spec.PostgresDB.AuthSecret.SecretName,
-				UserKey:     orchestrator.Spec.PostgresDB.AuthSecret.UserKey,
-				PasswordKey: orchestrator.Spec.PostgresDB.AuthSecret.PasswordKey,
+				Name:        orchestrator.Spec.PostgresConfig.AuthSecret.SecretName,
+				UserKey:     orchestrator.Spec.PostgresConfig.AuthSecret.UserKey,
+				PasswordKey: orchestrator.Spec.PostgresConfig.AuthSecret.PasswordKey,
 			},
 			ServiceRef: &sonataapi.PostgreSQLServiceOptions{
 				SQLServiceOptions: &sonataapi.SQLServiceOptions{
-					Name:         orchestrator.Spec.PostgresDB.Name,
-					Namespace:    orchestrator.Spec.PostgresDB.Namespace,
-					DatabaseName: orchestrator.Spec.PostgresDB.DatabaseName,
+					Name:         orchestrator.Spec.PostgresConfig.Name,
+					Namespace:    orchestrator.Spec.PostgresConfig.Namespace,
+					DatabaseName: orchestrator.Spec.PostgresConfig.DatabaseName,
 				},
 			},
 		},

@@ -39,7 +39,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )

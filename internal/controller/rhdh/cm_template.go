@@ -3,14 +3,14 @@ package rhdh
 import (
 	"bytes"
 	"fmt"
-	"github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	"github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"text/template"
 )
 
 func ConfigMapTemplateFactory(
 	cmTemplateType, clusterDomain, serverlessWorkflowNamespace string,
 	argoCDEnabled, tektonEnabled bool,
-	rhdhConfig v1alpha1.RHDHConfig) (string, error) {
+	rhdhConfig v1alpha2.RHDHConfig) (string, error) {
 	switch cmTemplateType {
 	case AppConfigRHDHName:
 		configData := RHDHConfig{

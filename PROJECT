@@ -18,6 +18,6 @@ resources:
   domain: rhdh.redhat.com
   group: orchestrator
   kind: Orchestrator
-  path: github.com/parodos-dev/orchestrator-operator/api/v1alpha1
-  version: v1alpha1
+  path: github.com/parodos-dev/orchestrator-operator/api/v1alpha2
+  version: v1alpha2
 version: "3"

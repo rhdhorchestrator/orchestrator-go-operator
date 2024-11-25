@@ -141,7 +141,7 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: subscriptionName},
 		Spec: &v1alpha1.SubscriptionSpec{
 			Channel:                channel,
-			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
+			InstallPlanApproval:    v1alpha1.ApprovalManual,
 			CatalogSource:          CatalogSourceName,
 			StartingCSV:            startingCSV,
 			CatalogSourceNamespace: CatalogSourceNamespace,

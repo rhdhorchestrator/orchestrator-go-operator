@@ -365,6 +365,11 @@ func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator 
 	return nil
 }
 
+func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orchestrator *orchestratorv1alpha2.OrchestratorSpec) error {
+	// handleNetworkPolicy
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	config := mgr.GetConfig()

@@ -44,7 +44,7 @@ type OrchestratorSpec struct {
 	PostgresConfig PostgresConfig `json:"postgres"`
 
 	// Configuration for Orchestrator. Optional
-	ServerlessWorkflow ServerlessWorkflow `json:"orchestrator,omitempty"`
+	PlatformConfig PlatformConfig `json:"platform,omitempty"`
 
 	// Configuration for Tekton. Optional
 	Tekton Tekton `json:"tekton,omitempty"`
@@ -150,18 +150,29 @@ type PostgresAuthSecret struct {
 	PasswordKey string `json:"passwordKey"`
 }
 
-type ServerlessWorkflow struct {
-	// Namespace to run sonataflow's workflows
+type PlatformConfig struct {
+	// Namespace of the workflow pods (Data Index and Job Service) and SonataFlow CR.
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
-	// Contains the pod resource configuration to be used for the data index and job services
-	SonataFlowPlatform SonataFlowPlatform `json:"sonataFlowPlatform,omitempty"`
+	// Resource configuration to be used for the data index and job services.
+	Resources Resource `json:"resources,omitempty"`
+
+	// Configuration for existing eventing to be used by sonataflow platform
+	Eventing Eventing `json:"eventing,omitempty"`
 }
 
-type SonataFlowPlatform struct {
-	// Contains the Requests and Limit of CPU and memory resources for the pod instance
-	Resources Resource `json:"resources,omitempty"`
+type Eventing struct {
+	// Configuration for K-Native broker.
+	Broker Broker `json:"broker,omitempty"`
+}
+
+type Broker struct {
+	// Name of existing Broker instance
+	Name string `json:"name,omitempty"`
+
+	// Namespace of existing Broker instance
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type Resource struct {

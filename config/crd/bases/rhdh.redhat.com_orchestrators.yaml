@@ -53,48 +53,59 @@ spec:
                       Ensure to add the Namespace if ArgoCD is installed
                     type: string
                 type: object
-              orchestrator:
+              platform:
                 description: Configuration for Orchestrator. Optional
                 properties:
-                  namespace:
-                    description: Namespace to run sonataflow's workflows
-                    type: string
-                  sonataFlowPlatform:
-                    description: Contains the pod resource configuration to be used
-                      for the data index and job services
+                  eventing:
+                    description: Configuration for existing eventing to be used by
+                      sonataflow platform
                     properties:
-                      resources:
-                        description: Contains the Requests and Limit of CPU and memory
-                          resources for the pod instance
+                      broker:
+                        description: Configuration for K-Native broker.
                         properties:
-                          limits:
-                            description: |-
-                              Describes the maximum amount of compute resources allowed.
-                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                            properties:
-                              cpu:
-                                default: 500m
-                                description: Defines the CPU resource limits
-                                type: string
-                              memory:
-                                default: 1Gi
-                                description: Defines the memory resource limits
-                                type: string
-                            type: object
-                          requests:
-                            description: |-
-                              Describe the minimum amount of compute resources required.
-                              Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-                            properties:
-                              cpu:
-                                default: 500m
-                                description: Defines the CPU resource limits
-                                type: string
-                              memory:
-                                default: 1Gi
-                                description: Defines the memory resource limits
-                                type: string
-                            type: object
+                          name:
+                            description: Name of existing Broker instance
+                            type: string
+                          namespace:
+                            description: Namespace of existing Broker instance
+                            type: string
+                        type: object
+                    type: object
+                  namespace:
+                    description: Namespace of the workflow pods (Data Index and Job
+                      Service) and SonataFlow CR.
+                    type: string
+                  resources:
+                    description: Resource configuration to be used for the data index
+                      and job services.
+                    properties:
+                      limits:
+                        description: |-
+                          Describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        properties:
+                          cpu:
+                            default: 500m
+                            description: Defines the CPU resource limits
+                            type: string
+                          memory:
+                            default: 1Gi
+                            description: Defines the memory resource limits
+                            type: string
+                        type: object
+                      requests:
+                        description: |-
+                          Describe the minimum amount of compute resources required.
+                          Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        properties:
+                          cpu:
+                            default: 500m
+                            description: Defines the CPU resource limits
+                            type: string
+                          memory:
+                            default: 1Gi
+                            description: Defines the memory resource limits
+                            type: string
                         type: object
                     type: object
                 required:

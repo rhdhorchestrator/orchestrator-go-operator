@@ -100,7 +100,7 @@ func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestr
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Handling ServerlessLogic CR...")
 
-	serverlessWorkflowNamespace := orchestrator.Spec.ServerlessWorkflow.Namespace
+	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 	if err := handleSonataFlowClusterCR(ctx, client, sonataFlowClusterPlatformCRName, serverlessWorkflowNamespace); err != nil {
 		sfLogger.Error(err, "Error occurred when creating SonataFlowClusterCR", "CR-Name", sonataFlowClusterPlatformCRName)
 		return err
@@ -238,14 +238,14 @@ func handleSonataFlowPlatformCR(
 func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) sonataapi.SonataFlowPlatformSpec {
 	limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
-	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Limits.Cpu)
-	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Limits.Memory)
+	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.PlatformConfig.Resources.Limits.Cpu)
+	memoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.PlatformConfig.Resources.Limits.Memory)
 	limitResourceMap[corev1.ResourceCPU] = cpuQuantity
 	limitResourceMap[corev1.ResourceMemory] = memoryQuantity
 
 	requestResourceMap := make(map[corev1.ResourceName]resource.Quantity)
-	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Requests.Cpu)
-	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.ServerlessWorkflow.SonataFlowPlatform.Resources.Requests.Memory)
+	requestCpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.PlatformConfig.Resources.Requests.Cpu)
+	requestMemoryQuantity, _ := resource.ParseQuantity(orchestrator.Spec.PlatformConfig.Resources.Requests.Memory)
 	requestResourceMap[corev1.ResourceCPU] = requestCpuQuantity
 	requestResourceMap[corev1.ResourceMemory] = requestMemoryQuantity
 

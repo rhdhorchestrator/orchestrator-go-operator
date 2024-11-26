@@ -141,7 +141,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	argoCDEnabled := orchestrator.Spec.ArgoCd.Enabled
 	tektonEnabled := orchestrator.Spec.Tekton.Enabled
-	serverlessWorkflowNamespace := orchestrator.Spec.ServerlessWorkflow.Namespace
+	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 
 	// handle serverless logic
 	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
@@ -195,7 +195,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Starting reconciliation for Serverless Logic")
 
-	serverlessWorkflowNamespace := orchestrator.Spec.ServerlessWorkflow.Namespace
+	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 
 	// if subscription is disabled;
 	// check if subscription exists and handle clean up if necessary
@@ -341,7 +341,7 @@ func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator
 		return err
 	}
 	// cleanup Serverless Logic
-	if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.ServerlessWorkflow.Namespace); err != nil {
+	if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.PlatformConfig.Namespace); err != nil {
 		return err
 	}
 	// cleanup RHDH

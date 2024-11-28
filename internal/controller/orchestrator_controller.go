@@ -188,6 +188,17 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		})
 		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
 	}
+	if err = r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
+		logger.Error(err, "Error occurred when installing NetworkPolicy")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
+			Type:               TypeDegrading,
+			Status:             metav1.ConditionFalse,
+			Reason:             "ReconcilingNetworkPolicyFailed",
+			Message:            err.Error(),
+			LastTransitionTime: metav1.Now(),
+		})
+		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -369,8 +380,13 @@ func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator 
 	return nil
 }
 
-func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orchestrator *orchestratorv1alpha2.OrchestratorSpec) error {
-	// handleNetworkPolicy
+func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling Network Policy...")
+	if err := handleNetworkPolicy(r.Client, ctx, orchestrator.Spec.PlatformConfig.Namespace, orchestrator.Spec.RHDHConfig.Namespace, orchestrator.Spec.PostgresConfig.Namespace); err != nil {
+		logger.Error(err, "Error occurred when reconciling Network Policy", "NP", NetworkPolicyName)
+		return err
+	}
 	return nil
 }
 

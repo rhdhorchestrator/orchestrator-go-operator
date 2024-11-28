@@ -231,7 +231,9 @@ spec:
                     type: boolean
                 type: object
               tekton:
-                description: Configuration for Tekton. Optional
+                description: |-
+                  Contains the configuration for the infrastructure services required for the Orchestrator to serve workflows
+                  by leveraging the OpenShift Serverless and OpenShift Serverless Logic capabilities. Optional
                 properties:
                   enabled:
                     default: false

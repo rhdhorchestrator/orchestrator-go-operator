@@ -46,7 +46,8 @@ type OrchestratorSpec struct {
 	// Configuration for Orchestrator. Optional
 	PlatformConfig PlatformConfig `json:"platform,omitempty"`
 
-	// Configuration for Tekton. Optional
+	// Contains the configuration for the infrastructure services required for the Orchestrator to serve workflows
+	// by leveraging the OpenShift Serverless and OpenShift Serverless Logic capabilities. Optional
 	Tekton Tekton `json:"tekton,omitempty"`
 
 	// Configuration for ArgoCD. Optional

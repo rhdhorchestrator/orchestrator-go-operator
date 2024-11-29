@@ -199,7 +199,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 
 	// if subscription is disabled;
 	// check if subscription exists and handle clean up if necessary
-	if !serverlessLogicOperator.Enabled {
+	if !serverlessLogicOperator.InstallOperator {
 		// handle clean up
 		if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace); err != nil {
 			return err
@@ -248,7 +248,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 	knativeLogger.Info("Starting Reconciliation for K-Native Serverless")
 
 	// if subscription is disabled; check if subscription exists and handle delete
-	if !serverlessOperator.Enabled {
+	if !serverlessOperator.InstallOperator {
 		// handle cleanup
 		if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 			return err

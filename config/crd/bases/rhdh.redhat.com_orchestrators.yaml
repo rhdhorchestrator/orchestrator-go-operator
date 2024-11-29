@@ -210,23 +210,23 @@ spec:
                 - name
                 - namespace
                 type: object
-              serverlessLogicOperator:
-                description: Configuration for ServerlessLogic. Optional
-                properties:
-                  enabled:
-                    default: true
-                    description: |-
-                      Determines whether to install the ServerlessLogic operator
-                      Defaults to true
-                    type: boolean
-                type: object
-              serverlessOperator:
+              serverless:
                 description: Configuration for Serverless (K-Native) Operator. Optional
                 properties:
-                  enabled:
+                  installOperator:
                     default: true
                     description: |-
                       Determines whether to install the Serverless operator
+                      Defaults to true
+                    type: boolean
+                type: object
+              serverlessLogic:
+                description: Configuration for ServerlessLogic. Optional
+                properties:
+                  installOperator:
+                    default: true
+                    description: |-
+                      Determines whether to install the ServerlessLogic operator
                       Defaults to true
                     type: boolean
                 type: object

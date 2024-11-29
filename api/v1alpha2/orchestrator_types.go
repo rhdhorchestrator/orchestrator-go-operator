@@ -29,10 +29,10 @@ const (
 // OrchestratorSpec defines the desired state of Orchestrator
 type OrchestratorSpec struct {
 	// Configuration for ServerlessLogic. Optional
-	ServerlessLogicOperator ServerlessLogicOperator `json:"serverlessLogicOperator,omitempty"`
+	ServerlessLogicOperator ServerlessLogicOperator `json:"serverlessLogic,omitempty"`
 
 	// Configuration for Serverless (K-Native) Operator. Optional
-	ServerlessOperator ServerlessOperator `json:"serverlessOperator,omitempty"`
+	ServerlessOperator ServerlessOperator `json:"serverless,omitempty"`
 
 	// Configuration for RHDH (Backstage).
 	// +kubebuilder:validation:Required
@@ -58,14 +58,14 @@ type ServerlessLogicOperator struct {
 	// Determines whether to install the ServerlessLogic operator
 	// Defaults to true
 	// +kubebuilder:default=true
-	Enabled bool `json:"enabled,omitempty"`
+	InstallOperator bool `json:"installOperator,omitempty"`
 }
 
 type ServerlessOperator struct {
 	// Determines whether to install the Serverless operator
 	// Defaults to true
 	// +kubebuilder:default=true
-	Enabled bool `json:"enabled,omitempty"`
+	InstallOperator bool `json:"installOperator,omitempty"`
 }
 
 type RHDHConfig struct {

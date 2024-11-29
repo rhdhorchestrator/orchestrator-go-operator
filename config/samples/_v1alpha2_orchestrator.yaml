@@ -5,9 +5,9 @@ metadata:
     app.kubernetes.io/name: orchestrator-sample
   name: orchestrator-sample
 spec:
-  serverlessLogicOperator:
-    enabled: true # Determines whether to install the ServerlessLogic operator. Defaults to True. Optional
-  serverlessOperator:
+  serverlessLogic:
+    installOperator: true # Determines whether to install the ServerlessLogic operator. Defaults to True. Optional
+  serverless:
     installOperator: true # Determines whether to install the Serverless operator. Defaults to True. Optional
   rhdh:
     installOperator: true # Determines whether the RHDH operator should be installed.This determines the deployment of the RHDH instance. Defaults to False. Optional

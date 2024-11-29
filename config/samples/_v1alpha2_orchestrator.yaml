@@ -37,9 +37,10 @@ spec:
       limits:
         memory: "1Gi" # Defines the Memory resource limits. Optional
         cpu: "500m" # Defines the CPU resource limits. Optional
-    eventing:
-      name: "my-knative" # Name of existing Broker instance. Optional
-      namespace: "knative" # Namespace of existing Broker instance. Optional
+    "eventing":
+      "broker":
+        "name": "my-knative" # Name of existing Broker instance. Optional
+        "namespace": "knative" # Namespace of existing Broker instance. Optional
   tekton:
     enabled: false # Determines whether to create the Tekton pipeline and install the Tekton plugin on RHDH. Defaults to false. Optional
   argocd:

@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: orchestrator-operator
     app.kubernetes.io/managed-by: kustomize
-  name: orchestrator-editor-role
+  name: orchestrator-editor
 rules:
 - apiGroups:
   - rhdh.redhat.com

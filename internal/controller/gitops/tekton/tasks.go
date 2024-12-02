@@ -244,7 +244,8 @@ func createBuildManifestTaskObject(gitOpsNamespace string) *tektonv1.Task {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      buildManifestTask,
-			Namespace: gitOpsNamespace, // Replace with your namespace
+			Namespace: gitOpsNamespace,
+			Labels:    kube.AddLabel(),
 		},
 		Spec: tektonv1.TaskSpec{
 			Workspaces: []tektonv1.WorkspaceDeclaration{
@@ -280,6 +281,7 @@ func createBuildGitOpsTaskObject(gitOpsNamespace string) *tektonv1.Task {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      buildGitOpsTask,
 			Namespace: gitOpsNamespace,
+			Labels:    kube.AddLabel(),
 		},
 		Spec: tektonv1.TaskSpec{
 			Workspaces: []tektonv1.WorkspaceDeclaration{

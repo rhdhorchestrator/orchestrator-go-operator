@@ -26,7 +26,8 @@ catalog:
       target: https://github.com/parodos-dev/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/basic-workflow/template.yaml
     - type: url
       target: https://github.com/parodos-dev/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/complex-assessment-workflow/template.yaml
-
+    - type: url
+      target: https://github.com/redhat-developer/rhdh-plugins/blob/main/workspaces/orchestrator/plugins/orchestrator-common/src/generated/docs/api-doc/orchestrator-api.yaml
 `
 
 type RHDHConfigCatalog struct {

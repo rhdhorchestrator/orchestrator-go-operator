@@ -63,6 +63,7 @@ rules:
   - networking.k8s.io
   resources:
   - ingresses
+  - networkpolicies
   verbs:
   - create
   - delete
@@ -89,6 +90,7 @@ rules:
   resources:
   - catalogsources
   - clusterserviceversions
+  - installplans
   - operatorgroups
   - subscriptions
   verbs:
@@ -108,6 +110,7 @@ rules:
   - get
   - list
   - patch
+  - watch
 - apiGroups:
   - rhdh.redhat.com
   resources:

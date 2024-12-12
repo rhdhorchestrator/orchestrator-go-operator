@@ -90,7 +90,7 @@ require (
 	istio.io/api v0.0.0-20231206023236-e7cadb36da57 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6 // indirect
+	k8s.io/utils v0.0.0-20241104163129-6fe5fd82f078 // indirect
 	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect

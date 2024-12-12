@@ -24,7 +24,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"knative.dev/operator/pkg/apis/operator/v1beta1"
 	"os"
-	"redhat-developer/red-hat-developer-hub-operator/api/v1alpha1"
+	"redhat-developer/red-hat-developer-hub-operator/api/v1alpha2"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -39,7 +39,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	orchestratorv1alpha1 "github.com/parodos-dev/orchestrator-operator/api/v1alpha1"
+	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
 	"github.com/parodos-dev/orchestrator-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
@@ -54,10 +54,10 @@ func init() {
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(orchestratorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(orchestratorv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(v1alpha08.AddToScheme(scheme))
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
-	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme

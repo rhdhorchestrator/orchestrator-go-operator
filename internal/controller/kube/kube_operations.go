@@ -110,6 +110,43 @@ func InstallOperatorViaSubscription(
 	return nil
 }
 
+func ApproveInstallPlan(client client.Client, ctx context.Context, installPlanName, startingCSV, namespace string) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Starting approval for InstallPlan...")
+
+	// Fetch the Subscription
+	subscription := &operatorsv1alpha1.Subscription{}
+	if err := client.Get(ctx, types.NamespacedName{Name: installPlanName, Namespace: namespace}, subscription); err != nil {
+		return err
+	}
+
+	// check the InstallPlanRef in subscription status
+	if subscription.Status.InstallPlanRef == nil {
+		logger.Info("No InstallPlan associated with Subscription yet", "Subscription", subscription.Name)
+		return nil
+	}
+
+	// Get the InstallPlan
+	installPlan := &operatorsv1alpha1.InstallPlan{}
+	if err := client.Get(ctx, types.NamespacedName{
+		Namespace: subscription.Namespace,
+		Name:      subscription.Status.InstallPlanRef.Name,
+	}, installPlan); err != nil {
+		return err
+	}
+
+	// Approve the InstallPlan if manual approval is needed
+	if subscription.Status.InstalledCSV == startingCSV && !installPlan.Spec.Approved {
+		logger.Info("Approving InstallPlan", "InstallPlanName", installPlan.Name, "StartingCSV", subscription.Status.InstalledCSV)
+		installPlan.Spec.Approved = true
+		if err := client.Update(ctx, installPlan); err != nil {
+			logger.Error(err, "Error occurred when approving InstallPlan", "InstallPlanName", installPlan.Name)
+			return err
+		}
+	}
+	return nil
+}
+
 func getOperatorGroup(ctx context.Context, client client.Client,
 	namespace, operatorGroupName string) error {
 	logger := log.FromContext(ctx)
@@ -138,8 +175,9 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 	subscriptionObject := &v1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: subscriptionName},
 		Spec: &v1alpha1.SubscriptionSpec{
-			Channel:                channel,
-			InstallPlanApproval:    v1alpha1.ApprovalManual,
+			Channel: channel,
+			//InstallPlanApproval:    v1alpha1.ApprovalManual,
+			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			CatalogSource:          CatalogSourceName,
 			StartingCSV:            startingCSV,
 			CatalogSourceNamespace: CatalogSourceNamespace,
@@ -225,9 +263,11 @@ func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Cl
 		logger.Info("Successfully deleted Subscription", "SubscriptionName", subscriptionName)
 
 		// cleanup csv
+		// TODO verify CSV deletion happens. refactor code to use csvName instead of namespace
 		csv, err := olmClientSet.OperatorsV1alpha1().ClusterServiceVersions(subscriptionNamespace).Get(ctx, csvName, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
+				// ensure csvName is not empty: Do a check for csvName
 				logger.Info("CSV resource not found", "CSV", csvName)
 				return nil
 			}

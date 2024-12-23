@@ -123,14 +123,11 @@ func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client
 
 func HandleRHDHCR(
 	rhdhConfig orchestratorv1alpha2.RHDHConfig,
-	argoCDEnabled, tektonEnabled bool,
-	clusterDomain, serverlessWorkflowNamespace string,
+	bsConfigMapList []rhdhv1alpha2.ObjectKeyRef,
 	ctx context.Context, client client.Client) error {
 	rhdhLogger := log.FromContext(ctx)
 
-	rhdhLogger.Info("Handling RHDH resources")
-
-	bsConfigMapList := GetConfigmapList(ctx, client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+	rhdhLogger.Info("Handling RHDH CR resource")
 
 	rhdhNamespace := rhdhConfig.Namespace
 	rhdhName := rhdhConfig.Name
@@ -161,13 +158,15 @@ func HandleRHDHCR(
 					},
 				},
 			}
+			rhdhLogger.Info("Creating Backstage CR", "CR-Name", backstageCR.Name)
 			if err := client.Create(ctx, backstageCR); err != nil {
 				rhdhLogger.Error(err, "Error occurred when creating RHDH resource", "CR-Name", rhdhName)
 				return err
 			}
 			rhdhLogger.Info("Successfully created RHDH resource", "CR-Name", rhdhName)
+			return nil
 		}
-		rhdhLogger.Error(err, "Error occurred when creating RHDH resource", "CR-Name", rhdhName)
+		rhdhLogger.Error(err, "Error occurred when retrieving RHDH resource", "CR-Name", rhdhName)
 		return err
 	}
 	return nil
@@ -184,6 +183,9 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 	configmapList := make([]rhdhv1alpha2.ObjectKeyRef, 0)
 	namespace := rhdhConfig.Namespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
+		if cmName != AppConfigRHDHDynamicPluginName {
+			configmapList = append(configmapList, rhdhv1alpha2.ObjectKeyRef{Name: cmName})
+		}
 		if err := client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      cmName,
@@ -194,9 +196,7 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 				continue
 			} else {
 				if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err == nil {
-					if cmName != AppConfigRHDHDynamicPluginName {
-						configmapList = append(configmapList, rhdhv1alpha2.ObjectKeyRef{Name: cmName})
-					}
+					cmLogger.Info("Creating ConfigMap", "CM", cmName)
 				}
 			}
 		}

@@ -66,11 +66,15 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=secrets;configmaps;namespaces;events,verbs=list;get;create;delete;patch;watch;update
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;clusterserviceversions;catalogsources,verbs=get;list;watch;create;delete;patch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;clusterserviceversions;catalogsources;installplans,verbs=get;list;watch;create;delete;patch
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
-//+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;watch;create;delete;patch;update
+//+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;create;delete;patch;watch
 //+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=tekton.dev,resources=pipelines,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=tekton.dev,resources=tasks,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=argoproj.io,resources=appprojects,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -179,6 +183,17 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
 			Reason:             "ReconcilingRHDHResourcesFailed",
+			Message:            err.Error(),
+			LastTransitionTime: metav1.Now(),
+		})
+		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
+	}
+	if err = r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
+		logger.Error(err, "Error occurred when installing NetworkPolicy")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
+			Type:               TypeDegrading,
+			Status:             metav1.ConditionFalse,
+			Reason:             "ReconcilingNetworkPolicyFailed",
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
@@ -299,8 +314,11 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	if err := rhdh.CreateRHDHSecret(namespace, ctx, r.Client); err != nil {
 		return err
 	}
+	// create configmap
+	bsConfigMapList := rhdh.GetConfigmapList(ctx, r.Client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+	logger.Info("Configmap list", "CM-List", bsConfigMapList)
 	// handle RHDH CR
-	if err := rhdh.HandleRHDHCR(rhdhConfig, argoCDEnabled, tektonEnabled, serverlessWorkflowNamespace, clusterDomain, ctx, r.Client); err != nil {
+	if err := rhdh.HandleRHDHCR(rhdhConfig, bsConfigMapList, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil
@@ -360,6 +378,16 @@ func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator 
 	err := r.Status().Update(ctx, orchestrator)
 	if err != nil {
 		logger.Error(err, "Failed to update Orchestrator status")
+		return err
+	}
+	return nil
+}
+
+func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling Network Policy...")
+	if err := handleNetworkPolicy(r.Client, ctx, orchestrator.Spec.PlatformConfig.Namespace, orchestrator.Spec.RHDHConfig.Namespace, orchestrator.Spec.PostgresConfig.Namespace); err != nil {
+		logger.Error(err, "Error occurred when reconciling Network Policy", "NP", NetworkPolicyName)
 		return err
 	}
 	return nil

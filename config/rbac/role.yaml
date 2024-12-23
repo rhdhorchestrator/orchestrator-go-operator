@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  name: manager
 rules:
 - apiGroups:
   - apiextensions.k8s.io
@@ -16,6 +16,18 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - argoproj.io
+  resources:
+  - appprojects
   verbs:
   - create
   - delete
@@ -48,6 +60,19 @@ rules:
   - update
   - watch
 - apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - operator.knative.dev
   resources:
   - knativeeventings
@@ -65,6 +90,7 @@ rules:
   resources:
   - catalogsources
   - clusterserviceversions
+  - installplans
   - operatorgroups
   - subscriptions
   verbs:
@@ -84,7 +110,6 @@ rules:
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - rhdh.redhat.com
@@ -118,6 +143,30 @@ rules:
   - sonataflowclusterplatforms
   - sonataflowplatforms
   - sonataflows
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tekton.dev
+  resources:
+  - pipelines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tekton.dev
+  resources:
+  - tasks
   verbs:
   - create
   - delete

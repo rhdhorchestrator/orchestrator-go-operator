@@ -314,8 +314,11 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	if err := rhdh.CreateRHDHSecret(namespace, ctx, r.Client); err != nil {
 		return err
 	}
+	// create configmap
+	bsConfigMapList := rhdh.GetConfigmapList(ctx, r.Client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+	logger.Info("Configmap list", "CM-List", bsConfigMapList)
 	// handle RHDH CR
-	if err := rhdh.HandleRHDHCR(rhdhConfig, argoCDEnabled, tektonEnabled, clusterDomain, serverlessWorkflowNamespace, ctx, r.Client); err != nil {
+	if err := rhdh.HandleRHDHCR(rhdhConfig, bsConfigMapList, ctx, r.Client); err != nil {
 		return err
 	}
 	return nil

@@ -96,11 +96,21 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 	return nil
 }
 
+// handleServerlessLogicCR performs the creation of serverless logic namespace and CRs
 func handleServerlessLogicCR(ctx context.Context, client client.Client, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Handling ServerlessLogic CR...")
-
 	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
+
+	// check namespace for workflow
+	if _, err := kube.CheckNamespaceExist(ctx, client, serverlessWorkflowNamespace); err != nil {
+		if apierrors.IsNotFound(err) {
+			sfLogger.Info("Workflow namespace does not exist. Please create workflow namespace", "NS", serverlessWorkflowNamespace)
+		}
+		sfLogger.Error(err, "Error occurred when checking namespace exist for Workflow operator", "NS", serverlessWorkflowNamespace)
+		return err
+	}
+
 	if err := handleSonataFlowClusterCR(ctx, client, sonataFlowClusterPlatformCRName, serverlessWorkflowNamespace); err != nil {
 		sfLogger.Error(err, "Error occurred when creating SonataFlowClusterCR", "CR-Name", sonataFlowClusterPlatformCRName)
 		return err

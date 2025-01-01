@@ -66,7 +66,7 @@ type OrchestratorReconciler struct {
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=secrets;configmaps;namespaces;events,verbs=list;get;create;delete;patch;watch;update
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;clusterserviceversions;catalogsources;installplans,verbs=get;list;watch;create;delete;patch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions;operatorgroups;clusterserviceversions;catalogsources;installplans,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=sonataflow.org,resources=sonataflows;sonataflowclusterplatforms;sonataflowplatforms,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=operator.knative.dev,resources=knativeeventings;knativeservings,verbs=get;list;watch;create;delete;patch;update
 //+kubebuilder:rbac:groups=rhdh.redhat.com,resources=backstages,verbs=get;list;create;delete;patch;watch
@@ -154,7 +154,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
-			Reason:             "ReconcilingSonatflowResourcesFailed",
+			Reason:             "ReconcilingOSLResourcesFailed",
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})

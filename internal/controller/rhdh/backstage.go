@@ -18,13 +18,14 @@ import (
 )
 
 const (
-	rhdhOperatorGroup             = "rhdh-operator-group"
-	rhdhAPIVersion                = "rhdh.redhat.com/v1alpha2"
-	rhdhKind                      = "Backstage"
-	rhdhReplica             int32 = 1
-	rhdhSubscriptionName          = "rhdh"
-	rhdhSubscriptionChannel       = "fast-1.3"
-	rhdhOperatorNamespace         = "rhdh-operator"
+	rhdhOperatorGroup                 = "rhdh-operator-group"
+	rhdhAPIVersion                    = "rhdh.redhat.com/v1alpha2"
+	rhdhKind                          = "Backstage"
+	rhdhReplica                 int32 = 1
+	rhdhSubscriptionName              = "rhdh"
+	rhdhSubscriptionChannel           = "fast-1.3"
+	rhdhOperatorNamespace             = "rhdh-operator"
+	rhdhSubscriptionStartingCSV       = "logic-operator-rhel8.v1.34.0"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{
@@ -53,7 +54,7 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 		rhdhSubscriptionName,
 		rhdhOperatorNamespace,
 		rhdhSubscriptionChannel,
-		"")
+		rhdhSubscriptionStartingCSV)
 
 	// check if subscription exists
 	subscriptionExists, existingSubscription, err := kubeoperations.CheckSubscriptionExists(ctx, olmClientSet, rhdhSubscription)
@@ -62,7 +63,9 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 		return err
 	}
 	if !subscriptionExists {
-		if err := kubeoperations.InstallOperatorViaSubscription(ctx, client, olmClientSet, rhdhOperatorGroup, rhdhSubscription); err != nil {
+		if err := kubeoperations.InstallSubscriptionAndOperatorGroup(
+			ctx, client, olmClientSet,
+			rhdhOperatorGroup, rhdhSubscription); err != nil {
 			rhdhLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", rhdhSubscriptionName)
 			return err
 		}
@@ -79,6 +82,22 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 			rhdhLogger.Info("Successfully updated subscription spec", "SubscriptionName", rhdhSubscriptionName)
 		}
 	}
+
+	// approve install plan
+	if existingSubscription.Status.InstallPlanRef != nil && existingSubscription.Status.CurrentCSV == rhdhSubscriptionStartingCSV {
+		installPlanName := existingSubscription.Status.InstallPlanRef.Name
+		if err := kubeoperations.ApproveInstallPlan(client, ctx, installPlanName, existingSubscription.Namespace); err != nil {
+			rhdhLogger.Error(err, "Error occurred while approving install plan for subscription", "SubscriptionName", installPlanName)
+			return err
+		}
+	}
+
+	// check CSV exists
+	if _, err := kubeoperations.CheckCSVExists(ctx, client, existingSubscription); err != nil {
+		rhdhLogger.Error(err, "Error occurred when checking CSV exists", "SubscriptionName", rhdhSubscriptionName)
+		return err
+	}
+
 	return nil
 }
 

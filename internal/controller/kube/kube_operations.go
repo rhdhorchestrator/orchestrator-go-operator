@@ -205,9 +205,9 @@ func CheckSubscriptionExists(
 	return true, subscription, nil
 }
 
-func CheckCRDExists(ctx context.Context, client client.Client, name string, namespace string) error {
+func CheckCRDExists(ctx context.Context, client client.Client, name string) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
-	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, crd)
+	err := client.Get(ctx, types.NamespacedName{Name: name}, crd)
 	if err != nil {
 		return err
 	}

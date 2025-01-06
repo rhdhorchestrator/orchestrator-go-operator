@@ -161,7 +161,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
 	}
 
-	//handle knative
+	// handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
 	if err := r.reconcileKnative(ctx, serverlessOperator); err != nil {
 		logger.Error(err, "Error occurred when installing K-Native resources")
@@ -178,7 +178,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// handle RHDH
 	rhdhConfig := orchestrator.Spec.RHDHConfig
 	if err = r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
-		logger.Error(err, "Error occurred when installing RHDH resources")
+		logger.Error(err, "Error occurred when creating RHDH resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
@@ -219,6 +219,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 		if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace); err != nil {
 			return err
 		}
+		return nil
 	}
 	// Subscription is enabled; check namespace exist
 	if _, err := kube.CheckNamespaceExist(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
@@ -250,7 +251,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 		return err
 	}
 
-	// handle serveless logic CRs
+	// handle serverless logic CRs
 	if err := handleServerlessLogicCR(ctx, r.Client, orchestrator); err != nil {
 		return err
 	}
@@ -268,6 +269,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 		if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
 			return err
 		}
+		return nil
 	}
 
 	// Subscription is enabled;
@@ -302,6 +304,7 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 			logger.Error(err, "Error occurred when cleaning up RHDH", "SubscriptionName", subscriptionName)
 			return err
 		}
+		return nil
 	}
 
 	if err := rhdh.HandleRHDHOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
@@ -309,14 +312,19 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 		return err
 	}
 
+	// get cluster domain name
 	clusterDomain, _ := r.getClusterDomain(ctx)
+
 	// create secret
 	if err := rhdh.CreateRHDHSecret(namespace, ctx, r.Client); err != nil {
 		return err
 	}
+
 	// create configmap
+	logger.Info("Creating configmap for RHDH CR...")
 	bsConfigMapList := rhdh.GetConfigmapList(ctx, r.Client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 	logger.Info("Configmap list", "CM-List", bsConfigMapList)
+
 	// handle RHDH CR
 	if err := rhdh.HandleRHDHCR(rhdhConfig, bsConfigMapList, ctx, r.Client); err != nil {
 		return err

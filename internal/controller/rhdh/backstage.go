@@ -21,11 +21,12 @@ const (
 	rhdhOperatorGroup                 = "rhdh-operator-group"
 	rhdhAPIVersion                    = "rhdh.redhat.com/v1alpha2"
 	rhdhKind                          = "Backstage"
+	rhdhCRDName                       = "backstages.rhdh.redhat.com"
 	rhdhReplica                 int32 = 1
 	rhdhSubscriptionName              = "rhdh"
 	rhdhSubscriptionChannel           = "fast-1.3"
 	rhdhOperatorNamespace             = "rhdh-operator"
-	rhdhSubscriptionStartingCSV       = "logic-operator-rhel8.v1.34.0"
+	rhdhSubscriptionStartingCSV       = "rhdh-operator.v1.3.3"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{
@@ -146,6 +147,16 @@ func HandleRHDHCR(
 	ctx context.Context, client client.Client) error {
 	rhdhLogger := log.FromContext(ctx)
 
+	// subscription exists; check if CRD exists for RHDH
+	if err := kubeoperations.CheckCRDExists(ctx, client, rhdhCRDName); err != nil {
+		if apierrors.IsNotFound(err) {
+			rhdhLogger.Info("CRD resource not found or ready", "CRD", rhdhCRDName)
+			return err
+		}
+		rhdhLogger.Error(err, "Error occurred when retrieving CRD", "CRD", rhdhCRDName)
+		return err
+	}
+
 	rhdhLogger.Info("Handling RHDH CR resource")
 
 	rhdhNamespace := rhdhConfig.Namespace
@@ -197,7 +208,7 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 	rhdhConfig orchestratorv1alpha2.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
 
 	cmLogger := log.FromContext(ctx)
-	cmLogger.Info("Creating ConfigMaps...")
+	cmLogger.Info("Processing ConfigMaps...")
 
 	configmapList := make([]rhdhv1alpha2.ObjectKeyRef, 0)
 	namespace := rhdhConfig.Namespace
@@ -205,17 +216,20 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 		if cmName != AppConfigRHDHDynamicPluginName {
 			configmapList = append(configmapList, rhdhv1alpha2.ObjectKeyRef{Name: cmName})
 		}
+		cmLogger.Info("Starting Configmap creation", "CM", cmName, "NS", namespace)
+
 		if err := client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      cmName,
 		}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
+			cmLogger.Info("Configmap not found, creating CM", "CM", cmName)
 			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
 			if err != nil {
 				cmLogger.Error(err, "Error occurred when parsing config data for configmap", "CM", cmName)
 				continue
 			} else {
-				if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err == nil {
-					cmLogger.Info("Creating ConfigMap", "CM", cmName)
+				if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err != nil {
+					cmLogger.Error(err, "Error occurred when creating ConfigMap", "CM", cmName)
 				}
 			}
 		}

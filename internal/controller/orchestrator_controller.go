@@ -49,7 +49,7 @@ const (
 	// Finalizer Definition
 	FinalizerCRCleanup = "rhdh.redhat.com/orchestrator-cleanup"
 
-	RequeueAfterTime = 5
+	RequeueAfterTime = 1
 )
 
 // OrchestratorReconciler reconciles an Orchestrator object

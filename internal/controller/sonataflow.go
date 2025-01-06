@@ -103,12 +103,6 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 			return err
 		}
 	}
-
-	// check CSV exists
-	if _, err := kube.CheckCSVExists(ctx, client, existingSubscription); err != nil {
-		sfLogger.Error(err, "Error occurred when checking CSV exists", "SubscriptionName", serverlessLogicSubscriptionName)
-		return err
-	}
 	return nil
 }
 

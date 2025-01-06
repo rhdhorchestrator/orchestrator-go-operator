@@ -100,12 +100,6 @@ func handleKNativeOperatorInstallation(ctx context.Context, client client.Client
 			return err
 		}
 	}
-
-	// check CSV exists
-	if _, err := kube.CheckCSVExists(ctx, client, existingSubscription); err != nil {
-		knativeLogger.Error(err, "Error occurred when checking CSV exists", "SubscriptionName", knativeSubscriptionName)
-		return err
-	}
 	return nil
 }
 

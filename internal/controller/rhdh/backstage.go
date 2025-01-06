@@ -92,13 +92,6 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 			return err
 		}
 	}
-
-	// check CSV exists
-	if _, err := kubeoperations.CheckCSVExists(ctx, client, existingSubscription); err != nil {
-		rhdhLogger.Error(err, "Error occurred when checking CSV exists", "SubscriptionName", rhdhSubscriptionName)
-		return err
-	}
-
 	return nil
 }
 

@@ -126,7 +126,7 @@ func handleKnativeCR(ctx context.Context, client client.Client) error {
 	if err := kube.CheckCRDExists(ctx, client, knativeServingCRDName); err != nil {
 		if apierrors.IsNotFound(err) {
 			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", knativeSubscriptionName)
-			return nil
+			return err
 		}
 		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", knativeServingCRDName)
 		return err

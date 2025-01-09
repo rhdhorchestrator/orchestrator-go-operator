@@ -195,10 +195,11 @@ func HandleRHDHCR(
 	return nil
 }
 
-func GetConfigmapList(ctx context.Context, client client.Client,
+// GetOrCreateConfigMaps creates or gets the configmap list
+func GetOrCreateConfigMaps(ctx context.Context, client client.Client,
 	clusterDomain, serverlessWorkflowNamespace string,
 	tektonEnabled, argoCDEnabled bool,
-	rhdhConfig orchestratorv1alpha2.RHDHConfig) []rhdhv1alpha2.ObjectKeyRef {
+	rhdhConfig orchestratorv1alpha2.RHDHConfig) ([]rhdhv1alpha2.ObjectKeyRef, error) {
 
 	cmLogger := log.FromContext(ctx)
 	cmLogger.Info("Processing ConfigMaps...")
@@ -209,25 +210,26 @@ func GetConfigmapList(ctx context.Context, client client.Client,
 		if cmName != AppConfigRHDHDynamicPluginName {
 			configmapList = append(configmapList, rhdhv1alpha2.ObjectKeyRef{Name: cmName})
 		}
-		cmLogger.Info("Starting Configmap creation", "CM", cmName, "NS", namespace)
+		cmLogger.Info("Starting Configmap creation for:", "CM", cmName, "NS", namespace)
 
-		if err := client.Get(ctx, types.NamespacedName{
-			Namespace: namespace,
-			Name:      cmName,
-		}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
-			cmLogger.Info("Configmap not found, creating CM", "CM", cmName)
-			configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
-			if err != nil {
-				cmLogger.Error(err, "Error occurred when parsing config data for configmap", "CM", cmName)
-				continue
-			} else {
-				if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err != nil {
-					cmLogger.Error(err, "Error occurred when creating ConfigMap", "CM", cmName)
+		err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: cmName}, &corev1.ConfigMap{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				cmLogger.Info("Configmap does not exist, creating CM", "CM", cmName)
+				configValue, err := ConfigMapTemplateFactory(cmName, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+				if err != nil {
+					cmLogger.Error(err, "Error occurred when parsing config data for configmap", "CM", cmName)
+					return configmapList, fmt.Errorf("failed to parse template data for configmap: %s", err)
+				} else {
+					if err := CreateConfigMap(cmName, configDataKey, namespace, configValue, ctx, client); err != nil {
+						cmLogger.Error(err, "Error occurred when creating ConfigMap", "CM", cmName)
+						return configmapList, err
+					}
 				}
 			}
 		}
 	}
-	return configmapList
+	return configmapList, nil
 }
 
 func CreateConfigMap(

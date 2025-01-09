@@ -113,8 +113,8 @@ func ApproveInstallPlan(client client.Client, ctx context.Context, installPlanNa
 			logger.Error(err, "Error occurred when approving InstallPlan", "InstallPlanName", installPlan.Name)
 			return err
 		}
+		logger.Info("Successfully approved InstallPlan", "InstallPlanName", installPlan.Name)
 	}
-	logger.Info("Successfully approved InstallPlan", "InstallPlanName", installPlan.Name)
 	return nil
 }
 

@@ -49,7 +49,7 @@ const (
 	// Finalizer Definition
 	FinalizerCRCleanup = "rhdh.redhat.com/orchestrator-cleanup"
 
-	RequeueAfterTime = 1
+	RequeueAfterTime = 1 * time.Minute
 )
 
 // OrchestratorReconciler reconciles an Orchestrator object
@@ -104,13 +104,13 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		// Error reading the object - requeue the request.
 		logger.Error(err, "Failed to get orchestrator")
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: RequeueAfterTime}, err
 	}
 
 	if !orchestrator.DeletionTimestamp.IsZero() {
 		err := r.handleCleanUp(ctx, orchestrator)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
+			return ctrl.Result{RequeueAfter: RequeueAfterTime}, err
 		}
 		// Remove the finalizer to complete deletion
 		controllerutil.RemoveFinalizer(orchestrator, FinalizerCRCleanup)
@@ -139,7 +139,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// Re-fetch orchestrator Custom Resource after updating the status
 		if err := r.Get(ctx, req.NamespacedName, orchestrator); err != nil {
 			logger.Error(err, "Failed to re fetch orchestrator")
-			return ctrl.Result{}, err
+			return ctrl.Result{RequeueAfter: RequeueAfterTime}, err
 		}
 	}
 
@@ -150,6 +150,9 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// handle serverless logic
 	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
 	if err = r.reconcileServerlessLogic(ctx, serverlessLogicOperator, orchestrator); err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
+		}
 		logger.Error(err, "Error occurred when installing Serverless Logic resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
@@ -158,12 +161,15 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
-		return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
+		return ctrl.Result{RequeueAfter: RequeueAfterTime}, err
 	}
 
 	// handle knative
 	serverlessOperator := orchestrator.Spec.ServerlessOperator
 	if err := r.reconcileKnative(ctx, serverlessOperator); err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
+		}
 		logger.Error(err, "Error occurred when installing K-Native resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
@@ -172,12 +178,15 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
-		return ctrl.Result{RequeueAfter: RequeueAfterTime * time.Minute}, err
+		return ctrl.Result{RequeueAfter: RequeueAfterTime}, err
 	}
 
 	// handle RHDH
 	rhdhConfig := orchestrator.Spec.RHDHConfig
 	if err = r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
+		}
 		logger.Error(err, "Error occurred when creating RHDH resources")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
@@ -186,9 +195,12 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
-		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
+		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
 	}
 	if err = r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
+		}
 		logger.Error(err, "Error occurred when installing NetworkPolicy")
 		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
 			Type:               TypeDegrading,
@@ -197,7 +209,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
-		return ctrl.Result{Requeue: true, RequeueAfter: 3 * time.Minute}, err
+		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
 	}
 	return ctrl.Result{}, nil
 }
@@ -216,10 +228,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	// check if subscription exists and handle clean up if necessary
 	if !serverlessLogicOperator.InstallOperator {
 		// handle clean up
-		if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace); err != nil {
-			return err
-		}
-		return nil
+		return handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace)
 	}
 	// Subscription is enabled; check namespace exist
 	if _, err := kube.CheckNamespaceExist(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
@@ -244,7 +253,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	if err := r.Get(ctx, types.NamespacedName{Name: sonataFlowClusterPlatformCRDName, Namespace: serverlessWorkflowNamespace}, sonataFlowClusterPlatformCRD); err != nil {
 		if apierrors.IsNotFound(err) {
 			// CRD does not exist
-			sfLogger.Info("CRD resource not found.", "SubscriptionName", serverlessLogicSubscriptionName, "Namespace", serverlessWorkflowNamespace)
+			sfLogger.Info("CRD resource not found or ready.", "SubscriptionName", serverlessLogicSubscriptionName, "Namespace", serverlessWorkflowNamespace)
 			return err
 		}
 		sfLogger.Error(err, "Error occurred when retrieving CRD", "CRD", sonataFlowClusterPlatformCRDName)
@@ -298,7 +307,7 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	subscriptionName := rhdhConfig.Name
 	namespace := rhdhConfig.Namespace
 
-	// if subscription is disabled; check if subscription exists and handle delete
+	// if install operator is disabled; handle clean up
 	if !rhdhConfig.InstallOperator {
 		if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, namespace); err != nil {
 			logger.Error(err, "Error occurred when cleaning up RHDH", "SubscriptionName", subscriptionName)
@@ -313,7 +322,10 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	}
 
 	// get cluster domain name
-	clusterDomain, _ := r.getClusterDomain(ctx)
+	clusterDomain, err := r.getClusterDomain(ctx)
+	if err != nil {
+		return err
+	}
 
 	// create secret
 	if err := rhdh.CreateRHDHSecret(namespace, ctx, r.Client); err != nil {
@@ -322,7 +334,10 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 
 	// create configmap
 	logger.Info("Creating configmap for RHDH CR...")
-	bsConfigMapList := rhdh.GetConfigmapList(ctx, r.Client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+	bsConfigMapList, err := rhdh.GetOrCreateConfigMaps(ctx, r.Client, clusterDomain, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig)
+	if err != nil {
+		return err
+	}
 	logger.Info("Configmap list", "CM-List", bsConfigMapList)
 
 	// handle RHDH CR

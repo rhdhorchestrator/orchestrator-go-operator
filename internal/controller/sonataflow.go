@@ -38,6 +38,7 @@ const (
 	sonataFlowClusterPlatformKind          = "SonataFlowClusterPlatform"
 	sonataFlowClusterPlatformCRName        = "cluster-platform"
 	sonataFlowClusterPlatformCRDName       = "sonataflowclusterplatforms.sonataflow.org"
+	serverlessOperatorGroupName            = "serverless-operator-group"
 	serverlessLogicSubscriptionChannel     = "alpha"
 	serverlessLogicOperatorNamespace       = "openshift-serverless-logic"
 	serverlessLogicSubscriptionName        = "logic-operator-rhel8"
@@ -72,9 +73,9 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 		return err
 	}
 	if !subscriptionExists {
-		err := kube.InstallOperatorViaSubscription(
+		err := kube.InstallSubscriptionAndOperatorGroup(
 			ctx, client, olmClientSet,
-			kube.OpenshiftServerlessOperatorGroupName,
+			serverlessOperatorGroupName,
 			oslSubscription)
 		if err != nil {
 			sfLogger.Error(err, "Error occurred when installing operator via Subscription", "SubscriptionName", serverlessLogicSubscriptionName)
@@ -91,6 +92,15 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 				return err
 			}
 			sfLogger.Info("Successfully updated updating subscription spec", "SubscriptionName", serverlessLogicSubscriptionName)
+		}
+	}
+
+	// approve install plan
+	if existingSubscription.Status.InstallPlanRef != nil && existingSubscription.Status.CurrentCSV == serverlessLogicSubscriptionStartingCSV {
+		installPlanName := existingSubscription.Status.InstallPlanRef.Name
+		if err := kube.ApproveInstallPlan(client, ctx, installPlanName, existingSubscription.Namespace); err != nil {
+			sfLogger.Error(err, "Error occurred while approving install plan for subscription", "SubscriptionName", installPlanName)
+			return err
 		}
 	}
 	return nil

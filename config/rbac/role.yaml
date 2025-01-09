@@ -99,6 +99,7 @@ rules:
   - get
   - list
   - patch
+  - update
   - watch
 - apiGroups:
   - rhdh.redhat.com

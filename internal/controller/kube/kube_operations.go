@@ -18,6 +18,7 @@ package kube
 
 import (
 	"context"
+	"fmt"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -32,12 +33,10 @@ import (
 )
 
 const (
-	CatalogSourceNamespace               = "openshift-marketplace"
-	CatalogSourceName                    = "redhat-operators"
-	OpenshiftServerlessOperatorGroupName = "serverless-operator-group"
-	ServerlessOperatorGroupName          = "serverless-operator-group"
-	CreatedByLabelKey                    = "created-by"
-	CreatedByLabelValue                  = "orchestrator"
+	CatalogSourceNamespace = "openshift-marketplace"
+	CatalogSourceName      = "redhat-operators"
+	CreatedByLabelKey      = "created-by"
+	CreatedByLabelValue    = "orchestrator"
 )
 
 func CheckNamespaceExist(ctx context.Context, client client.Client, namespace string) (bool, error) {
@@ -64,7 +63,7 @@ func CreateNamespace(ctx context.Context, client client.Client, namespace string
 	return nil
 }
 
-func InstallOperatorViaSubscription(
+func InstallSubscriptionAndOperatorGroup(
 	ctx context.Context, client client.Client,
 	olmClientSet olmclientset.Clientset,
 	operatorGroupName string,
@@ -79,77 +78,75 @@ func InstallOperatorViaSubscription(
 	// check operator group exists
 	err := getOperatorGroup(ctx, client, namespace, operatorGroupName)
 	if err != nil {
-		logger.Error(err, "Failed to get operator group resource", "OperatorGroup", operatorGroupName)
+		logger.Error(err, "Error occurred when checking operator group resource", "OperatorGroup", operatorGroupName)
+		return err
 	}
-	// install subscription
-	installedSubscription, err := olmClientSet.OperatorsV1alpha1().
+	// create subscription
+	if _, err := olmClientSet.OperatorsV1alpha1().
 		Subscriptions(namespace).
-		Create(ctx, subscription, metav1.CreateOptions{})
-
-	if err != nil {
+		Create(ctx, subscription, metav1.CreateOptions{}); err != nil {
 		logger.Error(err, "Error occurred while creating Subscription", "SubscriptionName", subscriptionName)
-	}
-	// Check the Subscription's status after installation
-	installedCSV := installedSubscription.Status.InstalledCSV
-	if installedCSV == "" {
-		logger.Info("Subscription has no installed CSV: CSV not ready or Incorrectly installed subscription", "Subscription", subscriptionName)
 		return err
 	}
-	// Get the ClusterServiceVersion (CSV) for the Subscription installed
-	sfcsv := &operatorsv1alpha1.ClusterServiceVersion{}
-	if err := client.Get(ctx, types.NamespacedName{Name: installedCSV, Namespace: namespace}, sfcsv); err != nil {
-		logger.Error(err, "Error occurred when retrieving CSV", "ClusterServiceVersion", installedCSV)
-		return err
-	}
-	// Check if the CSV's phase is "Succeeded"
-	if sfcsv.Status.Phase == operatorsv1alpha1.CSVPhaseSucceeded {
-		logger.Info("Successfully installed Operator Via Subscription", "SubscriptionName", installedSubscription.Name)
-		return nil
-	}
-	logger.Info("Successfully installed Operator Via Subscription", "SubscriptionName", installedSubscription.Name)
 	return nil
 }
 
-func ApproveInstallPlan(client client.Client, ctx context.Context, installPlanName, startingCSV, namespace string) error {
+func ApproveInstallPlan(client client.Client, ctx context.Context, installPlanName, namespace string) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Starting approval for InstallPlan...")
 
-	// Fetch the Subscription
-	subscription := &operatorsv1alpha1.Subscription{}
-	if err := client.Get(ctx, types.NamespacedName{Name: installPlanName, Namespace: namespace}, subscription); err != nil {
-		return err
-	}
-
-	// check the InstallPlanRef in subscription status
-	if subscription.Status.InstallPlanRef == nil {
-		logger.Info("No InstallPlan associated with Subscription yet", "Subscription", subscription.Name)
-		return nil
-	}
-
-	// Get the InstallPlan
+	// get the InstallPlan
 	installPlan := &operatorsv1alpha1.InstallPlan{}
 	if err := client.Get(ctx, types.NamespacedName{
-		Namespace: subscription.Namespace,
-		Name:      subscription.Status.InstallPlanRef.Name,
+		Namespace: namespace,
+		Name:      installPlanName,
 	}, installPlan); err != nil {
+		logger.Error(err, "Error occurred when retrieving InstallPlan", "InstallPlan", installPlan.Name)
 		return err
 	}
 
 	// Approve the InstallPlan if manual approval is needed
-	if subscription.Status.InstalledCSV == startingCSV && !installPlan.Spec.Approved {
-		logger.Info("Approving InstallPlan", "InstallPlanName", installPlan.Name, "StartingCSV", subscription.Status.InstalledCSV)
+	if !installPlan.Spec.Approved {
+		logger.Info("Approving InstallPlan", "InstallPlanName", installPlan.Name)
 		installPlan.Spec.Approved = true
 		if err := client.Update(ctx, installPlan); err != nil {
 			logger.Error(err, "Error occurred when approving InstallPlan", "InstallPlanName", installPlan.Name)
 			return err
 		}
+		logger.Info("Successfully approved InstallPlan", "InstallPlanName", installPlan.Name)
 	}
 	return nil
+}
+
+func CheckCSVExists(ctx context.Context, client client.Client, installedSubscription *v1alpha1.Subscription) (bool, error) {
+	logger := log.FromContext(ctx)
+
+	installedCSV := installedSubscription.Status.InstalledCSV
+
+	// Check the Subscription's status after installation
+	if installedCSV == "" {
+		logger.Info("Subscription has no installed CSV: CSV not ready or Incorrectly installed subscription", "Subscription", installedSubscription.Name)
+		return false, fmt.Errorf("subscription not ready yet")
+	}
+	// Get the ClusterServiceVersion (CSV) for the Subscription installed
+	sfcsv := &operatorsv1alpha1.ClusterServiceVersion{}
+	if err := client.Get(ctx, types.NamespacedName{Name: installedCSV, Namespace: installedSubscription.Namespace}, sfcsv); err != nil {
+		logger.Error(err, "Error occurred when retrieving CSV", "ClusterServiceVersion", installedCSV)
+		return false, err
+	}
+	// Check if the CSV's phase is Succeeded
+	if sfcsv != nil && sfcsv.Status.Phase == operatorsv1alpha1.CSVPhaseSucceeded {
+		logger.Info("Successfully installed Operator Via Subscription", "SubscriptionName", installedSubscription.Name)
+		return true, nil
+	}
+	return false, fmt.Errorf("failed to install operator via subscription")
+
 }
 
 func getOperatorGroup(ctx context.Context, client client.Client,
 	namespace, operatorGroupName string) error {
 	logger := log.FromContext(ctx)
+
 	// check if operator group exists
 	operatorGroup := &operatorsv1.OperatorGroup{}
 	err := client.Get(ctx, types.NamespacedName{Name: operatorGroupName, Namespace: namespace}, operatorGroup)
@@ -165,6 +162,7 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 		logger.Error(err, "Error occurred when creating OperatorGroup resource", "Namespace", namespace)
 		return err
 	}
+	logger.Info("Successfully created OperatorGroup", "OperatorGroup", operatorGroupName)
 	return nil
 }
 
@@ -175,9 +173,8 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 	subscriptionObject := &v1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: subscriptionName},
 		Spec: &v1alpha1.SubscriptionSpec{
-			Channel: channel,
-			//InstallPlanApproval:    v1alpha1.ApprovalManual,
-			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
+			Channel:                channel,
+			InstallPlanApproval:    v1alpha1.ApprovalManual,
 			CatalogSource:          CatalogSourceName,
 			StartingCSV:            startingCSV,
 			CatalogSourceNamespace: CatalogSourceNamespace,
@@ -208,9 +205,9 @@ func CheckSubscriptionExists(
 	return true, subscription, nil
 }
 
-func CheckCRDExists(ctx context.Context, client client.Client, name string, namespace string) error {
+func CheckCRDExists(ctx context.Context, client client.Client, name string) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
-	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, crd)
+	err := client.Get(ctx, types.NamespacedName{Name: name}, crd)
 	if err != nil {
 		return err
 	}

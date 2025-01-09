@@ -30,16 +30,18 @@ import (
 )
 
 const (
-	knativeAPIVersion             = "operator.knative.dev/v1beta1"
-	knativeServingKind            = "KnativeServing"
-	knativeServingNamespacedName  = "knative-serving"
-	knativeEventingKind           = "KnativeEventing"
-	knativeEventingNamespacedName = "knative-eventing"
-	knativeEventingCRDName        = "knativeeventings.operator.knative.dev"
-	knativeServingCRDName         = "knativeservings.operator.knative.dev"
-	knativeSubscriptionName       = "serverless-operator"
-	knativeSubscriptionNamespace  = "openshift-serverless"
-	knativeSubscriptionChannel    = "stable"
+	knativeAPIVersion              = "operator.knative.dev/v1beta1"
+	knativeServingKind             = "KnativeServing"
+	knativeServingNamespacedName   = "knative-serving"
+	knativeEventingKind            = "KnativeEventing"
+	knativeEventingNamespacedName  = "knative-eventing"
+	knativeEventingCRDName         = "knativeeventings.operator.knative.dev"
+	knativeServingCRDName          = "knativeservings.operator.knative.dev"
+	knativeOperatorGroupName       = "serverless-operator-group"
+	knativeSubscriptionName        = "serverless-operator"
+	knativeSubscriptionNamespace   = "openshift-serverless"
+	knativeSubscriptionChannel     = "stable"
+	knativeSubscriptionStartingCSV = "serverless-operator.v1.34.1"
 )
 
 func handleKNativeOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
@@ -61,30 +63,41 @@ func handleKNativeOperatorInstallation(ctx context.Context, client client.Client
 		knativeSubscriptionName,
 		knativeSubscriptionNamespace,
 		knativeSubscriptionChannel,
-		"")
+		knativeSubscriptionStartingCSV)
 
 	// check if subscription exists
 	subscriptionExists, existingSubscription, err := kube.CheckSubscriptionExists(ctx, olmClientSet, serverlessSubscription)
 	if err != nil {
-		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", serverlessLogicSubscriptionName)
+		knativeLogger.Error(err, "Error occurred when checking subscription exists", "SubscriptionName", knativeSubscriptionName)
 		return err
 	}
 	if !subscriptionExists {
-		if err := kube.InstallOperatorViaSubscription(ctx, client, olmClientSet, kube.ServerlessOperatorGroupName, serverlessSubscription); err != nil {
-			knativeLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", serverlessLogicSubscriptionName)
+		if err := kube.InstallSubscriptionAndOperatorGroup(
+			ctx, client, olmClientSet,
+			knativeOperatorGroupName, serverlessSubscription); err != nil {
+			knativeLogger.Error(err, "Error occurred when installing operator", "SubscriptionName", knativeSubscriptionName)
 			return err
 		}
-		knativeLogger.Info("Operator successfully installed", "SubscriptionName", serverlessLogicSubscriptionName)
-	}
-
-	if subscriptionExists {
+		knativeLogger.Info("Operator successfully installed", "SubscriptionName", knativeSubscriptionName)
+	} else {
 		// Compare the current and desired state
 		if !reflect.DeepEqual(existingSubscription.Spec, serverlessSubscription.Spec) {
 			// Update the existing subscription with the new Spec
 			existingSubscription.Spec = serverlessSubscription.Spec
 			if err := client.Update(ctx, existingSubscription); err != nil {
+				knativeLogger.Error(err, "Error occurred when updating subscription spec", "SubscriptionName", knativeSubscriptionName)
 				return err
 			}
+			knativeLogger.Info("Successfully updated updating subscription spec", "SubscriptionName", knativeSubscriptionName)
+		}
+	}
+
+	// approve install plan
+	if existingSubscription.Status.InstallPlanRef != nil && existingSubscription.Status.CurrentCSV == knativeSubscriptionStartingCSV {
+		installPlanName := existingSubscription.Status.InstallPlanRef.Name
+		if err := kube.ApproveInstallPlan(client, ctx, installPlanName, existingSubscription.Namespace); err != nil {
+			knativeLogger.Error(err, "Error occurred while approving install plan for subscription", "SubscriptionName", installPlanName)
+			return err
 		}
 	}
 	return nil
@@ -95,7 +108,7 @@ func handleKnativeCR(ctx context.Context, client client.Client) error {
 	knativeLogger.Info("Handling Serverless Custom Resources...")
 
 	// subscription exists; check if CRD exists for knative eventing;
-	if err := kube.CheckCRDExists(ctx, client, knativeEventingCRDName, knativeSubscriptionNamespace); err != nil {
+	if err := kube.CheckCRDExists(ctx, client, knativeEventingCRDName); err != nil {
 		if apierrors.IsNotFound(err) {
 			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", knativeSubscriptionName)
 			return err
@@ -110,10 +123,10 @@ func handleKnativeCR(ctx context.Context, client client.Client) error {
 	}
 
 	// subscription exists; check if CRD exists knative serving;
-	if err := kube.CheckCRDExists(ctx, client, knativeServingCRDName, knativeSubscriptionNamespace); err != nil {
+	if err := kube.CheckCRDExists(ctx, client, knativeServingCRDName); err != nil {
 		if apierrors.IsNotFound(err) {
 			knativeLogger.Info("CRD resource not found or ready", "SubscriptionName", knativeSubscriptionName)
-			return nil
+			return err
 		}
 		knativeLogger.Error(err, "Error occurred when retrieving CRD", "CRD", knativeServingCRDName)
 		return err

@@ -40,8 +40,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	orchestratorv1alpha2 "github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
-	"github.com/parodos-dev/orchestrator-operator/internal/controller"
+	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha2"
+	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -118,7 +118,7 @@ func main() {
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "bce6d9e2.parodos.dev",
+		LeaderElectionID:       "bce6d9e2.rhdhorchestrator.io",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

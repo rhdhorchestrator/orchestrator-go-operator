@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/parodos-dev/orchestrator-operator/test/utils"
+	"github.com/rhdhorchestrator/orchestrator-operator/test/utils"
 )
 
 const namespace = "orchestrator-operator-system"

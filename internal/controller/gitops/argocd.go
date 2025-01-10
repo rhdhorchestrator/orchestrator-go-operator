@@ -3,7 +3,7 @@ package gitops
 import (
 	"context"
 	argocdv1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
+	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"

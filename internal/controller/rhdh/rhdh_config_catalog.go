@@ -18,14 +18,14 @@ catalog:
   locations:
     {{- if .EnableGuestProvider }}
     - type: url
-      target: https://github.com/parodos-dev/orchestrator-helm-chart/blob/main/resources/users.yaml
+      target: https://github.com/rhdhorchestrator/orchestrator-helm-chart/blob/main/resources/users.yaml
     {{- end }}
     - type: url
-      target: https://github.com/parodos-dev/workflow-software-templates/blob/{{ .CatalogBranch }}/entities/workflow-resources.yaml
+      target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/entities/workflow-resources.yaml
     - type: url
-      target: https://github.com/parodos-dev/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/basic-workflow/template.yaml
+      target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/basic-workflow/template.yaml
     - type: url
-      target: https://github.com/parodos-dev/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/complex-assessment-workflow/template.yaml
+      target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/complex-assessment-workflow/template.yaml
     - type: url
       target: https://github.com/redhat-developer/rhdh-plugins/blob/main/workspaces/orchestrator/plugins/orchestrator-common/src/generated/docs/api-doc/orchestrator-api.yaml
 `

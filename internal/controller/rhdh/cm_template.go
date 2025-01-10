@@ -3,7 +3,7 @@ package rhdh
 import (
 	"bytes"
 	"fmt"
-	"github.com/parodos-dev/orchestrator-operator/api/v1alpha2"
+	"github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha2"
 	"text/template"
 )
 

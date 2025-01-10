@@ -19,7 +19,7 @@ package controller
 import (
 	"context"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
+	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"

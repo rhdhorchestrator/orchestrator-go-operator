@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 )
 
 var _ = Describe("Orchestrator Controller", func() {

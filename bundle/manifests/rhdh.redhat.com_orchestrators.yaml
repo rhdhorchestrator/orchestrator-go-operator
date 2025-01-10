@@ -14,7 +14,7 @@ spec:
     singular: orchestrator
   scope: Namespaced
   versions:
-  - name: v1alpha2
+  - name: v1alpha3
     schema:
       openAPIV3Schema:
         description: Orchestrator is the Schema for the orchestrators API

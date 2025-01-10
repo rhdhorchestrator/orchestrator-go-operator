@@ -40,7 +40,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha2"
+	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )

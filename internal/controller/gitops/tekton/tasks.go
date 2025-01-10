@@ -2,7 +2,7 @@ package tekton
 
 import (
 	"context"
-	"github.com/parodos-dev/orchestrator-operator/internal/controller/kube"
+	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

@@ -8,7 +8,11 @@ metadata:
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
-  customresourcedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: Orchestrator
+      name: orchestrators.rhdh.redhat.com
+      version: v1alpha3
   description: |
     Red Hat Developer Hub Orchestrator is a plugin that enables serverless asynchronous workflows to Backstage.
 

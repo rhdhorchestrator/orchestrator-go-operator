@@ -74,7 +74,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-01-10T16:05:27Z"
+    createdAt: "2025-01-10T19:47:26Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
   name: orchestrator-operator.v0.0.1
@@ -85,7 +85,7 @@ spec:
     owned:
     - kind: Orchestrator
       name: orchestrators.rhdh.redhat.com
-      version: v1alpha2
+      version: v1alpha3
   description: |
     Red Hat Developer Hub Orchestrator is a plugin that enables serverless asynchronous workflows to Backstage.
 

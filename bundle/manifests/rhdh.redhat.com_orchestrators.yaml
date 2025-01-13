@@ -40,6 +40,8 @@ spec:
             description: OrchestratorSpec defines the desired state of Orchestrator
             properties:
               argocd:
+                default:
+                  enabled: false
                 description: Configuration for ArgoCD. Optional
                 properties:
                   enabled:
@@ -211,26 +213,33 @@ spec:
                 - namespace
                 type: object
               serverless:
+                default:
+                  installOperator: true
                 description: Configuration for Serverless (K-Native) Operator. Optional
                 properties:
                   installOperator:
                     default: true
-                    description: |-
-                      Determines whether to install the Serverless operator
-                      Defaults to true
+                    description: Determines whether to install the Serverless operator
                     type: boolean
+                required:
+                - installOperator
                 type: object
               serverlessLogic:
+                default:
+                  installOperator: true
                 description: Configuration for ServerlessLogic. Optional
                 properties:
                   installOperator:
                     default: true
-                    description: |-
-                      Determines whether to install the ServerlessLogic operator
-                      Defaults to true
+                    description: Determines whether to install the ServerlessLogic
+                      operator
                     type: boolean
+                required:
+                - installOperator
                 type: object
               tekton:
+                default:
+                  enabled: false
                 description: |-
                   Contains the configuration for the infrastructure services required for the Orchestrator to serve workflows
                   by leveraging the OpenShift Serverless and OpenShift Serverless Logic capabilities. Optional

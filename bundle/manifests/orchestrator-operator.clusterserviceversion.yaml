@@ -5,7 +5,7 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "rhdh.redhat.com/v1alpha2",
+          "apiVersion": "rhdh.redhat.com/v1alpha3",
           "kind": "Orchestrator",
           "metadata": {
             "labels": {
@@ -48,7 +48,7 @@ metadata:
               "namespace": "sonataflow-infra"
             },
             "rhdh": {
-              "devMode": true,
+              "devMode": false,
               "installOperator": true,
               "name": "my-rhdh",
               "namespace": "rhdh",
@@ -74,7 +74,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-01-10T19:47:26Z"
+    createdAt: "2025-01-10T23:14:01Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
   name: orchestrator-operator.v0.0.1
@@ -335,7 +335,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/jubah/orchestrator-go-operator:latest
+                image: quay.io/orchestrator/orchestrator-go-operator:0.0.1
                 livenessProbe:
                   httpGet:
                     path: /healthz

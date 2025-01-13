@@ -29,7 +29,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # rhdh.redhat.com/orchestrator-go-operator-bundle:$VERSION and rhdh.redhat.com/orchestrator-go-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= quay.io/jubah/orchestrator-go-operator
+IMAGE_TAG_BASE ?= quay.io/orchestrator/orchestrator-go-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -50,8 +50,7 @@ endif
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPERATOR_SDK_VERSION ?= v1.36.0
 # Image URL to use all building/pushing image targets
-#IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
-IMG ?= $(IMAGE_TAG_BASE)
+IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.29.0
 

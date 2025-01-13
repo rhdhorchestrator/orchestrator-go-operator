@@ -29,9 +29,11 @@ const (
 // OrchestratorSpec defines the desired state of Orchestrator
 type OrchestratorSpec struct {
 	// Configuration for ServerlessLogic. Optional
+	// +kubebuilder:default={installOperator: true}
 	ServerlessLogicOperator ServerlessLogicOperator `json:"serverlessLogic,omitempty"`
 
 	// Configuration for Serverless (K-Native) Operator. Optional
+	// +kubebuilder:default={installOperator: true}
 	ServerlessOperator ServerlessOperator `json:"serverless,omitempty"`
 
 	// Configuration for RHDH (Backstage).
@@ -48,24 +50,24 @@ type OrchestratorSpec struct {
 
 	// Contains the configuration for the infrastructure services required for the Orchestrator to serve workflows
 	// by leveraging the OpenShift Serverless and OpenShift Serverless Logic capabilities. Optional
+	// +kubebuilder:default={enabled: false}
 	Tekton Tekton `json:"tekton,omitempty"`
 
 	// Configuration for ArgoCD. Optional
+	// +kubebuilder:default={enabled: false}
 	ArgoCd ArgoCD `json:"argocd,omitempty"`
 }
 
 type ServerlessLogicOperator struct {
 	// Determines whether to install the ServerlessLogic operator
-	// Defaults to true
 	// +kubebuilder:default=true
-	InstallOperator bool `json:"installOperator,omitempty"`
+	InstallOperator bool `json:"installOperator"`
 }
 
 type ServerlessOperator struct {
 	// Determines whether to install the Serverless operator
-	// Defaults to true
 	// +kubebuilder:default=true
-	InstallOperator bool `json:"installOperator,omitempty"`
+	InstallOperator bool `json:"installOperator"`
 }
 
 type RHDHConfig struct {

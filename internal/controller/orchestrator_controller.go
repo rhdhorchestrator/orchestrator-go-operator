@@ -34,6 +34,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
+	orchestratorgitops "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/gitops"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -197,6 +198,8 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		})
 		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
 	}
+
+	// handle network policy
 	if err = r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
@@ -206,6 +209,22 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Type:               TypeDegrading,
 			Status:             metav1.ConditionFalse,
 			Reason:             "ReconcilingNetworkPolicyFailed",
+			Message:            err.Error(),
+			LastTransitionTime: metav1.Now(),
+		})
+		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
+	}
+
+	// handle gitops
+	if err := r.reconcileGitOps(ctx, orchestrator); err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
+		}
+		logger.Error(err, "Error occurred when installing GitOps")
+		_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.FailedPhase, metav1.Condition{
+			Type:               TypeDegrading,
+			Status:             metav1.ConditionFalse,
+			Reason:             "ReconcilingGitOpsFailed",
 			Message:            err.Error(),
 			LastTransitionTime: metav1.Now(),
 		})
@@ -224,9 +243,9 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 
 	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 
-	// if subscription is disabled;
-	// check if subscription exists and handle clean up if necessary
+	// check if install operator is disabled and handle clean up if necessary
 	if !serverlessLogicOperator.InstallOperator {
+		sfLogger.Info("Operator is disabled. Handle Clean up process if necessary")
 		// handle clean up
 		return handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace)
 	}
@@ -409,10 +428,43 @@ func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator 
 func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling Network Policy...")
-	if err := handleNetworkPolicy(r.Client, ctx, orchestrator.Spec.PlatformConfig.Namespace, orchestrator.Spec.RHDHConfig.Namespace, orchestrator.Spec.PostgresConfig.Namespace); err != nil {
+
+	namespace := orchestrator.Spec.PlatformConfig.Namespace
+	namespaceExist, err := kube.CheckNamespaceExist(ctx, r.Client, namespace)
+	if err != nil || !namespaceExist {
+		logger.Error(err, "Ensure namespace already exist", "Namespace", namespace)
+		return err
+	}
+
+	if err := handleNetworkPolicy(r.Client, ctx, namespace, orchestrator.Spec.RHDHConfig.Namespace, orchestrator.Spec.PostgresConfig.Namespace); err != nil {
 		logger.Error(err, "Error occurred when reconciling Network Policy", "NP", NetworkPolicyName)
 		return err
 	}
+	return nil
+}
+
+func (r *OrchestratorReconciler) reconcileGitOps(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling GitOps...")
+
+	if !(orchestrator.Spec.ArgoCd.Enabled && orchestrator.Spec.Tekton.Enabled) {
+		logger.Info("Handling clean up  for GitOps...")
+
+		// handle argocd clean up
+		err := orchestratorgitops.HandleArgoCDProjectCleanUp(orchestrator.Spec.ArgoCd.Namespace, r.Client, ctx)
+		if err != nil {
+			return err
+		}
+
+		// handle tekton clean up
+		return nil
+	}
+
+	logger.Info("Handling for GitOps...")
+	if err := orchestratorgitops.HandleGitOps(r.Client, ctx, orchestrator.Spec.ArgoCd.Namespace); err != nil {
+		return err
+	}
+
 	return nil
 }
 

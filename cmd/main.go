@@ -62,6 +62,7 @@ func init() {
 	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
 	utilruntime.Must(tektonv1.AddToScheme(scheme))
+	utilruntime.Must(argocdv1alpha1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 }

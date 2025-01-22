@@ -451,7 +451,7 @@ func (r *OrchestratorReconciler) reconcileGitOps(ctx context.Context, orchestrat
 		logger.Info("Handling clean up  for GitOps...")
 
 		// handle argocd clean up
-		err := orchestratorgitops.HandleArgoCDProjectCleanUp(orchestrator.Spec.ArgoCd.Namespace, r.Client, ctx)
+		err := orchestratorgitops.HandleGitOpsCleanUp(r.Client, ctx, orchestrator.Spec.ArgoCd.Namespace)
 		if err != nil {
 			return err
 		}

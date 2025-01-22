@@ -16,7 +16,7 @@ metadata:
           "spec": {
             "argocd": {
               "enabled": false,
-              "namespace": "my-argocd"
+              "namespace": "orchestrator-gitops"
             },
             "platform": {
               "eventing": {
@@ -74,10 +74,10 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-01-10T23:14:01Z"
+    createdAt: "2025-01-22T14:50:03Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: orchestrator-operator.v0.0.1
+  name: orchestrator-operator.v0.0.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -335,7 +335,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/orchestrator/orchestrator-go-operator:0.0.1
+                image: quay.io/orchestrator/orchestrator-go-operator:0.0.2
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -423,4 +423,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.0.1
+  version: 0.0.2

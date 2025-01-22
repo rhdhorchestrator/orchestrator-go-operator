@@ -178,7 +178,7 @@ require (
 	k8s.io/kube-aggregator v0.31.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kubectl v0.31.2 // indirect
-	k8s.io/kubernetes v1.31.0 // indirect
+	k8s.io/kubernetes v1.31.5 // indirect
 	k8s.io/utils v0.0.0-20241104163129-6fe5fd82f078 // indirect
 	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608 // indirect
 	oras.land/oras-go/v2 v2.5.0 // indirect

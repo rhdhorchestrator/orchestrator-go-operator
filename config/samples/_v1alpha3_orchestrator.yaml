@@ -45,4 +45,4 @@ spec:
     enabled: false # Determines whether to create the Tekton pipeline and install the Tekton plugin on RHDH. Defaults to false. Optional
   argocd:
     enabled: false # Determines whether to install the ArgoCD plugin and create the orchestrator AppProject. Defaults to False. Optional
-    namespace: "my-argocd" # Namespace where the ArgoCD operator is installed and watching for argoapp CR instances. Optional
+    namespace: "orchestrator-gitops" # Namespace where the ArgoCD operator is installed and watching for argoapp CR instances. Optional

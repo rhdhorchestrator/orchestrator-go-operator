@@ -348,14 +348,15 @@ func handleTektonTaskCleanUp(client client.Client, ctx context.Context, gitOpsNa
 		}
 
 		for _, tektonTask := range tektonTaskList {
+			taskLogger.Info("Deleting Tekton Task ", "Task", tektonTask.Name)
 			// remove tekton task
 			err := client.Delete(ctx, &tektonTask)
 			if err != nil {
 				taskLogger.Error(err, "Error occurred when deleting tekton task", "Tekton Task", tektonTask.Name)
-				return err
+				continue
 			}
 			taskLogger.Info("Successfully deleted Tekton Task CR created by orchestrator", "Tekton Task", tektonTask.Name)
-			return nil
+			continue
 		}
 	}
 

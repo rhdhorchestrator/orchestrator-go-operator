@@ -55,13 +55,12 @@ func handleTektonPipelineTasks(client client.Client, ctx context.Context, gitOps
 	logger := log.FromContext(ctx)
 	logger.Info("Handling Tekton resource")
 
-	// check CRD for creating tasks
-
 	// handle tekton task
 	if err := HandleTektonTasks(client, ctx, gitOpsNamespace); err != nil {
 		return err
 	}
 
+	// handle tekton pipeline
 	if err := HandleTektonPipeline(client, ctx, gitOpsNamespace); err != nil {
 		return err
 	}
@@ -74,6 +73,11 @@ func HandleGitOpsCleanUp(client client.Client, ctx context.Context, gitOpsNamesp
 
 	// handle argocd clean up
 	if err := handleArgoCDProjectCleanUp(gitOpsNamespace, client, ctx); err != nil {
+		return err
+	}
+
+	// handle tekton pipeline clean up
+	if err := handleTektonPipelineCleanUp(client, ctx, gitOpsNamespace); err != nil {
 		return err
 	}
 

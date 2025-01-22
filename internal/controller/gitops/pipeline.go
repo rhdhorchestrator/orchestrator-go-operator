@@ -7,9 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"knative.dev/pkg/logging"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 )
 
 func HandleTektonPipeline(client client.Client, ctx context.Context, gitOpsNamespace string) error {
-	logger := logging.FromContext(ctx)
+	logger := log.FromContext(ctx)
 	logger.Info("Handling tekton pipeline resources")
 
 	if err := kube.CheckCRDExists(ctx, client, pipelineCRDName); err != nil {
@@ -230,4 +230,53 @@ func HandleTektonPipeline(client client.Client, ctx context.Context, gitOpsNames
 		return err
 	}
 	return nil
+}
+
+func handleTektonPipelineCleanUp(client client.Client, ctx context.Context, gitOpsNamespace string) error {
+	pipelineLogger := log.FromContext(ctx)
+
+	pipelineLogger.Info("Handling Tekton Pipeline CleanUp...")
+
+	namespaceExist, _ := kube.CheckNamespaceExist(ctx, client, gitOpsNamespace)
+	if namespaceExist {
+		tektonPipelineCRList, err := listTektonPipelineCR(ctx, client, gitOpsNamespace)
+
+		if err != nil || len(tektonPipelineCRList) == 0 {
+			pipelineLogger.Info("Failed to list or have no Tekton Pipeline CRs created by Orchestrator Operator and cannot perform clean up process")
+			return nil
+		}
+
+		if len(tektonPipelineCRList) == 1 {
+			// remove Tekton Pipeline CR
+			err := client.Delete(ctx, &tektonPipelineCRList[0])
+			if err != nil {
+				pipelineLogger.Error(err, "Error occurred when deleting Tekton Pipeline", "Tekton Pipeline", pipelineName)
+				return err
+
+			}
+			pipelineLogger.Info("Successfully deleted Tekton Pipeline CR created by orchestrator", "Tekton Pipeline", pipelineName)
+			return nil
+		}
+	}
+	return nil
+}
+
+func listTektonPipelineCR(ctx context.Context, k8client client.Client, namespace string) ([]tektonv1.Pipeline, error) {
+	pipelineLogger := log.FromContext(ctx)
+
+	crList := &tektonv1.PipelineList{}
+
+	listOptions := []client.ListOption{
+		client.InNamespace(namespace),
+		client.MatchingLabels{kube.CreatedByLabelKey: kube.CreatedByLabelValue},
+	}
+
+	// List the CRs
+	if err := k8client.List(ctx, crList, listOptions...); err != nil {
+		pipelineLogger.Error(err, "Error occurred when listing Tekton Pipeline CRs")
+		return nil, err
+	}
+
+	pipelineLogger.Info("Successfully listed Tekton Pipeline CRs", "Total", len(crList.Items))
+	return crList.Items, nil
 }

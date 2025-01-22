@@ -1,4 +1,20 @@
-package tekton
+/*
+Copyright 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package gitops
 
 import (
 	"context"
@@ -19,6 +35,7 @@ const (
 	flattenerTask        = "flattener"
 	buildManifestTask    = "build-manifests"
 	buildGitOpsTask      = "build-gitops"
+	tektonCRDName        = "tasks.tekton.dev"
 )
 
 var tektonTaskList = []string{
@@ -28,13 +45,18 @@ var tektonTaskList = []string{
 	buildGitOpsTask,
 }
 
-func handleTektonTasks(gitOpsNamespace string, client client.Client, ctx context.Context) error {
+func HandleTektonTasks(client client.Client, ctx context.Context, gitOpsNamespace string) error {
 	taskLogger := log.FromContext(ctx)
 	taskLogger.Info("Handling Tekton Tasks...")
 
+	if err := kube.CheckCRDExists(ctx, client, tektonCRDName); err != nil {
+		taskLogger.Error(err, "Tekton Task CRD does not exist. Install RedHat Openshift Pipelines Operator")
+		return err
+	}
+
 	for _, taskName := range tektonTaskList {
 		if err := client.Get(ctx, types.NamespacedName{
-			Namespace: gitOpsNamespace, Name: taskName}, &corev1.ConfigMap{}); err != nil {
+			Namespace: gitOpsNamespace, Name: taskName}, &tektonv1.Task{}); err != nil {
 			if apierrors.IsNotFound(err) {
 				tektonTask := getTaskObject(gitOpsNamespace, taskName)
 				if tektonTask != nil {
@@ -43,6 +65,7 @@ func handleTektonTasks(gitOpsNamespace string, client client.Client, ctx context
 						return err
 					}
 					taskLogger.Info("Successfully created Tekton Task", "Task", taskName)
+					continue
 				}
 			}
 			taskLogger.Error(err, "Error occurred when checking task exist", "Task", taskName)
@@ -309,4 +332,52 @@ func createBuildGitOpsTaskObject(gitOpsNamespace string) *tektonv1.Task {
 			},
 		},
 	}
+}
+
+func handleTektonTaskCleanUp(client client.Client, ctx context.Context, gitOpsNamespace string) error {
+	taskLogger := log.FromContext(ctx)
+	taskLogger.Info("Handling Tekton Tasks cleanup...")
+
+	namespaceExist, _ := kube.CheckNamespaceExist(ctx, client, gitOpsNamespace)
+	if namespaceExist {
+		tektonTaskList, err := listTektonTaskCR(ctx, client, gitOpsNamespace)
+
+		if err != nil || len(tektonTaskList) == 0 {
+			taskLogger.Info("Failed to list or have no Tekton Task created by Orchestrator Operator and cannot perform clean up process")
+			return nil
+		}
+
+		for _, tektonTask := range tektonTaskList {
+			// remove tekton task
+			err := client.Delete(ctx, &tektonTask)
+			if err != nil {
+				taskLogger.Error(err, "Error occurred when deleting tekton task", "Tekton Task", tektonTask.Name)
+				return err
+			}
+			taskLogger.Info("Successfully deleted Tekton Task CR created by orchestrator", "Tekton Task", tektonTask.Name)
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func listTektonTaskCR(ctx context.Context, k8client client.Client, namespace string) ([]tektonv1.Task, error) {
+	taskLogger := log.FromContext(ctx)
+
+	crList := &tektonv1.TaskList{}
+
+	listOptions := []client.ListOption{
+		client.InNamespace(namespace),
+		client.MatchingLabels{kube.CreatedByLabelKey: kube.CreatedByLabelValue},
+	}
+
+	// List the CRs
+	if err := k8client.List(ctx, crList, listOptions...); err != nil {
+		taskLogger.Error(err, "Error occurred when listing Tekton Task CRs")
+		return nil, err
+	}
+
+	taskLogger.Info("Successfully listed Tekton Task CRs", "Total", len(crList.Items))
+	return crList.Items, nil
 }

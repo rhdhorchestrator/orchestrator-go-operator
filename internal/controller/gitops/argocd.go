@@ -109,7 +109,7 @@ func handleArgoCDProject(gitOpsNamespace string, client client.Client, ctx conte
 	return nil
 }
 
-func HandleArgoCDProjectCleanUp(gitOpsNamespace string, client client.Client, ctx context.Context) error {
+func handleArgoCDProjectCleanUp(gitOpsNamespace string, client client.Client, ctx context.Context) error {
 	argoLogger := log.FromContext(ctx)
 
 	argoLogger.Info("Handling ArgoCD ProjectCleanUp...")
@@ -127,7 +127,7 @@ func HandleArgoCDProjectCleanUp(gitOpsNamespace string, client client.Client, ct
 			// remove ArgoCD Project CR
 			err := client.Delete(ctx, &argoCDProjectCRList[0])
 			if err != nil {
-				argoLogger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
+				argoLogger.Error(err, "Error occurred when deleting ArgoCD Project App", "ArgoCD", argoCDCRName)
 				return err
 
 			}
@@ -139,7 +139,7 @@ func HandleArgoCDProjectCleanUp(gitOpsNamespace string, client client.Client, ct
 }
 
 func listArgoCDProjectCR(ctx context.Context, k8client client.Client, namespace string) ([]argocdv1alpha1.AppProject, error) {
-	rhdhLogger := log.FromContext(ctx)
+	argoLogger := log.FromContext(ctx)
 
 	crList := &argocdv1alpha1.AppProjectList{}
 
@@ -150,10 +150,10 @@ func listArgoCDProjectCR(ctx context.Context, k8client client.Client, namespace 
 
 	// List the CRs
 	if err := k8client.List(ctx, crList, listOptions...); err != nil {
-		rhdhLogger.Error(err, "Error occurred when listing ArgoCD Project CRs", "CR", argoCDCRName)
+		argoLogger.Error(err, "Error occurred when listing ArgoCD Project CRs", "CR", argoCDCRName)
 		return nil, err
 	}
 
-	rhdhLogger.Info("Successfully listed ArgoCD Project CRs", "Total", len(crList.Items))
+	argoLogger.Info("Successfully listed ArgoCD Project CRs", "Total", len(crList.Items))
 	return crList.Items, nil
 }

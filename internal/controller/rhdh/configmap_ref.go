@@ -7,5 +7,5 @@ const (
 	AppConfigRHDHDynamicPluginName = "dynamic-plugins-rhdh"
 	NpmRegistry                    = "https://npm.registry.redhat.com"
 	Scope                          = "@redhat"
-	CatalogBranch                  = "v1.3.x"
+	CatalogBranch                  = "v1.4.x"
 )

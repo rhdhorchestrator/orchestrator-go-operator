@@ -69,7 +69,7 @@ plugins:
   - package: ./dynamic-plugins/dist/backstage-plugin-kubernetes
     disabled: false
   {{- if .TektonEnabled }}
-  - package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-tekton
+  - package: ./dynamic-plugins/dist/backstage-community-plugin-tekton
     disabled: false
   {{- end }}
   {{- end }}
@@ -110,13 +110,12 @@ plugins:
                 module: OrchestratorPlugin
                 path: /orchestrator
   
-  - package: "{{ .Scope }}/{{ .NotificationPackage }}"
+  - package: ./dynamic-plugins/dist/backstage-plugin-notifications
     disabled: false
-    integrity: {{ .NotificationIntegrity }}
     pluginConfig:
       dynamicPlugins:
         frontend:
-          redhat.plugin-notifications:
+          backstage.plugin-notifications:
             dynamicRoutes:
               - importName: NotificationsPage
                 menuItem:
@@ -127,26 +126,22 @@ plugins:
                   importName: NotificationsSidebarItem
                 path: /notifications
   
-  - package: "{{ .Scope }}/{{ .SignalsPackage }}"
+  - package: ./dynamic-plugins/dist/backstage-plugin-signals
     disabled: false
-    integrity: {{ .SignalsIntegrity }}
     pluginConfig:
       dynamicPlugins:
         frontend:
-          redhat.plugin-signals: {}
+          backstage.plugin-signals: {}
 
-  - package: "{{ .Scope }}/{{ .NotificationBackendPackage }}"
+  - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-dynamic
     disabled: false
-    integrity: {{ .NotificationBackendIntegrity }}
 
-  - package: "{{ .Scope }}/{{ .SignalsBackendPackage }}"
+  - package: ./dynamic-plugins/dist/backstage-plugin-signals-backend-dynamic
     disabled: false
-    integrity: {{ .SignalsBackendIntegrity }}
 
   {{- if and (.NotificationEmailEnabled) (.NotificationEmailHostname) }}
-  - package: "{{ .Scope }}/{{ .NotificationEmailPackage }}"
+  - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-module-email-dynamic
     disabled: false
-    integrity: {{ .NotificationEmailIntegrity}}
     pluginConfig:
       notifications:
         processors:

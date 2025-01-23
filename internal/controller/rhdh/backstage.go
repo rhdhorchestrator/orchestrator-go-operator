@@ -24,9 +24,9 @@ const (
 	rhdhCRDName                       = "backstages.rhdh.redhat.com"
 	rhdhReplica                 int32 = 1
 	rhdhSubscriptionName              = "rhdh"
-	rhdhSubscriptionChannel           = "fast-1.3"
+	rhdhSubscriptionChannel           = "fast-1.4"
 	rhdhOperatorNamespace             = "rhdh-operator"
-	rhdhSubscriptionStartingCSV       = "rhdh-operator.v1.3.3"
+	rhdhSubscriptionStartingCSV       = "rhdh-operator.v1.4.1"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{

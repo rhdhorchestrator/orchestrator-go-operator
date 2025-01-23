@@ -23,26 +23,6 @@ func getPlugins() map[string]Plugin {
 			Package:   "backstage-plugin-orchestrator-backend-dynamic@1.3.0",
 			Integrity: "sha512-Th5vmwyhHyhURwQo28++PPHTvxGSFScSHPJyofIdE5gTAb87ncyfyBkipSDq7fwj4L8CQTXa4YP6A2EkHW1npg==",
 		},
-		Notification: {
-			Package:   "plugin-notifications-dynamic@1.3.0",
-			Integrity: "sha512-iYLgIy0YdP/CdTLol07Fncmo9n0J8PdIZseiwAyUt9RFJzKIXmoi2CpQLPKMx36lEgPYUlT0rFO81Ie2CSis4Q==",
-		},
-		NotificationBackend: {
-			Package:   "plugin-notifications-backend-dynamic@1.3.0",
-			Integrity: "sha512-Pw9Op/Q+1MctmLiVvQ3M+89tkbWkw8Lw0VfcwyGSMiHpK/Xql1TrSFtThtLlymRgeCSBgxHYhh3MUusNQX08VA==",
-		},
-		Signals: {
-			Package:   "plugin-signals-dynamic@1.3.0",
-			Integrity: "sha512-+E8XeTXcG5oy+aNImGj/MY0dvEkP7XAsu4xuZjmAqOHyVfiIi0jnP/QDz8XMbD1IjCimbr/DMUZdjmzQiD0hSQ==",
-		},
-		SignalsBackend: {
-			Package:   "plugin-signals-backend-dynamic@1.3.0",
-			Integrity: "sha512-5Bl6C+idPXtquQxMZW+bjRMcOfFYcKxcGZZFv2ITkPVeY2zzxQnAz3vYHnbvKRSwlQxjIyRXY6YgITGHXWT0nw==",
-		},
-		NotificationsEmail: {
-			Package:   "plugin-notifications-backend-module-email-dynamic@1.3.0",
-			Integrity: "sha512-sm7yRoO6Nkk3B7+AWKb10maIrb2YBNSiqQaWmFDVg2G9cbDoWr9wigqqeQ32+b6o2FenfNWg8xKY6PPyZGh8BA==",
-		},
 	}
 
 }

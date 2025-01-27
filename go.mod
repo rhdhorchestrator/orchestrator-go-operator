@@ -16,6 +16,7 @@ replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-dev
 
 require (
 	github.com/apache/incubator-kie-kogito-serverless-operator/api v0.0.0-20240122.0.20240627193307-34df539f8438
+	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69
 	github.com/argoproj/argo-cd/v2 v2.13.2
 	github.com/openshift/api v0.0.0-20240419172957-f39cf2ef93fd
 	github.com/operator-framework/api v0.23.0
@@ -23,6 +24,11 @@ require (
 	k8s.io/apiextensions-apiserver v0.31.2
 	knative.dev/operator v0.42.5
 	redhat-developer/red-hat-developer-hub-operator v0.0.0-00010101000000-000000000000
+)
+
+require (
+	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/sosodev/duration v1.3.1 // indirect
 )
 
 require (
@@ -72,9 +78,9 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.1 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.22.1 // indirect
 	github.com/go-redis/cache/v9 v9.0.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -104,7 +110,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
@@ -127,12 +133,11 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/statsd_exporter v0.22.7 // indirect
 	github.com/redis/go-redis/v9 v9.6.1 // indirect
-	github.com/relvacode/iso8601 v1.3.0 // indirect
+	github.com/relvacode/iso8601 v1.4.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/serverlessworkflow/sdk-go/v2 v2.2.5 // indirect
+	github.com/serverlessworkflow/sdk-go/v2 v2.4.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect

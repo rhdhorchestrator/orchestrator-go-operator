@@ -16,7 +16,7 @@ package controller
 
 import (
 	"context"
-	sonataapi "github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
+	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
@@ -42,7 +42,7 @@ const (
 	serverlessLogicSubscriptionChannel     = "alpha"
 	serverlessLogicOperatorNamespace       = "openshift-serverless-logic"
 	serverlessLogicSubscriptionName        = "logic-operator-rhel8"
-	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.34.0"
+	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.35.0"
 )
 
 func handleServerlessLogicOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {

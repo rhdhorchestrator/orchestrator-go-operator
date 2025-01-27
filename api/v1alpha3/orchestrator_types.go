@@ -163,11 +163,20 @@ type PlatformConfig struct {
 
 	// Configuration for existing eventing to be used by sonataflow platform
 	Eventing Eventing `json:"eventing,omitempty"`
+
+	// Configuration for sonataflow platform monitoring
+	Monitoring MonitoringConfig `json:"monitoring,omitempty"`
 }
 
 type Eventing struct {
 	// Configuration for K-Native broker.
 	Broker Broker `json:"broker,omitempty"`
+}
+
+type MonitoringConfig struct {
+	// Determines whether to enable the platform monitoring
+	// +kubebuilder:default=false
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type Broker struct {

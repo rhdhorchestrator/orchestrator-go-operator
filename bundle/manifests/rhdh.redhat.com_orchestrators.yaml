@@ -73,6 +73,14 @@ spec:
                             type: string
                         type: object
                     type: object
+                  monitoring:
+                    description: Configuration for sonataflow platform monitoring
+                    properties:
+                      enabled:
+                        default: false
+                        description: Determines whether to enable the platform monitoring
+                        type: boolean
+                    type: object
                   namespace:
                     description: Namespace of the workflow pods (Data Index and Job
                       Service) and SonataFlow CR.

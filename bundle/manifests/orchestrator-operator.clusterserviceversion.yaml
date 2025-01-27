@@ -25,6 +25,9 @@ metadata:
                   "namespace": "knative"
                 }
               },
+              "monitoring": {
+                "enabled": false
+              },
               "namespace": "sonataflow-infra",
               "resources": {
                 "limits": {
@@ -74,7 +77,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-01-22T14:50:03Z"
+    createdAt: "2025-01-27T19:09:28Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
   name: orchestrator-operator.v0.0.2

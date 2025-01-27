@@ -15,4 +15,6 @@ const (
 	NotificationUsername  = "NOTIFICATIONS_EMAIL_USERNAME"
 	NotificationPassword  = "NOTIFICATIONS_EMAIL_PASSWORD"
 	RegistrySecretName    = "dynamic-plugins-npmrc"
+	GitLabHost            = "GITLAB_HOST"
+	GitLabToken           = "GITLAB_TOKEN"
 )

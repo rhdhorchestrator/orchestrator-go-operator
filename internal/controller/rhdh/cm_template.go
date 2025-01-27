@@ -33,6 +33,8 @@ func ConfigMapTemplateFactory(
 			Environment:         "development",
 			GitHubClientId:      GitHubClientID,
 			GitHubClientSecret:  GitHubClientSecret,
+			GitLabToken:         GitLabToken,
+			GitLabHost:          GitLabHost,
 			EnableGuestProvider: rhdhConfig.DevMode,
 		}
 		formattedConfig, err := parseConfigTemplate(RHDHAuthTempl, configData)

@@ -277,14 +277,21 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) 
 					Requests: requestResourceMap,
 				},
 			}},
+		Monitoring: &sonataapi.PlatformMonitoringOptionsSpec{
+			Enabled: orchestrator.Spec.PlatformConfig.Monitoring.Enabled,
+		},
 		Services: &sonataapi.ServicesPlatformSpec{
-			DataIndex: &sonataapi.ServiceSpec{
-				Enabled:     util.MakePointer(true),
-				Persistence: getServerlessLogicPersistence(orchestrator),
+			DataIndex: &sonataapi.DataIndexServiceSpec{
+				ServiceSpec: sonataapi.ServiceSpec{
+					Enabled:     util.MakePointer(true),
+					Persistence: getServerlessLogicPersistence(orchestrator),
+				},
 			},
-			JobService: &sonataapi.ServiceSpec{
-				Enabled:     util.MakePointer(true),
-				Persistence: getServerlessLogicPersistence(orchestrator),
+			JobService: &sonataapi.JobServiceServiceSpec{
+				ServiceSpec: sonataapi.ServiceSpec{
+					Enabled:     util.MakePointer(true),
+					Persistence: getServerlessLogicPersistence(orchestrator),
+				},
 			},
 		},
 	}

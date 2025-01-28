@@ -229,8 +229,10 @@ type OrchestratorStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
-	// +kubebuilder:validation:Enum={"Running","Completed", "Failed"}
-	Phase OrchestratorPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,casttype=OrchestratorPhase"`
+	// +kubebuilder:printcolumn:name="Phase",type=OrchestratorPhase,JSONPath=".status.phase"
+	Phase OrchestratorPhase `json:"phase,omitempty"`
+	// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=".status.conditions[0].reason"
+	Reason string `json:"reason,omitempty"`
 }
 
 //+kubebuilder:object:root=true

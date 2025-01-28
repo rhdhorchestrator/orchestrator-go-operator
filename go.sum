@@ -77,8 +77,6 @@ github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be/go.mod h1:ySMOLuW
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
 github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
-github.com/apache/incubator-kie-kogito-serverless-operator/api v0.0.0-20240122.0.20240627193307-34df539f8438 h1:cvOjKpwU8Yu/9wOes6p59IsHmczZ0VOTRFb6USQUsio=
-github.com/apache/incubator-kie-kogito-serverless-operator/api v0.0.0-20240122.0.20240627193307-34df539f8438/go.mod h1:vjZNG1YMzn1XD722i2khfoxyx7lJ7jpErUiscHTcytw=
 github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69 h1:ooe2z6yN5dsGCPGzbDYYQor+3W//wN2+zZbbHJ8BheM=
 github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69/go.mod h1:QMF4vEUaviEEc3WJaDJZikS5qKQBsOQzIYaJdFrjM48=
 github.com/argoproj/argo-cd/v2 v2.13.2 h1:eLar0aAqz7AgJiYncRzkPkqEbIxiXl+pUzOuSi47tA0=

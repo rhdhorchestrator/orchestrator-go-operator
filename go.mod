@@ -15,7 +15,6 @@ require (
 replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20241007114808-dc0e5c45da3c
 
 require (
-	github.com/apache/incubator-kie-kogito-serverless-operator/api v0.0.0-20240122.0.20240627193307-34df539f8438
 	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69
 	github.com/argoproj/argo-cd/v2 v2.13.2
 	github.com/openshift/api v0.0.0-20240419172957-f39cf2ef93fd

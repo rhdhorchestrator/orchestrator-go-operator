@@ -290,20 +290,20 @@ spec:
       - label:
           app.kubernetes.io/managed-by: kustomize
           app.kubernetes.io/name: orchestrator-operator
-          control-plane: controller-manager
+          control-plane: orchestrator-operator
         name: orchestrator-operator-controller-manager
         spec:
           replicas: 1
           selector:
             matchLabels:
-              control-plane: controller-manager
+              control-plane: orchestrator-operator
           strategy: {}
           template:
             metadata:
               annotations:
                 kubectl.kubernetes.io/default-container: manager
               labels:
-                control-plane: controller-manager
+                control-plane: orchestrator-operator
             spec:
               containers:
               - args:

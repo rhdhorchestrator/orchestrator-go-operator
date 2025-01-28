@@ -41,6 +41,8 @@ spec:
       "broker":
         "name": "my-knative" # Name of existing Broker instance. Optional
         "namespace": "knative" # Namespace of existing Broker instance. Optional
+    "monitoring":
+      enabled: false # Determines whether to enable monitoring for platform. Optional
   tekton:
     enabled: false # Determines whether to create the Tekton pipeline and install the Tekton plugin on RHDH. Defaults to false. Optional
   argocd:

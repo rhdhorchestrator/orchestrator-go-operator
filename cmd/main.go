@@ -17,7 +17,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"github.com/apache/incubator-kie-kogito-serverless-operator/api/v1alpha08"
+	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
 	argocdv1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
@@ -57,12 +57,12 @@ func init() {
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(orchestratorv1alpha2.AddToScheme(scheme))
-	utilruntime.Must(v1alpha08.AddToScheme(scheme))
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
 	utilruntime.Must(tektonv1.AddToScheme(scheme))
 	utilruntime.Must(argocdv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(sonataapi.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 }

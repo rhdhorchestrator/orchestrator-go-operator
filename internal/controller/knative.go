@@ -41,7 +41,7 @@ const (
 	knativeSubscriptionName        = "serverless-operator"
 	knativeSubscriptionNamespace   = "openshift-serverless"
 	knativeSubscriptionChannel     = "stable"
-	knativeSubscriptionStartingCSV = "serverless-operator.v1.34.1"
+	knativeSubscriptionStartingCSV = "serverless-operator.v1.35.0"
 )
 
 func handleKNativeOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {

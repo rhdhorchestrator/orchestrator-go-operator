@@ -55,7 +55,7 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 		rhdhSubscriptionName,
 		rhdhOperatorNamespace,
 		rhdhSubscriptionChannel,
-		"")
+		rhdhSubscriptionStartingCSV)
 
 	// check if subscription exists
 	subscriptionExists, existingSubscription, err := kubeoperations.CheckSubscriptionExists(ctx, olmClientSet, rhdhSubscription)

@@ -26,7 +26,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"knative.dev/operator/pkg/apis/operator/v1beta1"
 	"os"
-	"redhat-developer/red-hat-developer-hub-operator/api/v1alpha2"
+	rhdhv1alpha3 "redhat-developer/red-hat-developer-hub-operator/api/v1alpha3"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -58,7 +58,7 @@ func init() {
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(orchestratorv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
-	utilruntime.Must(v1alpha2.AddToScheme(scheme))
+	utilruntime.Must(rhdhv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
 	utilruntime.Must(tektonv1.AddToScheme(scheme))
 	utilruntime.Must(argocdv1alpha1.AddToScheme(scheme))

@@ -5,7 +5,7 @@ const (
 	AppConfigRHDHAuthName          = "app-config-rhdh-auth"
 	AppConfigRHDHCatalogName       = "app-config-rhdh-catalog"
 	AppConfigRHDHDynamicPluginName = "dynamic-plugins-rhdh"
-	NpmRegistry                    = "https://npm.registry.redhat.com"
+	NpmRegistry                    = "https://npm.stage.registry.redhat.com"
 	Scope                          = "@redhat"
 	CatalogBranch                  = "v1.4.x"
 )

@@ -11,7 +11,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	rhdhv1alpha2 "redhat-developer/red-hat-developer-hub-operator/api/v1alpha2"
+	rhdhv1alpha3 "redhat-developer/red-hat-developer-hub-operator/api/v1alpha3"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -55,7 +55,7 @@ func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, o
 		rhdhSubscriptionName,
 		rhdhOperatorNamespace,
 		rhdhSubscriptionChannel,
-		"")
+		rhdhSubscriptionStartingCSV)
 
 	// check if subscription exists
 	subscriptionExists, existingSubscription, err := kubeoperations.CheckSubscriptionExists(ctx, olmClientSet, rhdhSubscription)
@@ -136,7 +136,7 @@ func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client
 
 func HandleRHDHCR(
 	rhdhConfig orchestratorv1alpha2.RHDHConfig,
-	bsConfigMapList []rhdhv1alpha2.ObjectKeyRef,
+	bsConfigMapList []rhdhv1alpha3.FileObjectRef,
 	ctx context.Context, client client.Client) error {
 	rhdhLogger := log.FromContext(ctx)
 
@@ -155,12 +155,12 @@ func HandleRHDHCR(
 	rhdhNamespace := rhdhConfig.Namespace
 	rhdhName := rhdhConfig.Name
 
-	if err := client.Get(ctx, types.NamespacedName{Namespace: rhdhNamespace, Name: rhdhName}, &rhdhv1alpha2.Backstage{}); err != nil {
+	if err := client.Get(ctx, types.NamespacedName{Namespace: rhdhNamespace, Name: rhdhName}, &rhdhv1alpha3.Backstage{}); err != nil {
 		if apierrors.IsNotFound(err) {
-			secret := rhdhv1alpha2.ObjectKeyRef{
+			secret := rhdhv1alpha3.EnvObjectRef{
 				Name: BackendAuthSecretName,
 			}
-			backstageCR := &rhdhv1alpha2.Backstage{
+			backstageCR := &rhdhv1alpha3.Backstage{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: rhdhAPIVersion,
 					Kind:       rhdhKind,
@@ -170,12 +170,12 @@ func HandleRHDHCR(
 					Namespace: rhdhConfig.Namespace,
 					Labels:    kubeoperations.AddLabel(),
 				},
-				Spec: rhdhv1alpha2.BackstageSpec{
-					Application: &rhdhv1alpha2.Application{
-						AppConfig:                   &rhdhv1alpha2.AppConfig{ConfigMaps: bsConfigMapList},
+				Spec: rhdhv1alpha3.BackstageSpec{
+					Application: &rhdhv1alpha3.Application{
+						AppConfig:                   &rhdhv1alpha3.AppConfig{ConfigMaps: bsConfigMapList},
 						DynamicPluginsConfigMapName: AppConfigRHDHDynamicPluginName,
-						ExtraEnvs: &rhdhv1alpha2.ExtraEnvs{
-							Secrets: []rhdhv1alpha2.ObjectKeyRef{secret},
+						ExtraEnvs: &rhdhv1alpha3.ExtraEnvs{
+							Secrets: []rhdhv1alpha3.EnvObjectRef{secret},
 						},
 						Replicas: util.MakePointer(rhdhReplica),
 					},
@@ -199,16 +199,16 @@ func HandleRHDHCR(
 func GetOrCreateConfigMaps(ctx context.Context, client client.Client,
 	clusterDomain, serverlessWorkflowNamespace string,
 	tektonEnabled, argoCDEnabled bool,
-	rhdhConfig orchestratorv1alpha2.RHDHConfig) ([]rhdhv1alpha2.ObjectKeyRef, error) {
+	rhdhConfig orchestratorv1alpha2.RHDHConfig) ([]rhdhv1alpha3.FileObjectRef, error) {
 
 	cmLogger := log.FromContext(ctx)
 	cmLogger.Info("Processing ConfigMaps...")
 
-	configmapList := make([]rhdhv1alpha2.ObjectKeyRef, 0)
+	configmapList := make([]rhdhv1alpha3.FileObjectRef, 0)
 	namespace := rhdhConfig.Namespace
 	for cmName, configDataKey := range ConfigMapNameAndConfigDataKey {
 		if cmName != AppConfigRHDHDynamicPluginName {
-			configmapList = append(configmapList, rhdhv1alpha2.ObjectKeyRef{Name: cmName})
+			configmapList = append(configmapList, rhdhv1alpha3.FileObjectRef{Name: cmName})
 		}
 		cmLogger.Info("Starting Configmap creation for:", "CM", cmName, "NS", namespace)
 
@@ -290,10 +290,10 @@ func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet o
 	return nil
 }
 
-func listBackstageCRs(ctx context.Context, k8client client.Client, namespace string) ([]rhdhv1alpha2.Backstage, error) {
+func listBackstageCRs(ctx context.Context, k8client client.Client, namespace string) ([]rhdhv1alpha3.Backstage, error) {
 	rhdhLogger := log.FromContext(ctx)
 
-	crList := &rhdhv1alpha2.BackstageList{}
+	crList := &rhdhv1alpha3.BackstageList{}
 
 	listOptions := []client.ListOption{
 		client.InNamespace(namespace),

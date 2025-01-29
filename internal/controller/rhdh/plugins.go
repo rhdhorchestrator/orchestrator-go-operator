@@ -16,12 +16,12 @@ const NotificationsEmail string = "notificationsEmail"
 func getPlugins() map[string]Plugin {
 	return map[string]Plugin{
 		Orchestrator: {
-			Package:   "backstage-plugin-orchestrator@1.3.0",
-			Integrity: "sha512-A/twx1SOOGDQjglLzOxQikKO0XOdPP1jh2lj9Y/92bLox8mT+eaZpub8YLwR2mb7LsUIUImg+U6VnKwoAV9ATA==",
+			Package:   "backstage-plugin-orchestrator@1.4.0-rc.7.tgz",
+			Integrity: "sha512-Vclb+TIL8cEtf9G2nx0UJ+kMJnCGZuYG/Xcw0Otdo/fZGuynnoCaAZ6rHnt4PR6LerekHYWNUbzM3X+AVj5cwg==",
 		},
 		OrchestratorBackend: {
-			Package:   "backstage-plugin-orchestrator-backend-dynamic@1.3.0",
-			Integrity: "sha512-Th5vmwyhHyhURwQo28++PPHTvxGSFScSHPJyofIdE5gTAb87ncyfyBkipSDq7fwj4L8CQTXa4YP6A2EkHW1npg==",
+			Package:   "backstage-plugin-orchestrator-backend-dynamic@1.4.0-rc.7.tgz",
+			Integrity: "sha512-bxD0Au2V9BeUMcZBfNYrPSQ161vmZyKwm6Yik5keZZ09tenkc8fNjipwJsWVFQCDcAOOxdBAE0ibgHtddl3NKw==",
 		},
 	}
 

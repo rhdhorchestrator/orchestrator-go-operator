@@ -237,6 +237,8 @@ type OrchestratorStatus struct {
 
 // Orchestrator is the Schema for the orchestrators API
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=".metadata.creationTimestamp",description="Age"
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=".status.phase",description="Status"
 type Orchestrator struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

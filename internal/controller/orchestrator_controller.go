@@ -230,6 +230,13 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		})
 		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
 	}
+	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.CompletedPhase, metav1.Condition{
+		Type:               TypeDegrading,
+		Status:             metav1.ConditionFalse,
+		Reason:             "ReconciliationCompleted",
+		Message:            "Reconciliation is completed",
+		LastTransitionTime: metav1.Now(),
+	})
 	return ctrl.Result{}, nil
 }
 

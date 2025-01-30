@@ -234,7 +234,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		Type:               TypeDegrading,
 		Status:             metav1.ConditionFalse,
 		Reason:             "ReconciliationCompleted",
-		Message:            err.Error(),
+		Message:            "Reconciliation is completed",
 		LastTransitionTime: metav1.Now(),
 	})
 	return ctrl.Result{}, nil

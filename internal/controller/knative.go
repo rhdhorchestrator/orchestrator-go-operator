@@ -39,7 +39,7 @@ const (
 	knativeServingCRDName          = "knativeservings.operator.knative.dev"
 	knativeOperatorGroupName       = "serverless-operator-group"
 	knativeSubscriptionName        = "serverless-operator"
-	knativeSubscriptionNamespace   = "openshift-serverless"
+	knativeOperatorNamespace       = "openshift-serverless"
 	knativeSubscriptionChannel     = "stable"
 	knativeSubscriptionStartingCSV = "serverless-operator.v1.35.0"
 )
@@ -47,21 +47,21 @@ const (
 func handleKNativeOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
 	knativeLogger := log.FromContext(ctx)
 
-	if _, err := kube.CheckNamespaceExist(ctx, client, knativeSubscriptionNamespace); err != nil {
+	if _, err := kube.CheckNamespaceExist(ctx, client, knativeOperatorNamespace); err != nil {
 		if apierrors.IsNotFound(err) {
-			knativeLogger.Info("Creating namespace", "NS", knativeSubscriptionNamespace)
-			if err := kube.CreateNamespace(ctx, client, knativeSubscriptionNamespace); err != nil {
-				knativeLogger.Error(err, "Error occurred when creating namespace", "NS", knativeSubscriptionNamespace)
+			knativeLogger.Info("Creating namespace", "NS", knativeOperatorNamespace)
+			if err := kube.CreateNamespace(ctx, client, knativeOperatorNamespace); err != nil {
+				knativeLogger.Error(err, "Error occurred when creating namespace", "NS", knativeOperatorNamespace)
 				return nil
 			}
 		}
-		knativeLogger.Error(err, "Error occurred when checking namespace exist", "NS", knativeSubscriptionNamespace)
+		knativeLogger.Error(err, "Error occurred when checking namespace exist", "NS", knativeOperatorNamespace)
 		return err
 	}
 
 	serverlessSubscription := kube.CreateSubscriptionObject(
 		knativeSubscriptionName,
-		knativeSubscriptionNamespace,
+		knativeOperatorNamespace,
 		knativeSubscriptionChannel,
 		knativeSubscriptionStartingCSV)
 
@@ -229,7 +229,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	return nil
 }
 
-func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func handleKnativeCleanUp(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	// remove all namespace
 	if err := kube.CleanUpNamespace(ctx, knativeEventingNamespacedName, client); err != nil {
@@ -240,20 +240,12 @@ func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSe
 		logger.Error(err, "Error occurred when deleting namespace", "NS", knativeServingNamespacedName)
 		return err
 	}
-	// remove subscription and csv
-	serverlessSubscription := kube.CreateSubscriptionObject(
-		knativeSubscriptionName,
-		knativeSubscriptionNamespace,
-		knativeSubscriptionChannel,
-		"")
 
-	if err := kube.CleanUpSubscriptionAndCSV(ctx, olmClientSet, serverlessSubscription); err != nil {
-		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", knativeSubscriptionName)
+	// remove operator namespace
+	if err := kube.CleanUpNamespace(ctx, knativeOperatorNamespace, client); err != nil {
+		logger.Error(err, "Error occurred when deleting namespace", "NS", knativeOperatorNamespace)
 		return err
 	}
-	//TODO
-	// remove operator group
-	// remove namespace for subscription/operator installation
-	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
+
 	return nil
 }

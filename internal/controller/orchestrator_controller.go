@@ -254,7 +254,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	if !serverlessLogicOperator.InstallOperator {
 		sfLogger.Info("Operator is disabled. Handle Clean up process if necessary")
 		// handle clean up
-		return handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, serverlessWorkflowNamespace)
+		return handleServerlessLogicCleanUp(ctx, r.Client, serverlessWorkflowNamespace)
 	}
 	// Subscription is enabled; check namespace exist
 	if _, err := kube.CheckNamespaceExist(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
@@ -301,7 +301,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !serverlessOperator.InstallOperator {
 		// handle cleanup
-		if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+		if err := handleKnativeCleanUp(ctx, r.Client); err != nil {
 			return err
 		}
 		return nil
@@ -335,7 +335,7 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 
 	// if install operator is disabled; handle clean up
 	if !rhdhConfig.InstallOperator {
-		if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, namespace); err != nil {
+		if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, namespace); err != nil {
 			logger.Error(err, "Error occurred when cleaning up RHDH", "SubscriptionName", subscriptionName)
 			return err
 		}
@@ -404,15 +404,15 @@ func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator
 
 func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	// cleanup Knative
-	if err := handleKnativeCleanUp(ctx, r.Client, r.OLMClient); err != nil {
+	if err := handleKnativeCleanUp(ctx, r.Client); err != nil {
 		return err
 	}
 	// cleanup Serverless Logic
-	if err := handleServerlessLogicCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.PlatformConfig.Namespace); err != nil {
+	if err := handleServerlessLogicCleanUp(ctx, r.Client, orchestrator.Spec.PlatformConfig.Namespace); err != nil {
 		return err
 	}
 	// cleanup RHDH
-	if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, r.OLMClient, orchestrator.Spec.RHDHConfig.Namespace); err != nil {
+	if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, orchestrator.Spec.RHDHConfig.Namespace); err != nil {
 		return err
 	}
 	return nil

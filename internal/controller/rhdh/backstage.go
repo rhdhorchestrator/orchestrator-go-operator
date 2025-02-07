@@ -257,13 +257,8 @@ func CreateConfigMap(
 	return nil
 }
 
-func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, rhdhNamespace string) error {
+func HandleRHDHCleanUp(ctx context.Context, client client.Client, rhdhNamespace string) error {
 	rhdhLogger := log.FromContext(ctx)
-	rhdhSubscription := kubeoperations.CreateSubscriptionObject(
-		rhdhSubscriptionName,
-		rhdhNamespace,
-		rhdhSubscriptionChannel,
-		"")
 
 	namespaceExist, _ := kubeoperations.CheckNamespaceExist(ctx, client, rhdhNamespace)
 	if namespaceExist {
@@ -279,13 +274,13 @@ func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet o
 				rhdhLogger.Error(err, "Error occurred when deleting namespace", "NS", "namespace")
 				return err
 			}
-			// remove subscription and csv
-			if err := kubeoperations.CleanUpSubscriptionAndCSV(ctx, olmClientSet, rhdhSubscription); err != nil {
-				rhdhLogger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", rhdhSubscription.Name)
-				return err
-			}
-			// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
 		}
+	}
+
+	// remove operator namespace
+	if err := kubeoperations.CleanUpNamespace(ctx, rhdhOperatorNamespace, client); err != nil {
+		rhdhLogger.Error(err, "Error occurred when deleting namespace", "NS", rhdhOperatorNamespace)
+		return err
 	}
 	return nil
 }

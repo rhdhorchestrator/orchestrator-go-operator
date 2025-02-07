@@ -299,22 +299,18 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) 
 
 func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, namespace string) error {
 	logger := log.FromContext(ctx)
+	logger.Info("Starting Clean Up for Serverless Logic ...")
 
-	// remove all namespace
+	// remove operand namespace
 	if err := kube.CleanUpNamespace(ctx, namespace, client); err != nil {
 		logger.Error(err, "Error occurred when deleting namespace", "NS", namespace)
 		return err
 	}
-	oslSubscription := kube.CreateSubscriptionObject(
-		serverlessLogicSubscriptionName,
-		serverlessLogicOperatorNamespace,
-		serverlessLogicSubscriptionChannel,
-		serverlessLogicSubscriptionStartingCSV)
 
-	if err := kube.CleanUpSubscriptionAndCSV(ctx, olmClientSet, oslSubscription); err != nil {
-		logger.Error(err, "Error occurred when deleting Subscription and CSV", "Subscription", serverlessLogicSubscriptionName)
+	// remove operator namespace
+	if err := kube.CleanUpNamespace(ctx, serverlessLogicOperatorNamespace, client); err != nil {
+		logger.Error(err, "Error occurred when deleting namespace", "NS", namespace)
 		return err
 	}
-	// remove all CRDs, optional (ensure all CRs and namespace have been removed first)
 	return nil
 }

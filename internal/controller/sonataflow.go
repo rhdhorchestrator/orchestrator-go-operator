@@ -309,7 +309,7 @@ func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, olm
 
 	// remove operator namespace
 	if err := kube.CleanUpNamespace(ctx, serverlessLogicOperatorNamespace, client); err != nil {
-		logger.Error(err, "Error occurred when deleting namespace", "NS", namespace)
+		logger.Error(err, "Error occurred when deleting namespace", "NS", serverlessLogicOperatorNamespace)
 		return err
 	}
 	return nil

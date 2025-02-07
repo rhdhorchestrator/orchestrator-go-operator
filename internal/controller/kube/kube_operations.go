@@ -54,7 +54,7 @@ func CreateNamespace(ctx context.Context, client client.Client, namespace string
 	nsLogger := log.FromContext(ctx)
 	nsLogger.Info("Creating namespace", "Namespace", namespace)
 	// create new namespace
-	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace, Labels: AddLabel()}}
 	err := client.Create(ctx, newNamespace)
 	if err != nil {
 		nsLogger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)

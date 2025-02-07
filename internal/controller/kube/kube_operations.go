@@ -216,23 +216,28 @@ func CheckCRDExists(ctx context.Context, client client.Client, name string) erro
 
 func CleanUpNamespace(ctx context.Context, namespaceName string, client client.Client) error {
 	logger := log.FromContext(ctx)
-	// check namespace exist
-	namespaceExist, _ := CheckNamespaceExist(ctx, client, namespaceName)
 
-	if !namespaceExist {
-		logger.Info("Namespace does not exist", "Namespace", namespaceName)
-		return nil
-	}
-	namespace := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespaceName,
-		},
-	}
-	// delete namespace
-	if err := client.Delete(ctx, namespace); err != nil && !apierrors.IsNotFound(err) {
+	// check namespace exist
+	logger.Info("Checking namespace exist", "Namespace", namespaceName)
+	namespaceObj := &corev1.Namespace{}
+	if err := client.Get(ctx, types.NamespacedName{Name: namespaceName}, namespaceObj); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Namespace does not exist", "Namespace", namespaceName)
+			return nil
+		}
 		return err
 	}
-	logger.Info("Successfully deleted Namespace", "Namespace", namespaceName)
+
+	// check label exist
+	labelExist := CheckLabelExist(namespaceObj.Labels)
+
+	if labelExist {
+		// delete namespace
+		if err := client.Delete(ctx, namespaceObj); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+		logger.Info("Successfully deleted Namespace", "Namespace", namespaceName)
+	}
 	return nil
 }
 

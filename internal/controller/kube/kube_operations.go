@@ -285,3 +285,11 @@ func AddLabel() map[string]string {
 		CreatedByLabelKey: CreatedByLabelValue,
 	}
 }
+
+func CheckLabelExist(labels map[string]string) bool {
+	labelValue, labelExist := labels[CreatedByLabelKey]
+	if !labelExist {
+		return false
+	}
+	return labelValue == CreatedByLabelValue
+}

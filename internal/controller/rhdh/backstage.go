@@ -257,7 +257,7 @@ func CreateConfigMap(
 	return nil
 }
 
-func HandleRHDHCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, rhdhNamespace string) error {
+func HandleRHDHCleanUp(ctx context.Context, client client.Client, rhdhNamespace string) error {
 	rhdhLogger := log.FromContext(ctx)
 
 	namespaceExist, _ := kubeoperations.CheckNamespaceExist(ctx, client, rhdhNamespace)

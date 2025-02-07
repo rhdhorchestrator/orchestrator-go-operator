@@ -229,7 +229,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 	return nil
 }
 
-func handleKnativeCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func handleKnativeCleanUp(ctx context.Context, client client.Client) error {
 	logger := log.FromContext(ctx)
 	// remove all namespace
 	if err := kube.CleanUpNamespace(ctx, knativeEventingNamespacedName, client); err != nil {

@@ -297,7 +297,7 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) 
 	}
 }
 
-func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset, namespace string) error {
+func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, namespace string) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Clean Up for Serverless Logic ...")
 

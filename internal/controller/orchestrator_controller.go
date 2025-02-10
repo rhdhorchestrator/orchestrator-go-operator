@@ -43,9 +43,9 @@ import (
 
 const (
 	// Definition to manage Orchestrator condition status.
-	TypeAvailable   string = "Available"
-	TypeProgressing string = "Progressing"
-	TypeDegrading   string = "Degrading"
+	TypeAvailable string = "Available"
+	//TypeProgressing string = "Progressing"
+	TypeDegrading string = "Degrading"
 
 	// Finalizer Definition
 	FinalizerCRCleanup = "rhdh.redhat.com/orchestrator-cleanup"
@@ -184,7 +184,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// handle RHDH
 	rhdhConfig := orchestrator.Spec.RHDHConfig
-	if err = r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
+	if err := r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
 		}
@@ -200,7 +200,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// handle network policy
-	if err = r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
+	if err := r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
 		}

@@ -155,19 +155,13 @@ func getServerlessLogicPersistence(orchestrator *orchestratorv1alpha2.Orchestrat
 
 func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName, namespace string) error {
 	logger := log.FromContext(ctx)
+	logger.Info("Starting CR creation for SonataFlowCluster...")
+
 	// check sonataflowlusterplatform CR exists
 	sfcCR := &sonataapi.SonataFlowClusterPlatform{}
 
 	err := client.Get(ctx, types.NamespacedName{Name: crName, Namespace: namespace}, sfcCR)
-	if err == nil {
-		// CR exists; check for CR updates
-		logger.Info("CR resource  found.", "CR-Name", crName, "NS", namespace)
-		sfcCR.Spec = getSonataFlowClusterSpec(namespace)
-		if err = client.Update(ctx, sfcCR); err != nil {
-			logger.Error(err, "Failed to update CR", "CR-Name", sfcCR.Name)
-		}
-		return nil
-	} else {
+	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Create sonataflowcluster CR object
 			sonataFlowClusterCR := &sonataapi.SonataFlowClusterPlatform{
@@ -183,7 +177,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				Spec: getSonataFlowClusterSpec(namespace),
 			}
 
-			// Create sonataflow cluster CR
+			// Create sonataflowcluster CR
 			if err := client.Create(ctx, sonataFlowClusterCR); err != nil {
 				logger.Error(err, "Error occurred when creating Custom Resource", "CR-Name", crName)
 				return err
@@ -192,8 +186,9 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 			return nil
 		}
 		logger.Error(err, "Error occurred when retrieving SonataFlowClusterPlatform CR", "CR-Name", crName)
+		return err
 	}
-	return err
+	return nil
 }
 
 func getSonataFlowClusterSpec(namespace string) sonataapi.SonataFlowClusterPlatformSpec {
@@ -218,13 +213,7 @@ func handleSonataFlowPlatformCR(
 		Name:      sonataFlowPlatformCRName,
 	}, sfpCR)
 
-	if err == nil {
-		// CR exists; check for CR updates
-		logger.Info("CR resource  found.", "CR-Name", crName, "Namespace", namespace)
-		err = client.Update(ctx, sfpCR)
-
-		return nil
-	} else {
+	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SonataFlowPlatform not found. Proceed to creating CR...")
 
@@ -251,8 +240,9 @@ func handleSonataFlowPlatformCR(
 			return nil
 		}
 		logger.Error(err, "Error occurred when retrieving SonataFlowPlatform CR", "CR-Name", crName)
+		return err
 	}
-	return err
+	return nil
 }
 
 func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) sonataapi.SonataFlowPlatformSpec {

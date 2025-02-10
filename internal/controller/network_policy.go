@@ -2,8 +2,9 @@ package controller
 
 import (
 	"context"
+	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrros "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
@@ -26,6 +27,7 @@ func handleNetworkPolicy(client client.Client, ctx context.Context,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      NetworkPolicyName,
 			Namespace: networkAndServerlessWorkflowNamespace,
+			Labels:    kubeoperations.AddLabel(),
 		},
 		Spec: networkingv1.NetworkPolicySpec{
 			// This policy applies to all pods within the namespace where the policy is defined
@@ -91,12 +93,13 @@ func handleNetworkPolicy(client client.Client, ctx context.Context,
 	// get existing the networkPolicy
 	err := client.Get(ctx, types.NamespacedName{Name: desiredNP.Name, Namespace: desiredNP.Namespace}, existingNP)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrros.IsNotFound(err) {
 			// create network policy
 			if err := client.Create(ctx, desiredNP); err != nil {
 				npLogger.Error(err, "Error occurred when creating NetworkPolicy", "NP", NetworkPolicyName)
 				return err
 			}
+			return nil
 		}
 		return err
 	}

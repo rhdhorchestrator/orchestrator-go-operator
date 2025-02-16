@@ -16,6 +16,8 @@ package controller
 
 import (
 	"context"
+	"reflect"
+
 	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
@@ -26,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
+	v1 "knative.dev/pkg/apis/duck/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -281,6 +283,16 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) 
 				ServiceSpec: sonataapi.ServiceSpec{
 					Enabled:     util.MakePointer(true),
 					Persistence: getServerlessLogicPersistence(orchestrator),
+				},
+			},
+		},
+		Eventing: &sonataapi.PlatformEventingSpec{
+			Broker: &v1.Destination{
+				Ref: &v1.KReference{
+					Kind:       knativeEventingKind,
+					Name:       knativeEventingCRDName,
+					Namespace:  knativeEventingNamespacedName,
+					APIVersion: knativeAPIVersion,
 				},
 			},
 		},

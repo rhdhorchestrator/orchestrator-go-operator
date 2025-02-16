@@ -2,8 +2,9 @@ package controller
 
 import (
 	"context"
-	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"reflect"
+
+	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrros "k8s.io/apimachinery/pkg/api/errors"
@@ -14,14 +15,18 @@ import (
 )
 
 const (
-	MetaDataNameLabel   = "kubernetes.io/metadata.name"
-	monitoringNamespace = "openshift-user-workload-monitoring"
+	MetaDataNameLabel                    = "kubernetes.io/metadata.name"
+	monitoringNamespace                  = "openshift-user-workload-monitoring"
+	allowRHDHToSonataflowWorkflows       = "allow-rhdh-to-sonataflow-and-workflows"
+	allowIntraNamespace                  = "allow-intra-namespace"
+	allowMonitoringToSonataflowWorkflows = "allow-monitoring-to-sonataflow-and-workflows"
 )
 
 var (
 	NetworkPoliciesList = []string{
-		"allow-rhdh-to-sonataflow-and-workflows",
-		"allow-intra-namespace",
+		allowRHDHToSonataflowWorkflows,
+		allowIntraNamespace,
+		allowMonitoringToSonataflowWorkflows,
 	}
 	allErrors = make(map[string]error)
 )
@@ -32,12 +37,11 @@ func handleNetworkPolicy(client client.Client, ctx context.Context,
 	networkAndServerlessWorkflowNamespace, rhdhNamespace, databaseNamespace string, monitoringFlag bool) map[string]error {
 	npLogger := log.FromContext(ctx)
 
-	// If monitoring is enabled, an additional NP needs to be applied
-	if monitoringFlag {
-		NetworkPoliciesList = append(NetworkPoliciesList, "allow-monitoring-to-sonataflow-and-workflows")
-	}
-
 	for _, NetworkPolicyName := range NetworkPoliciesList {
+
+		if !monitoringFlag && (NetworkPolicyName == allowMonitoringToSonataflowWorkflows) {
+			continue
+		}
 
 		// Define the desired NetworkPolicy
 		desiredNP := &networkingv1.NetworkPolicy{

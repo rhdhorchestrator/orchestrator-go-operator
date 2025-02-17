@@ -51,7 +51,7 @@ metadata:
               "namespace": "sonataflow-infra"
             },
             "rhdh": {
-              "devMode": false,
+              "devMode": true,
               "installOperator": true,
               "name": "my-rhdh",
               "namespace": "rhdh",
@@ -77,10 +77,10 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-02-10T20:25:20Z"
+    createdAt: "2025-02-17T08:59:50Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: orchestrator-operator.v0.0.4
+  name: orchestrator-operator.v0.0.5
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -338,7 +338,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/orchestrator/orchestrator-go-operator:0.0.4
+                image: quay.io/orchestrator/orchestrator-go-operator:0.0.5
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -426,4 +426,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.0.4
+  version: 0.0.5

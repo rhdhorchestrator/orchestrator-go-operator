@@ -18,13 +18,16 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
+
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/rhdh"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -199,7 +202,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
 	}
 
-	// handle network policy
+	// handle network policies
 	if err := r.reconcileNetworkPolicy(ctx, orchestrator); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
@@ -434,7 +437,7 @@ func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator 
 
 func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling Network Policy...")
+	logger.Info("Reconciling Network Policies...")
 
 	namespace := orchestrator.Spec.PlatformConfig.Namespace
 	namespaceExist, err := kube.CheckNamespaceExist(ctx, r.Client, namespace)
@@ -443,10 +446,18 @@ func (r *OrchestratorReconciler) reconcileNetworkPolicy(ctx context.Context, orc
 		return err
 	}
 
-	if err := handleNetworkPolicy(r.Client, ctx, namespace, orchestrator.Spec.RHDHConfig.Namespace, orchestrator.Spec.PostgresConfig.Namespace); err != nil {
-		logger.Error(err, "Error occurred when reconciling Network Policy", "NP", NetworkPolicyName)
-		return err
+	monitoringFlag := orchestrator.Spec.PlatformConfig.Monitoring.Enabled
+	networkPolicyErrors := handleNetworkPolicy(r.Client, ctx, namespace, orchestrator.Spec.RHDHConfig.Namespace, orchestrator.Spec.PostgresConfig.Namespace, monitoringFlag)
+
+	if len(networkPolicyErrors) > 0 {
+		var networkPolicyNames []string
+		for networkPolicyName, err := range networkPolicyErrors {
+			logger.Error(err, "Error occurred when reconciling Network Policy", "NP", networkPolicyName)
+			networkPolicyNames = append(networkPolicyNames, networkPolicyName)
+		}
+		return fmt.Errorf("error occurred when reconciling the following Network Policies: %s ", strings.Join(networkPolicyNames, ", "))
 	}
+
 	return nil
 }
 

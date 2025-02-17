@@ -16,6 +16,8 @@ package controller
 
 import (
 	"context"
+	"reflect"
+
 	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
@@ -26,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -43,6 +45,8 @@ const (
 	serverlessLogicOperatorNamespace       = "openshift-serverless-logic"
 	serverlessLogicSubscriptionName        = "logic-operator-rhel8"
 	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.35.0"
+	knativeBrokerAPIVersion                = "eventing.knative.dev/v1"
+	knativeBrokerKind                      = "Broker"
 )
 
 func handleServerlessLogicOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
@@ -281,6 +285,16 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) 
 				ServiceSpec: sonataapi.ServiceSpec{
 					Enabled:     util.MakePointer(true),
 					Persistence: getServerlessLogicPersistence(orchestrator),
+				},
+			},
+		},
+		Eventing: &sonataapi.PlatformEventingSpec{
+			Broker: &duckv1.Destination{
+				Ref: &duckv1.KReference{
+					Kind:       knativeBrokerKind,
+					Name:       orchestrator.Spec.PlatformConfig.Eventing.Broker.Name,
+					Namespace:  orchestrator.Spec.PlatformConfig.Eventing.Broker.Namespace,
+					APIVersion: knativeBrokerAPIVersion,
 				},
 			},
 		},

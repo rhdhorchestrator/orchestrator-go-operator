@@ -1,10 +1,8 @@
 package rhdh
 
-const RHDHConfigTempl = `
-app:
+const RHDHConfigTempl = `app:
   title: Red Hat Developer Hub
   baseUrl: https://backstage-backstage-{{ .TargetNamespace }}.{{ .ClusterDomain }}
-
 backend:
   auth:
     externalAccess:
@@ -26,7 +24,6 @@ backend:
       user: ${POSTGRES_USER}
       host: ${POSTGRES_HOST}
       port: ${POSTGRES_PORT}
-
 {{- if .ArgoCDEnabled }}
 argocd:
   appLocatorMethods:

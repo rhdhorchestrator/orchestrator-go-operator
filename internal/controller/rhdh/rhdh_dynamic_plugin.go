@@ -33,10 +33,8 @@ type RHDHDynamicPluginConfig struct {
 	WorkflowNamespace            string
 }
 
-const RHDHDynamicPluginTempl = `
-includes: 
+const RHDHDynamicPluginTempl = `includes:
   - dynamic-plugins.default.yaml
-
 plugins:
   {{- if and (.K8ClusterToken) (.K8ClusterUrl) }}
   - package: ./dynamic-plugins/dist/backstage-plugin-kubernetes-backend-dynamic
@@ -73,7 +71,6 @@ plugins:
     disabled: false
   {{- end }}
   {{- end }}
-  
   {{- if and (.ArgoCDEnabled) (.ArgoCDUrl) (.ArgoCDUsername) }}
   - package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-argocd
     disabled: false
@@ -82,7 +79,6 @@ plugins:
   - package: ./dynamic-plugins/dist/roadiehq-scaffolder-backend-argocd-dynamic
     disabled: false
   {{- end }}
-  
   - package: "{{ .Scope }}/{{ .OrchestratorBackendPackage }}"
     disabled: false
     integrity: {{ .OrchestratorBackendIntegrity }}
@@ -90,7 +86,6 @@ plugins:
       orchestrator:
         dataIndexService:
           url: http://sonataflow-platform-data-index-service.{{ .WorkflowNamespace }}
-          
   - package: "{{ .Scope }}/{{ .OrchestratorPackage }}"
     disabled: false
     integrity: {{ .OrchestratorIntegrity }}
@@ -109,7 +104,6 @@ plugins:
                   text: Orchestrator
                 module: OrchestratorPlugin
                 path: /orchestrator
-  
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications
     disabled: false
     pluginConfig:
@@ -125,20 +119,16 @@ plugins:
                       webNotificationsEnabled: false
                   importName: NotificationsSidebarItem
                 path: /notifications
-  
   - package: ./dynamic-plugins/dist/backstage-plugin-signals
     disabled: false
     pluginConfig:
       dynamicPlugins:
         frontend:
           backstage.plugin-signals: {}
-
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-dynamic
     disabled: false
-
   - package: ./dynamic-plugins/dist/backstage-plugin-signals-backend-dynamic
     disabled: false
-
   {{- if and (.NotificationEmailEnabled) (.NotificationEmailHostname) }}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-module-email-dynamic
     disabled: false
@@ -167,5 +157,4 @@ plugins:
             cache:
               ttl:
                 days: 1
-  {{- end }}
-`
+  {{- end }}`

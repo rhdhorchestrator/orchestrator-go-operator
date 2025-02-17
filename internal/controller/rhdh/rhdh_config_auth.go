@@ -1,7 +1,6 @@
 package rhdh
 
-const RHDHAuthTempl = `
-integrations:
+const RHDHAuthTempl =`integrations:
   {{- if and ( .GitHubToken) }}
   github:
     - host: github.com
@@ -13,7 +12,6 @@ integrations:
       token: {{ printf "${%s}" .GitLabToken }}
       apiBaseUrl: https://{{ printf "${%s}" .GitLabHost }}/api/v4
   {{- end }}
-
 {{- if and ( .GitHubToken) }}
 auth:
   environment: {{ .Environment }}

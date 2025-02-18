@@ -1,7 +1,6 @@
 package rhdh
 
-const RHDHCatalogTempl = `
-catalog:
+const RHDHCatalogTempl =`catalog:
   rules:
     - allow:
         [

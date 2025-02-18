@@ -13,16 +13,6 @@ type RHDHDynamicPluginConfig struct {
 	OrchestratorPackage          string
 	OrchestratorIntegrity        string
 	Scope                        string
-	NotificationPackage          string
-	NotificationIntegrity        string
-	SignalsPackage               string
-	SignalsIntegrity             string
-	SignalsBackendPackage        string
-	SignalsBackendIntegrity      string
-	NotificationBackendPackage   string
-	NotificationBackendIntegrity string
-	NotificationEmailPackage     string
-	NotificationEmailIntegrity   string
 	NotificationEmailEnabled     bool
 	NotificationEmailHostname    string
 	NotificationEmailUsername    string

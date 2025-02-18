@@ -7,11 +7,6 @@ type Plugin struct {
 
 const Orchestrator string = "orchestrator"
 const OrchestratorBackend string = "orchestratorBackend"
-const Notification string = "notifications"
-const NotificationBackend string = "notificationsBackend"
-const Signals string = "signals"
-const SignalsBackend string = "signalsBackend"
-const NotificationsEmail string = "notificationsEmail"
 
 func getPlugins() map[string]Plugin {
 	return map[string]Plugin{

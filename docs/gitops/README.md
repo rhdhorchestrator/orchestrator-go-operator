@@ -22,7 +22,7 @@ You can use the Janus IDP Demo repository to install the `Red Hat OpenShift Pipe
 3. Install the OpenShift Pipelines operator:
 
     ```bash
-    helm upgrade --install orchestrator-pipelines pipelines-operator/ -f pipelines-operator/values.yaml -n orchestrator-gitops --create-namespace --set operator.channel=pipelines-1.16
+    helm upgrade --install orchestrator-pipelines pipelines-operator/ -f pipelines-operator/values.yaml -n orchestrator-gitops --create-namespace --set operator.channel=pipelines-1.17
     ```
 
 ### Install OpenShift GitOps Operator

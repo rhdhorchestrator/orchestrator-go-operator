@@ -20,8 +20,8 @@ func getPlugins() map[string]Plugin {
 			Integrity: "sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==",
 		},
 		ScaffolderBackendOrchestrator: {
-			Package:   "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.1.tgz",
-			Integrity: "sha512-nvVU4TnWttq5OM9/4e0dOIDMsa4q2MH2G1LsnpaGnNKbYWmJXlhLBwy/4fOOhkf+Y+b+FIlMjNgiZoaM6HUsQA==",
+			Package:   "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.2.tgz",
+			Integrity: "sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==",
 		},
 	}
 

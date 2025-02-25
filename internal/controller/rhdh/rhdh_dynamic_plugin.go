@@ -1,26 +1,28 @@
 package rhdh
 
 type RHDHDynamicPluginConfig struct {
-	K8ClusterToken               string
-	K8ClusterUrl                 string
-	TektonEnabled                bool
-	ArgoCDEnabled                bool
-	ArgoCDUrl                    string
-	ArgoCDUsername               string
-	ArgoCDPassword               string
-	OrchestratorBackendPackage   string
-	OrchestratorBackendIntegrity string
-	OrchestratorPackage          string
-	OrchestratorIntegrity        string
-	Scope                        string
-	NotificationEmailEnabled     bool
-	NotificationEmailHostname    string
-	NotificationEmailUsername    string
-	NotificationEmailPassword    string
-	NotificationEmailSender      string
-	NotificationEmailReplyTo     string
-	NotificationEmailPort        int
-	WorkflowNamespace            string
+	K8ClusterToken                         string
+	K8ClusterUrl                           string
+	TektonEnabled                          bool
+	ArgoCDEnabled                          bool
+	ArgoCDUrl                              string
+	ArgoCDUsername                         string
+	ArgoCDPassword                         string
+	OrchestratorBackendPackage             string
+	OrchestratorBackendIntegrity           string
+	OrchestratorPackage                    string
+	OrchestratorIntegrity                  string
+	Scope                                  string
+	NotificationEmailEnabled               bool
+	NotificationEmailHostname              string
+	NotificationEmailUsername              string
+	NotificationEmailPassword              string
+	NotificationEmailSender                string
+	NotificationEmailReplyTo               string
+	NotificationEmailPort                  int
+	WorkflowNamespace                      string
+	ScaffolderBackendOrchestratorPackage   string
+	ScaffolderBackendOrchestratorIntegrity string
 }
 
 const RHDHDynamicPluginTempl = `includes:
@@ -94,6 +96,13 @@ plugins:
                   text: Orchestrator
                 module: OrchestratorPlugin
                 path: /orchestrator
+  - package: "{{ .Scope }}/{{ .ScaffolderBackendOrchestratorPackage }}"
+    disabled: false
+    integrity: {{ .ScaffolderBackendOrchestratorIntegrity }}
+    pluginConfig:
+      orchestrator:
+        dataIndexService:
+          url: http://sonataflow-platform-data-index-service.{{ .WorkflowNamespace }}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications
     disabled: false
     pluginConfig:

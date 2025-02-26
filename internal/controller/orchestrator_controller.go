@@ -492,14 +492,14 @@ func (r *OrchestratorReconciler) reconcileSubscription(ctx context.Context, obje
 	subscriptionObject := object.(*olmv1alpha1.Subscription)
 
 	if subscriptionObject != nil && kube.CheckLabelExist(subscriptionObject.Labels) {
-		if subscriptionObject.Namespace == serverlessLogicOperatorNamespace {
+		if (subscriptionObject.Namespace == serverlessLogicOperatorNamespace) && (subscriptionObject.Name == serverlessLogicSubscriptionName) {
 			err := handleServerlessLogicOperatorInstallation(ctx, r.Client, r.OLMClient)
 			if err != nil && !apierrors.IsNotFound(err) {
 				log.Log.Error(err, "Error occurred when reconciling Serverless Logic subscription resources")
 				return nil
 			}
 		}
-		if subscriptionObject.Namespace == knativeOperatorNamespace {
+		if (subscriptionObject.Namespace == knativeOperatorNamespace) && (subscriptionObject.Name == knativeSubscriptionName) {
 			err := handleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient)
 			if err != nil && !apierrors.IsNotFound(err) {
 				log.Log.Error(err, "Error occurred when reconciling Serverless subscription resources")

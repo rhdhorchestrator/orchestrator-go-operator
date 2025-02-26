@@ -171,7 +171,11 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 	logger.Info("Creating subscription object")
 
 	subscriptionObject := &v1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: subscriptionName},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      subscriptionName,
+			Labels:    AddLabel(),
+		},
 		Spec: &v1alpha1.SubscriptionSpec{
 			Channel:                channel,
 			InstallPlanApproval:    v1alpha1.ApprovalManual,

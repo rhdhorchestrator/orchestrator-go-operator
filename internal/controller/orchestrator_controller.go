@@ -19,6 +19,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
 
@@ -152,8 +155,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 
 	// handle serverless logic
-	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
-	if err = r.reconcileServerlessLogic(ctx, serverlessLogicOperator, orchestrator); err != nil {
+	if err := r.reconcileServerlessLogic(ctx, orchestrator); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
 		}
@@ -245,11 +247,11 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	ctx context.Context,
-	serverlessLogicOperator orchestratorv1alpha2.ServerlessLogicOperator,
 	orchestrator *orchestratorv1alpha2.Orchestrator) error {
 
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Starting reconciliation for Serverless Logic")
+	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
 
 	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 
@@ -486,6 +488,31 @@ func (r *OrchestratorReconciler) reconcileGitOps(ctx context.Context, orchestrat
 	return nil
 }
 
+func (r *OrchestratorReconciler) reconcileSubscription(ctx context.Context, object client.Object) []reconcile.Request {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling Operator's Subscription...")
+	subscriptionObject := object.(*olmv1alpha1.Subscription)
+
+	if subscriptionObject != nil && kube.CheckLabelExist(subscriptionObject.Labels) {
+		if (subscriptionObject.Namespace == serverlessLogicOperatorNamespace) && (subscriptionObject.Name == serverlessLogicSubscriptionName) {
+			err := handleServerlessLogicOperatorInstallation(ctx, r.Client, r.OLMClient)
+			if err != nil && !apierrors.IsNotFound(err) {
+				logger.Error(err, "Error occurred when reconciling ServerlessLogic Operator's Subscription resource")
+				return nil
+			}
+		}
+		if (subscriptionObject.Namespace == knativeOperatorNamespace) && (subscriptionObject.Name == knativeSubscriptionName) {
+			err := handleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient)
+			if err != nil && !apierrors.IsNotFound(err) {
+				logger.Error(err, "Error occurred when reconciling Serverless(K-Native) Operator's Subscription resource")
+				return nil
+			}
+		}
+
+	}
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	config := mgr.GetConfig()
@@ -497,9 +524,11 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 	r.OLMClient = *olmClient
 
-	return ctrl.NewControllerManagedBy(mgr).
+	o := ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha2.Orchestrator{}).
+		Watches(&olmv1alpha1.Subscription{}, handler.EnqueueRequestsFromMapFunc(r.reconcileSubscription)).
 		Owns(&orchestratorv1alpha2.Orchestrator{}).
-		WithOptions(controller.Options{MaxConcurrentReconciles: 2}).
-		Complete(r)
+		WithOptions(controller.Options{MaxConcurrentReconciles: 2})
+
+	return o.Complete(r)
 }

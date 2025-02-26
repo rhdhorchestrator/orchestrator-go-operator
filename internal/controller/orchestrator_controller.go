@@ -19,6 +19,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
 
@@ -152,8 +155,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 
 	// handle serverless logic
-	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
-	if err = r.reconcileServerlessLogic(ctx, serverlessLogicOperator, orchestrator); err != nil {
+	if err := r.reconcileServerlessLogic(ctx, orchestrator); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
 		}
@@ -245,11 +247,11 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	ctx context.Context,
-	serverlessLogicOperator orchestratorv1alpha2.ServerlessLogicOperator,
 	orchestrator *orchestratorv1alpha2.Orchestrator) error {
 
 	sfLogger := log.FromContext(ctx)
 	sfLogger.Info("Starting reconciliation for Serverless Logic")
+	serverlessLogicOperator := orchestrator.Spec.ServerlessLogicOperator
 
 	serverlessWorkflowNamespace := orchestrator.Spec.PlatformConfig.Namespace
 

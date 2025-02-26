@@ -489,20 +489,22 @@ func (r *OrchestratorReconciler) reconcileGitOps(ctx context.Context, orchestrat
 }
 
 func (r *OrchestratorReconciler) reconcileSubscription(ctx context.Context, object client.Object) []reconcile.Request {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling Operator's Subscription...")
 	subscriptionObject := object.(*olmv1alpha1.Subscription)
 
 	if subscriptionObject != nil && kube.CheckLabelExist(subscriptionObject.Labels) {
 		if (subscriptionObject.Namespace == serverlessLogicOperatorNamespace) && (subscriptionObject.Name == serverlessLogicSubscriptionName) {
 			err := handleServerlessLogicOperatorInstallation(ctx, r.Client, r.OLMClient)
 			if err != nil && !apierrors.IsNotFound(err) {
-				log.Log.Error(err, "Error occurred when reconciling Serverless Logic subscription resources")
+				logger.Error(err, "Error occurred when reconciling ServerlessLogic Operator's Subscription resource")
 				return nil
 			}
 		}
 		if (subscriptionObject.Namespace == knativeOperatorNamespace) && (subscriptionObject.Name == knativeSubscriptionName) {
 			err := handleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient)
 			if err != nil && !apierrors.IsNotFound(err) {
-				log.Log.Error(err, "Error occurred when reconciling Serverless subscription resources")
+				logger.Error(err, "Error occurred when reconciling Serverless(K-Native) Operator's Subscription resource")
 				return nil
 			}
 		}

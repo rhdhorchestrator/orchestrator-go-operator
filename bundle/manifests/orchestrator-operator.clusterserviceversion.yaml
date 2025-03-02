@@ -77,10 +77,10 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-02-17T08:59:50Z"
+    createdAt: "2025-03-02T09:13:44Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: orchestrator-operator.v0.0.5
+  name: orchestrator-operator.v1.5.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -338,7 +338,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/orchestrator/orchestrator-go-operator:0.0.5
+                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-02
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -426,4 +426,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.0.5
+  version: 1.5.0

@@ -7,9 +7,9 @@ This outlines the process of releasing a version of the go operator.
 1. Pull a fresh copy of the repository. Alternatively pull the latest from main on your existing repository and ensure that the HEAD matches the upstream's HEAD commit hash.
 1. Create a new branch, example `release-1.5.0-rc1`.
 1. Update the version tag field in Makefile to the version you want it to be.
-1. To validate all files are synced, run `make generate manifest`. If there are changes to any files, halt release and verify those changes on a separate branch.
+1. To validate all files are synced, run `make generate manifest`. If there are changes to any files, halt release and verify those changes.
 1. Run `make bundle`. This updates the contents of the `/bundle` with the new version tag.
-1. Push the commit.
+1. Review the changes and if satisfied, push the commit.
 1. Create a new PR against main, unless the changes are targeting a specific release.
 1. Get the PR reviewed by another team member. Two more pair of eyes are always welcome for these kind of things.
 1. Merge the PR.
@@ -54,8 +54,10 @@ spec:
     registryPoll:
       interval: 10m
 ```
-1. Deploy the `catalogsource` in your cluster and ensure that the latest version in the OLM menu for the orchestrator go operator matches with the new version of the operator.
-1. Install the operator and create a sample CR. Validate the CR deploys successfully by checking its status. Optionally, you can take it further a notch and validate the related objects also successfully deploy.
+1. Deploy the `catalogsource` on a cluster and ensure that the latest version in the OLM menu for the orchestrator go operator matches with the new version of the operator.
+1. Install the operator and ensure the controller pod is running without errors and ready to receive a CR.
+2. Optionally, create and apply sample CR. Validate the CR deploys successfully by checking its status.
+3. Optionally, you can take it further a notch and validate the related objects also successfully deploy.
 1. Crate a Jira ticket and add attach the catalogsoure to it. In the description box, summarize the changes contained in the release. \
 Example of Jira ticket: https://issues.redhat.com/browse/FLPATH-2107
 1. Share the new manifest and Jira ticket in the development channel to announce the new release. Tag the QE team so that they are aware and can take action as soon as they are able.

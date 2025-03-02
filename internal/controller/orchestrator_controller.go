@@ -62,7 +62,7 @@ const (
 // OrchestratorReconciler reconciles an Orchestrator object
 type OrchestratorReconciler struct {
 	client.Client
-	OLMClient olmclientset.Clientset
+	OLMClient olmclientset.Interface
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
 }
@@ -522,7 +522,7 @@ func (r *OrchestratorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err != nil {
 		return err
 	}
-	r.OLMClient = *olmClient
+	r.OLMClient = olmClient
 
 	o := ctrl.NewControllerManagedBy(mgr).
 		For(&orchestratorv1alpha2.Orchestrator{}).

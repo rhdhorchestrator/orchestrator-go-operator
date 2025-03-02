@@ -49,7 +49,7 @@ const (
 	knativeBrokerKind                      = "Broker"
 )
 
-func handleServerlessLogicOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func handleServerlessLogicOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Interface) error {
 	sfLogger := log.FromContext(ctx)
 
 	// create namespace for operator

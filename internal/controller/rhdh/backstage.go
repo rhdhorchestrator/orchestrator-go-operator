@@ -36,7 +36,7 @@ var ConfigMapNameAndConfigDataKey = map[string]string{
 	AppConfigRHDHDynamicPluginName: "dynamic-plugins.yaml",
 }
 
-func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func HandleRHDHOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Interface) error {
 	rhdhLogger := log.FromContext(ctx)
 
 	if _, err := kubeoperations.CheckNamespaceExist(ctx, client, rhdhOperatorNamespace); err != nil {

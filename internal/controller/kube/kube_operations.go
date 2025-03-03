@@ -65,7 +65,7 @@ func CreateNamespace(ctx context.Context, client client.Client, namespace string
 
 func InstallSubscriptionAndOperatorGroup(
 	ctx context.Context, client client.Client,
-	olmClientSet olmclientset.Clientset,
+	olmClientSet olmclientset.Interface,
 	operatorGroupName string,
 	subscription *v1alpha1.Subscription) error {
 
@@ -189,7 +189,7 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 }
 
 func CheckSubscriptionExists(
-	ctx context.Context, olmClientSet olmclientset.Clientset,
+	ctx context.Context, olmClientSet olmclientset.Interface,
 	existingSubscription *v1alpha1.Subscription) (bool, *v1alpha1.Subscription, error) {
 	logger := log.FromContext(ctx)
 
@@ -245,7 +245,7 @@ func CleanUpNamespace(ctx context.Context, namespaceName string, client client.C
 	return nil
 }
 
-func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Clientset, subscription *v1alpha1.Subscription) error {
+func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.Interface, subscription *v1alpha1.Subscription) error {
 	logger := log.FromContext(ctx)
 
 	subscriptionName := subscription.Name

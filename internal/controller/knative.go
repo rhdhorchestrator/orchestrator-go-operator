@@ -44,7 +44,7 @@ const (
 	knativeSubscriptionStartingCSV = "serverless-operator.v1.35.0"
 )
 
-func handleKNativeOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Clientset) error {
+func handleKNativeOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Interface) error {
 	knativeLogger := log.FromContext(ctx)
 
 	if _, err := kube.CheckNamespaceExist(ctx, client, knativeOperatorNamespace); err != nil {

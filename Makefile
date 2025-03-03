@@ -50,7 +50,6 @@ endif
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPERATOR_SDK_VERSION ?= v1.36.0
 # Image URL to use all building/pushing image targets
-TIMESTAMP ?= $(shell date +%Y-%m-%d)
 IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.

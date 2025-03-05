@@ -261,3 +261,29 @@ func TestCheckCRDExists(t *testing.T) {
 	err = CheckCRDExists(ctx, fakeClientWithCRD, crdName)
 	assert.NoError(t, err, "Expected no error")
 }
+
+func TestAddLabel(t *testing.T) {
+	expectedLabels := map[string]string{
+		CreatedByLabelKey: CreatedByLabelValue,
+	}
+	labelMap := AddLabel()
+	assert.NotNil(t, labelMap, "Expected labelMap to not be nil")
+	assert.Equal(t, expectedLabels, labelMap, "Expected labelMap to match expectedLabels")
+	assert.Equal(t, len(expectedLabels), len(labelMap), "Expected maps to have the same length")
+}
+
+func TestCheckLabelExists(t *testing.T) {
+	existingLabelMap := map[string]string{
+		CreatedByLabelKey:              CreatedByLabelValue,
+		"app.kubernetes.io/created-by": "orchestrator-operator",
+	}
+	labelExist := CheckLabelExist(existingLabelMap)
+	assert.True(t, labelExist, "Expected label to exist")
+
+	existingLabelMap2 := map[string]string{
+		"app.kubernetes.io/created-by": "orchestrator-operator",
+	}
+
+	labelExist = CheckLabelExist(existingLabelMap2)
+	assert.False(t, labelExist, "Expected label to not exist")
+}

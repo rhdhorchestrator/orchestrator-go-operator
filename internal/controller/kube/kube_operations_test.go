@@ -122,3 +122,27 @@ func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
 		subscription)
 	assert.Error(t, err, "Expected error")
 }
+
+func TestApproveInstallPlan(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(operatorsv1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+
+	installPlan := &v1alpha1.InstallPlan{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "install-plan",
+			Namespace: orchestratorNamespaceName,
+		},
+	}
+
+	// Test with InstallPlan
+	fakeClientWithInstallPlan := fake.NewClientBuilder().WithScheme(scheme).WithObjects(installPlan).Build()
+	err := ApproveInstallPlan(fakeClientWithInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
+	assert.NoError(t, err, "Expected no error")
+
+	// Test without InstallPlan
+	fakeClientWithoutInstallPlan := fake.NewClientBuilder().WithScheme(scheme).Build()
+	err = ApproveInstallPlan(fakeClientWithoutInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
+	assert.Error(t, err, "Expected error")
+}

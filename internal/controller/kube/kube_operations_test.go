@@ -262,6 +262,20 @@ func TestCheckCRDExists(t *testing.T) {
 	assert.NoError(t, err, "Expected no error")
 }
 
+func TestCleanUpNamespace(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(corev1.AddToScheme(scheme))
+
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespaceName, Labels: AddLabel()},
+	}
+
+	fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
+	err := CleanUpNamespace(ctx, orchestratorNamespaceName, fakeClientWithoutNS)
+	assert.NoError(t, err, "Expected no error")
+}
+
 func TestAddLabel(t *testing.T) {
 	expectedLabels := map[string]string{
 		CreatedByLabelKey: CreatedByLabelValue,

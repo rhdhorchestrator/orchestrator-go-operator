@@ -207,3 +207,34 @@ func TestCreateSubscriptionObject(t *testing.T) {
 	assert.Equal(t, subscriptionChannel, subscription.Spec.Channel)
 	assert.Equal(t, subscriptionStartingCSV, subscription.Spec.StartingCSV)
 }
+
+func TestCheckSubscriptionExists(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+
+	subscriptionName := "subscriptionName"
+	subscriptionChannel := "channel"
+	subscriptionStartingCSV := "starting-csv"
+	subscription := CreateSubscriptionObject(
+		subscriptionName,
+		orchestratorNamespaceName,
+		subscriptionChannel,
+		subscriptionStartingCSV,
+	)
+
+	// Test subscription does not exist
+	fakeOLMClientSetWithoutSubscription := olmclientsetfake.NewSimpleClientset()
+	subscriptionExist, existingSub, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithoutSubscription, subscription)
+	assert.NoError(t, err, "Expected no error")
+	assert.False(t, subscriptionExist, "Expected subscription to not exist")
+	assert.Nil(t, existingSub, "Subscription is empty")
+
+	// Test subscription exist
+	fakeOLMClientSetWithSubscription := olmclientsetfake.NewSimpleClientset(subscription)
+	subscriptionExist2, existingSub2, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithSubscription, subscription)
+	assert.NoError(t, err, "Expected no error")
+	assert.True(t, subscriptionExist2, "Expected subscription to not exist")
+	assert.NotNil(t, existingSub2, "Subscription is not nil")
+	assert.Equal(t, existingSub2.Name, subscription.Name)
+}

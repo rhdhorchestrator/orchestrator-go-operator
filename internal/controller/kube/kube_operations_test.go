@@ -189,5 +189,21 @@ func TestGetOperatorGroup(t *testing.T) {
 		createdOperatorGroup)
 	assert.Equal(t, createdOperatorGroup.Namespace, operatorGroup.Namespace, "OperatorGroup namespace should be match")
 	assert.Equal(t, createdOperatorGroup.Name, operatorGroup.Name, "OperatorGroup namespace should be match")
+}
 
+func TestCreateSubscriptionObject(t *testing.T) {
+
+	subscriptionName := "subscriptionName"
+	subscriptionChannel := "channel"
+	subscriptionStartingCSV := "starting-csv"
+	subscription := CreateSubscriptionObject(
+		subscriptionName,
+		orchestratorNamespaceName,
+		subscriptionChannel,
+		subscriptionStartingCSV,
+	)
+	assert.Equal(t, subscriptionName, subscription.Name)
+	assert.Equal(t, orchestratorNamespaceName, subscription.Namespace)
+	assert.Equal(t, subscriptionChannel, subscription.Spec.Channel)
+	assert.Equal(t, subscriptionStartingCSV, subscription.Spec.StartingCSV)
 }

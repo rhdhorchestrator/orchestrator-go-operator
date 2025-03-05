@@ -23,8 +23,10 @@ import (
 	olmclientsetfake "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
@@ -126,13 +128,17 @@ func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
 func TestApproveInstallPlan(t *testing.T) {
 	ctx := context.TODO()
 	scheme := runtime.NewScheme()
-	utilruntime.Must(operatorsv1.AddToScheme(scheme))
+	//utilruntime.Must(operatorsv1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 
 	installPlan := &v1alpha1.InstallPlan{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "install-plan",
 			Namespace: orchestratorNamespaceName,
+		},
+		Spec: v1alpha1.InstallPlanSpec{
+			Approval: v1alpha1.ApprovalManual,
+			Approved: false,
 		},
 	}
 
@@ -141,8 +147,14 @@ func TestApproveInstallPlan(t *testing.T) {
 	err := ApproveInstallPlan(fakeClientWithInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
 	assert.NoError(t, err, "Expected no error")
 
+	// Verify InstallPlan is approved
+	updatedInstallPlan := &v1alpha1.InstallPlan{}
+	_ = fakeClientWithInstallPlan.Get(ctx, types.NamespacedName{Name: installPlan.Name, Namespace: installPlan.Namespace}, updatedInstallPlan)
+	assert.True(t, updatedInstallPlan.Spec.Approved, "InstallPlan should be approved")
+
 	// Test without InstallPlan
 	fakeClientWithoutInstallPlan := fake.NewClientBuilder().WithScheme(scheme).Build()
 	err = ApproveInstallPlan(fakeClientWithoutInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
 	assert.Error(t, err, "Expected error")
+	assert.True(t, apierrors.IsNotFound(err), "Expected not found error")
 }

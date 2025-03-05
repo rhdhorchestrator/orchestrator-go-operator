@@ -75,7 +75,8 @@ func TestCreateNamespace(t *testing.T) {
 	// Test create namespace with error
 	fakeClientWithNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
 	err = CreateNamespace(ctx, fakeClientWithNS, orchestratorNamespaceName)
-	assert.Error(t, err, "Expected an error when namespace does not exist")
+	assert.Error(t, err, "Expected an error")
+	assert.True(t, apierrors.IsAlreadyExists(err), "Expected error when namespace already exists")
 }
 
 func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
@@ -180,4 +181,13 @@ func TestGetOperatorGroup(t *testing.T) {
 	fakeClientWithoutOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).Build()
 	err = getOperatorGroup(ctx, fakeClientWithoutOperatorGroup, orchestratorNamespaceName, orchestratorOperatorGroup)
 	assert.NoError(t, err, "Expected no error")
+
+	createdOperatorGroup := &operatorsv1.OperatorGroup{}
+	_ = fakeClientWithoutOperatorGroup.Get(
+		ctx,
+		types.NamespacedName{Name: orchestratorOperatorGroup, Namespace: orchestratorNamespaceName},
+		createdOperatorGroup)
+	assert.Equal(t, createdOperatorGroup.Namespace, operatorGroup.Namespace, "OperatorGroup namespace should be match")
+	assert.Equal(t, createdOperatorGroup.Name, operatorGroup.Name, "OperatorGroup namespace should be match")
+
 }

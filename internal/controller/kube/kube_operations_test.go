@@ -23,6 +23,7 @@ import (
 	olmclientsetfake "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -237,4 +238,26 @@ func TestCheckSubscriptionExists(t *testing.T) {
 	assert.True(t, subscriptionExist2, "Expected subscription to not exist")
 	assert.NotNil(t, existingSub2, "Subscription is not nil")
 	assert.Equal(t, existingSub2.Name, subscription.Name)
+}
+
+func TestCheckCRDExists(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+
+	// Test without crd
+	fakeClientWithoutCRD := fake.NewClientBuilder().WithScheme(scheme).Build()
+	err := CheckCRDExists(ctx, fakeClientWithoutCRD, "sonataflowclusterplatforms")
+	assert.Error(t, err, "Expected error")
+	crdName := "sonataflowclusterplatforms"
+
+	// Test with CRD
+	crd := &apiextensionsv1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: crdName,
+		},
+	}
+	fakeClientWithCRD := fake.NewClientBuilder().WithScheme(scheme).WithObjects(crd).Build()
+	err = CheckCRDExists(ctx, fakeClientWithCRD, crdName)
+	assert.NoError(t, err, "Expected no error")
 }

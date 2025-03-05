@@ -142,7 +142,7 @@ func TestApproveInstallPlan(t *testing.T) {
 		},
 	}
 
-	// Test with InstallPlan
+	// Test with approve InstallPlan
 	fakeClientWithInstallPlan := fake.NewClientBuilder().WithScheme(scheme).WithObjects(installPlan).Build()
 	err := ApproveInstallPlan(fakeClientWithInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
 	assert.NoError(t, err, "Expected no error")
@@ -152,9 +152,32 @@ func TestApproveInstallPlan(t *testing.T) {
 	_ = fakeClientWithInstallPlan.Get(ctx, types.NamespacedName{Name: installPlan.Name, Namespace: installPlan.Namespace}, updatedInstallPlan)
 	assert.True(t, updatedInstallPlan.Spec.Approved, "InstallPlan should be approved")
 
-	// Test without InstallPlan
+	// Test approve InstallPlan with error
 	fakeClientWithoutInstallPlan := fake.NewClientBuilder().WithScheme(scheme).Build()
 	err = ApproveInstallPlan(fakeClientWithoutInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
 	assert.Error(t, err, "Expected error")
 	assert.True(t, apierrors.IsNotFound(err), "Expected not found error")
+}
+
+func TestGetOperatorGroup(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(operatorsv1.AddToScheme(scheme))
+
+	operatorGroup := &operatorsv1.OperatorGroup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      orchestratorOperatorGroup,
+			Namespace: orchestratorNamespaceName,
+		},
+	}
+
+	// Test get operator group
+	fakeClientWithOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).WithObjects(operatorGroup).Build()
+	err := getOperatorGroup(ctx, fakeClientWithOperatorGroup, orchestratorNamespaceName, orchestratorOperatorGroup)
+	assert.NoError(t, err, "Expected no error")
+
+	// Test create operator group
+	fakeClientWithoutOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).Build()
+	err = getOperatorGroup(ctx, fakeClientWithoutOperatorGroup, orchestratorNamespaceName, orchestratorOperatorGroup)
+	assert.NoError(t, err, "Expected no error")
 }

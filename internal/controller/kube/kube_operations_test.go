@@ -27,6 +27,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -34,8 +35,24 @@ import (
 )
 
 var (
-	orchestratorNamespaceName = "orchestrator-namespace"
+	orchestratorNamespace     = "orchestrator-namespace"
 	orchestratorOperatorGroup = "orchestrator-operator-group"
+	subscriptionName          = "orchestrator-subscription"
+	subscription              = &v1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      subscriptionName,
+			Namespace: orchestratorNamespace,
+			Labels:    AddLabel(),
+		},
+		Spec: &v1alpha1.SubscriptionSpec{
+			Channel:                "channel",
+			StartingCSV:            "starting-csv",
+			InstallPlanApproval:    v1alpha1.ApprovalManual,
+			CatalogSource:          CatalogSourceName,
+			CatalogSourceNamespace: CatalogSourceNamespace,
+			Package:                subscriptionName,
+		},
+	}
 )
 
 func TestCheckNamespaceExist(t *testing.T) {
@@ -44,21 +61,33 @@ func TestCheckNamespaceExist(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(corev1.AddToScheme(scheme))
 
-	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespaceName},
+	testCases := []struct {
+		name           string
+		namespace      string
+		namespaceObj   *corev1.Namespace
+		expectedExists bool
+	}{
+		{
+			name:           "Namespace exists",
+			namespace:      orchestratorNamespace,
+			namespaceObj:   &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace}},
+			expectedExists: true,
+		},
+		{
+			name:           "Namespace does not exist",
+			namespace:      "fake-namespace",
+			namespaceObj:   &corev1.Namespace{},
+			expectedExists: false,
+		},
 	}
 
-	// Test Namespace exists
-	fakeClientWithNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
-	exists, err := CheckNamespaceExist(ctx, fakeClientWithNS, orchestratorNamespaceName)
-	assert.NoError(t, err, "Expected no error when namespace exists")
-	assert.True(t, exists, "Expected namespace to exist")
-
-	// Test Namespace does not exist
-	fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).Build()
-	exists, err = CheckNamespaceExist(ctx, fakeClientWithoutNS, orchestratorNamespaceName)
-	assert.Error(t, err, "Expected an error when namespace does not exist")
-	assert.False(t, exists, "Expected namespace to not exist")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.namespaceObj).Build()
+			exists, _ := CheckNamespaceExist(ctx, fakeClient, tc.namespace)
+			assert.Equal(t, tc.expectedExists, exists)
+		})
+	}
 }
 
 func TestCreateNamespace(t *testing.T) {
@@ -66,18 +95,33 @@ func TestCreateNamespace(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(corev1.AddToScheme(scheme))
 
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespaceName, Labels: AddLabel()}}
+	testCases := []struct {
+		name          string
+		namespace     string
+		namespaceObj  *corev1.Namespace
+		expectedError error
+	}{
+		{
+			name:          "Create namespace",
+			namespace:     orchestratorNamespace,
+			namespaceObj:  &corev1.Namespace{},
+			expectedError: nil,
+		},
+		{
+			name:          "Create namespace with error",
+			namespace:     "fake-namespace",
+			namespaceObj:  &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "fake-namespace", Labels: AddLabel()}},
+			expectedError: apierrors.NewAlreadyExists(schema.GroupResource{}, "fake-namespace"),
+		},
+	}
 
-	// Test create namespace
-	fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).Build()
-	err := CreateNamespace(ctx, fakeClientWithoutNS, orchestratorNamespaceName)
-	assert.NoError(t, err, "Expected no error")
-
-	// Test create namespace with error
-	fakeClientWithNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
-	err = CreateNamespace(ctx, fakeClientWithNS, orchestratorNamespaceName)
-	assert.Error(t, err, "Expected an error")
-	assert.True(t, apierrors.IsAlreadyExists(err), "Expected error when namespace already exists")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.namespaceObj).Build()
+			err := CreateNamespace(ctx, fakeClient, tc.namespace)
+			assert.Equal(t, apierrors.IsAlreadyExists(tc.expectedError), apierrors.IsAlreadyExists(err))
+		})
+	}
 }
 
 func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
@@ -86,57 +130,41 @@ func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
 
-	subscriptionName := "orchestrator-subscription"
-	subscription := &v1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      subscriptionName,
-			Namespace: orchestratorNamespaceName,
-		},
-		Spec: &v1alpha1.SubscriptionSpec{
-			Channel:                "channel",
-			StartingCSV:            "starting-csv",
-			InstallPlanApproval:    v1alpha1.ApprovalManual,
-			CatalogSource:          CatalogSourceName,
-			CatalogSourceNamespace: CatalogSourceNamespace,
-		},
-	}
+	t.Run("Install subscription and operator group no error", func(t *testing.T) {
+		fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+		fakeOLMClientSet := olmclientsetfake.NewSimpleClientset()
+		err := InstallSubscriptionAndOperatorGroup(
+			ctx, fakeClient,
+			fakeOLMClientSet,
+			orchestratorOperatorGroup,
+			subscription)
+		assert.Equal(t, nil, err)
+	})
 
-	fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-	// Test subscription is created
-	fakeOLMClientSetWithoutSubscription := olmclientsetfake.NewSimpleClientset()
-	err := InstallSubscriptionAndOperatorGroup(
-		ctx, fakeClient,
-		fakeOLMClientSetWithoutSubscription,
-		orchestratorOperatorGroup,
-		subscription)
-	assert.NoError(t, err, "Expected no error")
-
-	// Test create subscription with error
-	fakeOLMClientSetWithSubscription := olmclientsetfake.NewSimpleClientset()
-	fakeOLMClientSetWithSubscription.OperatorsV1alpha1().
-		Subscriptions(orchestratorNamespaceName).
-		Create(ctx, subscription, metav1.CreateOptions{})
-
-	err = InstallSubscriptionAndOperatorGroup(
-		ctx,
-		fakeClient,
-		fakeOLMClientSetWithSubscription,
-		orchestratorOperatorGroup,
-		subscription)
-	assert.Error(t, err, "Expected error")
+	t.Run("Install subscription and operator group with error", func(t *testing.T) {
+		fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+		fakeOLMClientSetWithSubscription := olmclientsetfake.NewSimpleClientset()
+		fakeOLMClientSetWithSubscription.OperatorsV1alpha1().
+			Subscriptions(orchestratorNamespace).
+			Create(ctx, subscription, metav1.CreateOptions{})
+		err := InstallSubscriptionAndOperatorGroup(
+			ctx, fakeClient,
+			fakeOLMClientSetWithSubscription,
+			orchestratorOperatorGroup,
+			subscription)
+		assert.Error(t, err, "Expected error when subscription already exists")
+	})
 }
 
 func TestApproveInstallPlan(t *testing.T) {
 	ctx := context.TODO()
 	scheme := runtime.NewScheme()
-	//utilruntime.Must(operatorsv1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 
 	installPlan := &v1alpha1.InstallPlan{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "install-plan",
-			Namespace: orchestratorNamespaceName,
+			Namespace: orchestratorNamespace,
 		},
 		Spec: v1alpha1.InstallPlanSpec{
 			Approval: v1alpha1.ApprovalManual,
@@ -144,21 +172,25 @@ func TestApproveInstallPlan(t *testing.T) {
 		},
 	}
 
-	// Test with approve InstallPlan
-	fakeClientWithInstallPlan := fake.NewClientBuilder().WithScheme(scheme).WithObjects(installPlan).Build()
-	err := ApproveInstallPlan(fakeClientWithInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
-	assert.NoError(t, err, "Expected no error")
+	// Test with approve InstallPlan with no errors
+	t.Run("Approve install plan", func(t *testing.T) {
+		fakeClientWithInstallPlan := fake.NewClientBuilder().WithScheme(scheme).WithObjects(installPlan).Build()
+		err := ApproveInstallPlan(fakeClientWithInstallPlan, ctx, installPlan.Name, orchestratorNamespace)
+		assert.NoError(t, err, "Expected no error")
 
-	// Verify InstallPlan is approved
-	updatedInstallPlan := &v1alpha1.InstallPlan{}
-	_ = fakeClientWithInstallPlan.Get(ctx, types.NamespacedName{Name: installPlan.Name, Namespace: installPlan.Namespace}, updatedInstallPlan)
-	assert.True(t, updatedInstallPlan.Spec.Approved, "InstallPlan should be approved")
+		// Verify InstallPlan is approved
+		updatedInstallPlan := &v1alpha1.InstallPlan{}
+		_ = fakeClientWithInstallPlan.Get(ctx, types.NamespacedName{Name: installPlan.Name, Namespace: installPlan.Namespace}, updatedInstallPlan)
+		assert.Equal(t, true, updatedInstallPlan.Spec.Approved)
+	})
 
 	// Test approve InstallPlan with error
-	fakeClientWithoutInstallPlan := fake.NewClientBuilder().WithScheme(scheme).Build()
-	err = ApproveInstallPlan(fakeClientWithoutInstallPlan, ctx, installPlan.Name, orchestratorNamespaceName)
-	assert.Error(t, err, "Expected error")
-	assert.True(t, apierrors.IsNotFound(err), "Expected not found error")
+	t.Run("Approve install plan with error", func(t *testing.T) {
+		fakeClientWithoutInstallPlan := fake.NewClientBuilder().WithScheme(scheme).Build()
+		err := ApproveInstallPlan(fakeClientWithoutInstallPlan, ctx, installPlan.Name, orchestratorNamespace)
+		assert.Error(t, err, "Expected error")
+		assert.True(t, apierrors.IsNotFound(err))
+	})
 }
 
 func TestGetOperatorGroup(t *testing.T) {
@@ -169,44 +201,41 @@ func TestGetOperatorGroup(t *testing.T) {
 	operatorGroup := &operatorsv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      orchestratorOperatorGroup,
-			Namespace: orchestratorNamespaceName,
+			Namespace: orchestratorNamespace,
 		},
 	}
 
 	// Test get operator group
-	fakeClientWithOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).WithObjects(operatorGroup).Build()
-	err := getOperatorGroup(ctx, fakeClientWithOperatorGroup, orchestratorNamespaceName, orchestratorOperatorGroup)
-	assert.NoError(t, err, "Expected no error")
+	t.Run("Get operator group", func(t *testing.T) {
+		fakeClientWithOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).WithObjects(operatorGroup).Build()
+		err := getOperatorGroup(ctx, fakeClientWithOperatorGroup, orchestratorNamespace, orchestratorOperatorGroup)
+		assert.NoError(t, err, "Expected no error")
+	})
 
 	// Test create operator group
-	fakeClientWithoutOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).Build()
-	err = getOperatorGroup(ctx, fakeClientWithoutOperatorGroup, orchestratorNamespaceName, orchestratorOperatorGroup)
-	assert.NoError(t, err, "Expected no error")
+	t.Run("Create operator group", func(t *testing.T) {
+		fakeClientWithoutOperatorGroup := fake.NewClientBuilder().WithScheme(scheme).Build()
+		err := getOperatorGroup(ctx, fakeClientWithoutOperatorGroup, orchestratorNamespace, orchestratorOperatorGroup)
+		assert.NoError(t, err, "Expected no error")
 
-	createdOperatorGroup := &operatorsv1.OperatorGroup{}
-	_ = fakeClientWithoutOperatorGroup.Get(
-		ctx,
-		types.NamespacedName{Name: orchestratorOperatorGroup, Namespace: orchestratorNamespaceName},
-		createdOperatorGroup)
-	assert.Equal(t, createdOperatorGroup.Namespace, operatorGroup.Namespace, "OperatorGroup namespace should be match")
-	assert.Equal(t, createdOperatorGroup.Name, operatorGroup.Name, "OperatorGroup namespace should be match")
+		createdOperatorGroup := &operatorsv1.OperatorGroup{}
+		_ = fakeClientWithoutOperatorGroup.Get(
+			ctx,
+			types.NamespacedName{Name: orchestratorOperatorGroup, Namespace: orchestratorNamespace},
+			createdOperatorGroup)
+		assert.Equal(t, createdOperatorGroup.Namespace, operatorGroup.Namespace, "OperatorGroup namespace should be match")
+		assert.Equal(t, createdOperatorGroup.Name, operatorGroup.Name, "OperatorGroup namespace should be match")
+	})
 }
 
 func TestCreateSubscriptionObject(t *testing.T) {
-
-	subscriptionName := "subscriptionName"
-	subscriptionChannel := "channel"
-	subscriptionStartingCSV := "starting-csv"
-	subscription := CreateSubscriptionObject(
+	actualSubscription := CreateSubscriptionObject(
 		subscriptionName,
-		orchestratorNamespaceName,
-		subscriptionChannel,
-		subscriptionStartingCSV,
+		orchestratorNamespace,
+		subscription.Spec.Channel,
+		subscription.Spec.StartingCSV,
 	)
-	assert.Equal(t, subscriptionName, subscription.Name)
-	assert.Equal(t, orchestratorNamespaceName, subscription.Namespace)
-	assert.Equal(t, subscriptionChannel, subscription.Spec.Channel)
-	assert.Equal(t, subscriptionStartingCSV, subscription.Spec.StartingCSV)
+	assert.Equal(t, subscription, actualSubscription)
 }
 
 func TestCheckSubscriptionExists(t *testing.T) {
@@ -214,30 +243,18 @@ func TestCheckSubscriptionExists(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 
-	subscriptionName := "subscriptionName"
-	subscriptionChannel := "channel"
-	subscriptionStartingCSV := "starting-csv"
-	subscription := CreateSubscriptionObject(
-		subscriptionName,
-		orchestratorNamespaceName,
-		subscriptionChannel,
-		subscriptionStartingCSV,
-	)
-
-	// Test subscription does not exist
-	fakeOLMClientSetWithoutSubscription := olmclientsetfake.NewSimpleClientset()
-	subscriptionExist, existingSub, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithoutSubscription, subscription)
-	assert.NoError(t, err, "Expected no error")
-	assert.False(t, subscriptionExist, "Expected subscription to not exist")
-	assert.Nil(t, existingSub, "Subscription is empty")
-
-	// Test subscription exist
-	fakeOLMClientSetWithSubscription := olmclientsetfake.NewSimpleClientset(subscription)
-	subscriptionExist2, existingSub2, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithSubscription, subscription)
-	assert.NoError(t, err, "Expected no error")
-	assert.True(t, subscriptionExist2, "Expected subscription to not exist")
-	assert.NotNil(t, existingSub2, "Subscription is not nil")
-	assert.Equal(t, existingSub2.Name, subscription.Name)
+	t.Run("Subscription exist", func(t *testing.T) {
+		fakeOLMClientSetWithoutSubscription := olmclientsetfake.NewSimpleClientset(subscription)
+		subscriptionExist, _, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithoutSubscription, subscription)
+		assert.NoError(t, err, "Expected no error")
+		assert.Equal(t, true, subscriptionExist)
+	})
+	t.Run("Subscription does not exist", func(t *testing.T) {
+		fakeOLMClientSetWithSubscription := olmclientsetfake.NewSimpleClientset()
+		subscriptionExist2, _, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithSubscription, subscription)
+		assert.NoError(t, err, "Expected no error")
+		assert.Equal(t, false, subscriptionExist2)
+	})
 }
 
 func TestCheckCRDExists(t *testing.T) {
@@ -245,21 +262,23 @@ func TestCheckCRDExists(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 
-	// Test without crd
-	fakeClientWithoutCRD := fake.NewClientBuilder().WithScheme(scheme).Build()
-	err := CheckCRDExists(ctx, fakeClientWithoutCRD, "sonataflowclusterplatforms")
-	assert.Error(t, err, "Expected error")
-	crdName := "sonataflowclusterplatforms"
+	t.Run("Check CRD exist with error", func(t *testing.T) {
+		fakeClientWithoutCRD := fake.NewClientBuilder().WithScheme(scheme).Build()
+		err := CheckCRDExists(ctx, fakeClientWithoutCRD, "sonataflowclusterplatforms")
+		assert.Error(t, err, "Expected error")
+	})
 
-	// Test with CRD
-	crd := &apiextensionsv1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: crdName,
-		},
-	}
-	fakeClientWithCRD := fake.NewClientBuilder().WithScheme(scheme).WithObjects(crd).Build()
-	err = CheckCRDExists(ctx, fakeClientWithCRD, crdName)
-	assert.NoError(t, err, "Expected no error")
+	t.Run("Check CRD exist without error", func(t *testing.T) {
+		crdName := "sonataflowclusterplatforms"
+		crd := &apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: crdName,
+			},
+		}
+		fakeClientWithCRD := fake.NewClientBuilder().WithScheme(scheme).WithObjects(crd).Build()
+		err := CheckCRDExists(ctx, fakeClientWithCRD, crdName)
+		assert.NoError(t, err, "Expected no error")
+	})
 }
 
 func TestCleanUpNamespace(t *testing.T) {
@@ -268,22 +287,27 @@ func TestCleanUpNamespace(t *testing.T) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 
 	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespaceName, Labels: AddLabel()},
+		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: AddLabel()},
 	}
-
-	fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
-	err := CleanUpNamespace(ctx, orchestratorNamespaceName, fakeClientWithoutNS)
-	assert.NoError(t, err, "Expected no error")
+	t.Run("Clean up namespace with no error", func(t *testing.T) {
+		fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
+		err := CleanUpNamespace(ctx, orchestratorNamespace, fakeClientWithoutNS)
+		assert.NoError(t, err, "Expected no error")
+	})
 }
 
 func TestAddLabel(t *testing.T) {
 	expectedLabels := map[string]string{
 		CreatedByLabelKey: CreatedByLabelValue,
 	}
-	labelMap := AddLabel()
-	assert.NotNil(t, labelMap, "Expected labelMap to not be nil")
-	assert.Equal(t, expectedLabels, labelMap, "Expected labelMap to match expectedLabels")
-	assert.Equal(t, len(expectedLabels), len(labelMap), "Expected maps to have the same length")
+
+	t.Run("Add label", func(t *testing.T) {
+		labelMap := AddLabel()
+		assert.NotNil(t, labelMap, "Expected labelMap to not be nil")
+		assert.Equal(t, expectedLabels, labelMap, "Expected labelMap to match expectedLabels")
+		assert.Equal(t, len(expectedLabels), len(labelMap), "Expected maps to have the same length")
+	})
+
 }
 
 func TestCheckLabelExists(t *testing.T) {
@@ -291,13 +315,28 @@ func TestCheckLabelExists(t *testing.T) {
 		CreatedByLabelKey:              CreatedByLabelValue,
 		"app.kubernetes.io/created-by": "orchestrator-operator",
 	}
-	labelExist := CheckLabelExist(existingLabelMap)
-	assert.True(t, labelExist, "Expected label to exist")
-
-	existingLabelMap2 := map[string]string{
-		"app.kubernetes.io/created-by": "orchestrator-operator",
+	testCases := []struct {
+		name          string
+		labelMap      map[string]string
+		expectedExist bool
+	}{
+		{
+			name:          "Check label exists",
+			labelMap:      existingLabelMap,
+			expectedExist: true,
+		},
+		{
+			name: "Check label doesn't exist",
+			labelMap: map[string]string{
+				"app.kubernetes.io/created-by": "orchestrator-operator",
+			},
+			expectedExist: false,
+		},
 	}
-
-	labelExist = CheckLabelExist(existingLabelMap2)
-	assert.False(t, labelExist, "Expected label to not exist")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			labelExist := CheckLabelExist(tc.labelMap)
+			assert.Equal(t, tc.expectedExist, labelExist)
+		})
+	}
 }

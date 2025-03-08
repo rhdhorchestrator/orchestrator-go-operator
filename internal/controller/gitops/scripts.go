@@ -84,7 +84,7 @@ fi
 
 ls flat/$(params.workflowId)
 
-curl -L https://raw.githubusercontent.com/rhdhorchestrator/serverless-workflows/v1.3.x/pipeline/workflow-builder.Dockerfile -o flat/workflow-builder.Dockerfile
+curl -L https://raw.githubusercontent.com/rhdhorchestrator/serverless-workflows/main/pipeline/workflow-builder.Dockerfile -o flat/workflow-builder.Dockerfile
 `
 
 const buildManifestTaskScript = `

@@ -21,9 +21,11 @@ require (
 	github.com/argoproj/argo-cd/v2 v2.13.2
 	github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a
 	github.com/operator-framework/api v0.23.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tektoncd/pipeline v0.65.2
 	k8s.io/apiextensions-apiserver v0.31.3
 	knative.dev/operator v0.42.5
+	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608
 	redhat-developer/red-hat-developer-hub-operator v0.0.0-00010101000000-000000000000
 )
 
@@ -128,6 +130,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.20.3 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
@@ -185,7 +188,6 @@ require (
 	k8s.io/kubectl v0.31.2 // indirect
 	k8s.io/kubernetes v1.31.5 // indirect
 	k8s.io/utils v0.0.0-20241210054802-24370beab758 // indirect
-	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608 // indirect
 	oras.land/oras-go/v2 v2.5.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.18.0 // indirect

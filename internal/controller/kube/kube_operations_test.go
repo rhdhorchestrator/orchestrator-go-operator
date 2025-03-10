@@ -53,6 +53,9 @@ var (
 			Package:                subscriptionName,
 		},
 	}
+	existingLabelMap = map[string]string{
+		CreatedByLabelKey: CreatedByLabelValue,
+	}
 )
 
 func TestCheckNamespaceExist(t *testing.T) {
@@ -130,6 +133,8 @@ func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
 
+	expectedError := apierrors.NewAlreadyExists(schema.GroupResource{}, "fake-subscription")
+
 	t.Run("Install subscription and operator group no error", func(t *testing.T) {
 		fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 		fakeOLMClientSet := olmclientsetfake.NewSimpleClientset()
@@ -153,6 +158,7 @@ func TestInstallSubscriptionAndOperatorGroup(t *testing.T) {
 			orchestratorOperatorGroup,
 			subscription)
 		assert.Error(t, err, "Expected error when subscription already exists")
+		assert.Equal(t, apierrors.IsAlreadyExists(expectedError), apierrors.IsAlreadyExists(err))
 	})
 }
 
@@ -223,8 +229,8 @@ func TestGetOperatorGroup(t *testing.T) {
 			ctx,
 			types.NamespacedName{Name: orchestratorOperatorGroup, Namespace: orchestratorNamespace},
 			createdOperatorGroup)
-		assert.Equal(t, createdOperatorGroup.Namespace, operatorGroup.Namespace, "OperatorGroup namespace should be match")
-		assert.Equal(t, createdOperatorGroup.Name, operatorGroup.Name, "OperatorGroup namespace should be match")
+		assert.Equal(t, createdOperatorGroup.Namespace, operatorGroup.Namespace, "OperatorGroup namespace should match")
+		assert.Equal(t, createdOperatorGroup.Name, operatorGroup.Name, "OperatorGroup namespace should match")
 	})
 }
 
@@ -251,9 +257,9 @@ func TestCheckSubscriptionExists(t *testing.T) {
 	})
 	t.Run("Subscription does not exist", func(t *testing.T) {
 		fakeOLMClientSetWithSubscription := olmclientsetfake.NewSimpleClientset()
-		subscriptionExist2, _, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithSubscription, subscription)
+		subscriptionExist, _, err := CheckSubscriptionExists(ctx, fakeOLMClientSetWithSubscription, subscription)
 		assert.NoError(t, err, "Expected no error")
-		assert.Equal(t, false, subscriptionExist2)
+		assert.Equal(t, false, subscriptionExist)
 	})
 }
 
@@ -305,16 +311,12 @@ func TestAddLabel(t *testing.T) {
 		labelMap := AddLabel()
 		assert.NotNil(t, labelMap, "Expected labelMap to not be nil")
 		assert.Equal(t, expectedLabels, labelMap, "Expected labelMap to match expectedLabels")
-		assert.Equal(t, len(expectedLabels), len(labelMap), "Expected maps to have the same length")
+		assert.Equal(t, len(expectedLabels), len(labelMap), "Expected labelMap to have the same length")
 	})
 
 }
 
 func TestCheckLabelExists(t *testing.T) {
-	existingLabelMap := map[string]string{
-		CreatedByLabelKey:              CreatedByLabelValue,
-		"app.kubernetes.io/created-by": "orchestrator-operator",
-	}
 	testCases := []struct {
 		name          string
 		labelMap      map[string]string
@@ -328,7 +330,7 @@ func TestCheckLabelExists(t *testing.T) {
 		{
 			name: "Check label doesn't exist",
 			labelMap: map[string]string{
-				"app.kubernetes.io/created-by": "orchestrator-operator",
+				"app.kubernetes.io/created-by": "kustomize",
 			},
 			expectedExist: false,
 		},

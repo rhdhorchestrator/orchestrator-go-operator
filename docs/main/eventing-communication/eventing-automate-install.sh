@@ -4,12 +4,12 @@ set -e
 set -x
 program_name=$0
 
-KNATIVE_VERSION=1.16.1
+KNATIVE_VERSION=1.15.8
 
 function usage {
     echo -e "Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESPACE=BROKER_NAMESPACE [KAFKA_REPLICATION_FACTOR=KAFKA_REPLICATION_FACTOR] [ORCHESTRATOR_NAMESPACE=openshift-operators] [BROKER_TYPE=Kafka] [INSTALL_KAFKA_CLUSTER=true] $program_name"
     echo "  ORCHESTRATOR_NAME                   Name of the installed orchestrator CR"
-    echo "  ORCHESTRATOR_NAMESPACE              Optional, namespace in which the orchestrator operator is depoyed. Default is openshift-operators"
+    echo "  ORCHESTRATOR_NAMESPACE              Optional, namespace in which the orchestrator operator is deployed. Default is openshift-operators"
     echo "  BROKER_NAME                         Name of the broker to install"
     echo "  BROKER_NAMESPACE                    Namespace in which the broker must be installed"
     echo "  BROKER_TYPE                         Optional , type of the broker. Either 'Kafka' or 'in-memory'. Default is: 'Kafka'"
@@ -17,6 +17,17 @@ function usage {
     echo "  KAFKA_REPLICATION_FACTOR            Optional, only used if INSTALL_KAFKA_CLUSTER is set to false and BROKER_TYPE is 'Kafka', provide the replication factor for the Kafka cluster"
     exit 1
 }
+
+OCP_VERSION=$(oc get clusterversion -o jsonpath='{.items[0].status.history[0].version}')
+if [[ -z "$OCP_VERSION" ]]; then
+    echo "Error: Could not retrieve OpenShift version."
+    usage
+fi
+
+if [[ "$OCP_VERSION" < "4.15" ]]; then
+    echo "Error: OpenShift version $OCP_VERSION must be 4.15 or higher."
+    usage
+fi
 
 if [[ -z "${ORCHESTRATOR_NAMESPACE}" ]]; then
   ORCHESTRATOR_NAMESPACE=openshift-operators

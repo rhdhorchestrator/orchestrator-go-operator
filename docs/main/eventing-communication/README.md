@@ -5,7 +5,7 @@ Usage:
 ```
 Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESPACE=BROKER_NAMESPACE [KAFKA_REPLICATION_FACTOR=KAFKA_REPLICATION_FACTOR] [ORCHESTRATOR_NAMESPACE=openshift-operators] [BROKER_TYPE=Kafka] [INSTALL_KAFKA_CLUSTER=true] ./eventing-automate-install.sh
   ORCHESTRATOR_NAME                   Name of the installed orchestrator CR
-  ORCHESTRATOR_NAMESPACE              Optional, namespace in which the orchestrator operator is depoyed. Default is openshift-operators
+  ORCHESTRATOR_NAMESPACE              Optional, namespace in which the orchestrator operator is deployed. Default is openshift-operators
   BROKER_NAME                         Name of the broker to install
   BROKER_NAMESPACE                    Namespace in which the broker must be installed
   BROKER_TYPE                         Optional , type of the broker. Either 'Kafka' or 'in-memory'. Default is: 'Kafka'
@@ -44,15 +44,16 @@ A Kafka broker will bring resiliency and reliability to event losses to the sont
 #### Pre-requisites
 
 1. A Kafka cluster running, see https://strimzi.io/quickstarts/ for a quickstart setup
+2. OpenShift version 4.15 and up, as older versions are not supported 
 
 #### Installation steps
-1. Configure and enable Kafka broker feature in Knative: https://knative.dev/v1.16-docs/eventing/brokers/broker-types/kafka-broker/
+1. Configure and enable Kafka broker feature in Knative: https://knative.dev/v1.15-docs/eventing/brokers/broker-types/kafka-broker/
 ```console
-oc apply --filename https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.16.1/eventing-kafka-controller.yaml
-oc apply --filename https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.16.1/eventing-kafka-broker.yaml
+oc apply --filename https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.15.8/eventing-kafka-controller.yaml
+oc apply --filename https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.15.8/eventing-kafka-broker.yaml
 ```
 > [!NOTE]
-> At the time this document was written, the latest `knative` version was `v1.16.1`. Please refer to [the official documentation](https://knative.dev/v1.16-docs/eventing/brokers/broker-types/kafka-broker/) for more up-to-date instructions for the Kafka broker setup.
+> At the time this document was written, the compatible `knative` version was `v1.15.8`. Please refer to [the official documentation](https://knative.dev/v1.15-docs/eventing/brokers/broker-types/kafka-broker/) for more up-to-date instructions for the Kafka broker setup. Knative 1.16.x cannot be used due to incompatibillity with k8s and OCP versions. For more information, please advise the release-compatibillity tables [here](https://github.com/knative/community/blob/main/mechanics/RELEASE-SCHEDULE.md#releases-supported-by-community) and [here](https://access.redhat.com/solutions/4870701).
  * Review the `Security Context Constraints` (`scc`) to be granted to the `knative-kafka-broker-data-plane` service account used by the `kafka-broker-receiver`  deployment:
 ```console
 oc get deployments.apps -n knative-eventing kafka-broker-receiver -oyaml | oc adm policy scc-subject-review --filename -
@@ -137,7 +138,7 @@ oc -n openshift-operators patch orchestrators.rhdh.redhat.com orchestrator-sampl
 }'
 ```
 
-The `sinkbinding` and `trigger` resources should be automatically created by the OSL operator:
+The `sinkbinding` and `trigger` resources should be automatically created by the OpenShift Serverless Logic operator:
 ```
 $ oc -n sonataflow-infra get sinkbindings.sources.knative.dev 
 NAME                                  SINK                                                                                        READY   REASON
@@ -156,6 +157,6 @@ jobs-service-create-job-2ac1baab-d856-40bc-bcec-c6dd50951419      kafka-broker  
 jobs-service-delete-job-2ac1baab-d856-40bc-bcec-c6dd50951419      kafka-broker   http://sonataflow-platform-jobs-service.orchestrator.svc.cluster.local/v2/jobs/events      True    
 ```
 
-For each workflows deployed:
+For each workflow deployed:
   * A `sinkbinding` resource will be created: it will inject the `K_SINK` environment variable into the  `deployment` resource. See https://knative.dev/docs/eventing/custom-event-source/sinkbinding/ for more information about`sinkbinding`.
   * A `trigger` resource will be created for each event consumed by the workflow. See https://knative.dev/docs/eventing/triggers/ for more information about `trigger` and their usage.

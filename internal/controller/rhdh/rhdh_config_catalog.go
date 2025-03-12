@@ -33,7 +33,7 @@ const RHDHCatalogTempl = `catalog:
       target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/gitlab-workflows/advanced-workflow/template.yaml
     - type: url
       target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/gitlab-workflows/convert-workflow-to-template/template.yaml
-	- type: url
+    - type: url
       target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/github-workflows/convert-workflow-to-template/template.yaml
 `
 

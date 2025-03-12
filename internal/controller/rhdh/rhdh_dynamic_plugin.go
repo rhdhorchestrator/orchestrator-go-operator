@@ -144,12 +144,12 @@ plugins:
               username: {{ printf "${%s}" .NotificationEmailUsername }}
               {{- end}}
               {{- if .NotificationEmailPassword }}
-              password: {{ .NotificationEmailPassword }}
+              password: {{ printf "${%s}" .NotificationEmailPassword }}
               {{- end}}
-              sender: {{ .NotificationEmailSender }}
-              {{- if .NotificationEmailReplyTo }}
-              replyTo: {{ .NotificationEmailReplyTo }}
-              {{- end}}
+            sender: {{ .NotificationEmailSender }}
+            {{- if .NotificationEmailReplyTo }}
+            replyTo: {{ .NotificationEmailReplyTo }}
+            {{- end}}
             broadcastConfig:
               receiver: "none"
             concurrencyLimit: 10

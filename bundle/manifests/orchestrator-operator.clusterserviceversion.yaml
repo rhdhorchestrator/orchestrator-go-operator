@@ -53,7 +53,7 @@ metadata:
             "rhdh": {
               "devMode": true,
               "installOperator": true,
-              "name": "my-rhdh",
+              "name": "backstage",
               "namespace": "rhdh",
               "plugins": {
                 "notificationsEmail": {
@@ -77,10 +77,10 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-03-09T11:36:20Z"
+    createdAt: "2025-03-12T00:26:35Z"
     operators.operatorframework.io/builder: operator-sdk-v1.38.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: orchestrator-operator.v1.5.0-2025-03-02
+  name: orchestrator-operator.v1.5.0-2025-03-11
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -316,7 +316,7 @@ spec:
                 - --health-probe-bind-address=:8081
                 command:
                 - /manager
-                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-02
+                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-11
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -404,4 +404,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 1.5.0-2025-03-02
+  version: 1.5.0-2025-03-11

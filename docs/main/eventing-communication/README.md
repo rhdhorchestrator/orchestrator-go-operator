@@ -160,3 +160,5 @@ jobs-service-delete-job-2ac1baab-d856-40bc-bcec-c6dd50951419      kafka-broker  
 For each workflow deployed:
   * A `sinkbinding` resource will be created: it will inject the `K_SINK` environment variable into the  `deployment` resource. See https://knative.dev/docs/eventing/custom-event-source/sinkbinding/ for more information about`sinkbinding`.
   * A `trigger` resource will be created for each event consumed by the workflow. See https://knative.dev/docs/eventing/triggers/ for more information about `trigger` and their usage.
+
+Testing new ai feature

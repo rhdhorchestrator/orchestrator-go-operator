@@ -38,9 +38,11 @@ spec:
         memory: "1Gi" # Defines the Memory resource limits. Optional
         cpu: "500m" # Defines the CPU resource limits. Optional
     eventing:
-      broker:
-        name: "my-knative" # Name of existing Broker instance. Optional
-        namespace: "knative" # Namespace of existing Broker instance. Optional
+      broker: {}
+    # To enable eventing communication with an existing broker, populate the following fields: 
+    # broker: 
+    #   name: "my-knative" # Name of existing Broker instance.
+    #   namespace: "knative" # Namespace of existing Broker instance.
     monitoring:
       enabled: false # Determines whether to enable monitoring for platform. Optional
   tekton:

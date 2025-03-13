@@ -232,7 +232,7 @@ func handleSonataFlowPlatformCR(
 					Namespace: namespace,
 					Labels:    kube.AddLabel(),
 				},
-				Spec: getSonataFlowPlatformSpec(orchestrator),
+				Spec: getSonataFlowPlatformSpec(ctx, orchestrator),
 			}
 			logger.Info("Persistence function", "Persistent", getServerlessLogicPersistence(orchestrator))
 			// Create sonataflowplatform CR
@@ -249,7 +249,7 @@ func handleSonataFlowPlatformCR(
 	return nil
 }
 
-func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) sonataapi.SonataFlowPlatformSpec {
+func getSonataFlowPlatformSpec(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) sonataapi.SonataFlowPlatformSpec {
 	limitResourceMap := make(map[corev1.ResourceName]resource.Quantity)
 
 	cpuQuantity, _ := resource.ParseQuantity(orchestrator.Spec.PlatformConfig.Resources.Limits.Cpu)
@@ -288,16 +288,7 @@ func getSonataFlowPlatformSpec(orchestrator *orchestratorv1alpha2.Orchestrator) 
 				},
 			},
 		},
-		Eventing: &sonataapi.PlatformEventingSpec{
-			Broker: &duckv1.Destination{
-				Ref: &duckv1.KReference{
-					Kind:       knativeBrokerKind,
-					Name:       orchestrator.Spec.PlatformConfig.Eventing.Broker.Name,
-					Namespace:  orchestrator.Spec.PlatformConfig.Eventing.Broker.Namespace,
-					APIVersion: knativeBrokerAPIVersion,
-				},
-			},
-		},
+		Eventing: createEventingSpec(ctx, orchestrator),
 	}
 }
 
@@ -317,4 +308,26 @@ func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, nam
 		return err
 	}
 	return nil
+}
+
+func createEventingSpec(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) *sonataapi.PlatformEventingSpec {
+	sfLogger := log.FromContext(ctx)
+
+	// Check if Broker is empty
+	if reflect.ValueOf(orchestrator.Spec.PlatformConfig.Eventing.Broker).IsZero() {
+		sfLogger.Info("No existing eventing broker")
+		return &sonataapi.PlatformEventingSpec{}
+	}
+
+	sfLogger.Info("An existing eventing broker is configured")
+	return &sonataapi.PlatformEventingSpec{
+		Broker: &duckv1.Destination{
+			Ref: &duckv1.KReference{
+				Kind:       knativeBrokerKind,
+				Name:       orchestrator.Spec.PlatformConfig.Eventing.Broker.Name,
+				Namespace:  orchestrator.Spec.PlatformConfig.Eventing.Broker.Namespace,
+				APIVersion: knativeBrokerAPIVersion,
+			},
+		},
+	}
 }

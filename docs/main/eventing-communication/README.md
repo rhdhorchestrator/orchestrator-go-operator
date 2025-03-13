@@ -1,5 +1,30 @@
 # Using Knative broker for eventing communication
 
+Knative Broker enables decoupled event-driven communication by routing events from producers to subscribers based on Triggers, simplifying event management in Kubernetes.
+
+Orchestrator supports two flows for enabling Knative eventing communication: 
+1. Enabling Eventing via Orchestrator CR
+2. Enabling Eventing Post Orchestrator CR Application
+
+## Enabling Eventing via Orchestrator CR
+
+This flow will include configuring the Orchestrator CR to use an existing Knative Broker. To do so, the following needs to be added to the Orchestrator CR:
+
+```yaml
+platform: 
+  eventing: 
+    broker: 
+      name: "my-knative" # Name of existing Broker instance.
+      namespace: "knative" # Namespace of existing Broker instance.
+```
+Please not that this can only be done during the first CR application, otherwise you would have to follow the Enabling Eventing Post Orchestrator CR Application flow. 
+
+## Enabling Eventing Post Orchestrator CR Application
+
+This flow will including having no Eventing Broker configured in the Orchestrator CR, rather patching the SonataflowPlatform post-installation with the Knative broker. 
+
+You can follow an automated or a manual approach:
+
 ## Automated installation steps
 Usage:
 ```
@@ -118,24 +143,36 @@ metadata:
 > [!WARNING]
 > When using this type of broker you should keep in mind they are neither reliable nor resilient to event losses.
 ### Common steps
-1. Configure the `sonataflowplatforms.sonataflow.org`: given that the `Orchestrator` is named `orchestrator-sample` and was created under the `orchestrator` namespace:
+1. Configure the `sonataflowplatform` with your Broker's information. 
+
 ```console
-oc -n openshift-operators patch orchestrators.rhdh.redhat.com orchestrator-sample --type merge \
+oc -n <workflow-namespace> patch sonataflowplatform sonataflow-platform --type merge \
    -p '
 {
   "spec": {
-    "orchestrator": {
-      "sonataflowPlatform": {
-        "eventing": {
-          "broker": {
-            "name": "'"${BROKER_NAME}"'",
-            "namespace": "'"${BROKER_NAMESPACE}"'"
-          }
+    "eventing": {
+      "broker": {
+        "ref": {
+          "apiVersion": "eventing.knative.dev/v1",
+          "kind": "Broker",
+          "name": "'"${BROKER_NAME}"'",
+          "namespace": "'"${BROKER_NAMESPACE}"'"
+          }            
         }
       }
     }
   }
-}'
+```
+Scale the Job service and data index service deployments:
+
+```console
+oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=0
+
+oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=0
+
+oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=1
+
+oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=1
 ```
 
 The `sinkbinding` and `trigger` resources should be automatically created by the OpenShift Serverless Logic operator:

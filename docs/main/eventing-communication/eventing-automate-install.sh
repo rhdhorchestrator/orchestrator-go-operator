@@ -122,19 +122,27 @@ fi
 
 
 echo "Updating SonataflowPlatform to set the eventing spec"
-oc -n "${ORCHESTRATOR_NAMESPACE}" patch orchestrators.rhdh.redhat.com "${ORCHESTRATOR_NAME}" --type merge \
+
+oc -n <workflow-namespace> patch sonataflowplatform sonataflow-platform --type merge \
    -p '
 {
   "spec": {
-    "orchestrator": {
-      "sonataflowPlatform": {
-        "eventing": {
-          "broker": {
-            "name": "'"${BROKER_NAME}"'",
-            "namespace": "'"${BROKER_NAMESPACE}"'"
-          }
+    "eventing": {
+      "broker": {
+        "ref": {
+          "apiVersion": "eventing.knative.dev/v1",
+          "kind": "Broker",
+          "name": "'"${BROKER_NAME}"'",
+          "namespace": "'"${BROKER_NAMESPACE}"'"
+          }            
         }
       }
     }
-  }
-}'
+  }'
+
+echo "Restarting Job service and data index deployments"
+oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=0
+oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=0
+
+oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=1
+oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=1

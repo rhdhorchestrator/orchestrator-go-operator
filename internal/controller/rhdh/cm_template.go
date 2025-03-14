@@ -14,13 +14,14 @@ func ConfigMapTemplateFactory(
 	switch cmTemplateType {
 	case AppConfigRHDHName:
 		configData := RHDHConfig{
-			TargetNamespace: rhdhConfig.Namespace,
-			ArgoCDUsername:  ArgoCDUsername,
-			ArgoCDPassword:  ArgoCDPassword,
-			ArgoCDUrl:       ArgoCDUrl,
-			ArgoCDEnabled:   argoCDEnabled,
-			BackendSecret:   BackendSecretKey,
-			ClusterDomain:   clusterDomain,
+			RHDHNamespace:  rhdhConfig.Namespace,
+			RHDHName:       rhdhConfig.Name,
+			ArgoCDUsername: ArgoCDUsername,
+			ArgoCDPassword: ArgoCDPassword,
+			ArgoCDUrl:      ArgoCDUrl,
+			ArgoCDEnabled:  argoCDEnabled,
+			BackendSecret:  BackendSecretKey,
+			ClusterDomain:  clusterDomain,
 		}
 		formattedConfig, err := parseConfigTemplate(RHDHConfigTempl, configData)
 		if err != nil {

@@ -2,7 +2,7 @@ package rhdh
 
 const RHDHConfigTempl = `app:
   title: Red Hat Developer Hub
-  baseUrl: https://backstage-backstage-{{ .TargetNamespace }}.{{ .ClusterDomain }}
+  baseUrl: https://backstage-{{ .RHDHName }}-{{ .RHDHNamespace }}.{{ .ClusterDomain }}
 backend:
   auth:
     externalAccess:
@@ -10,13 +10,13 @@ backend:
         options:
           token: {{ printf "${%s}" .BackendSecret }}
           subject: orchestrator
-  baseUrl: https://backstage-backstage-{{ .TargetNamespace }}.{{ .ClusterDomain }}
+  baseUrl: https://backstage-{{ .RHDHName }}-{{ .RHDHNamespace }}.{{ .ClusterDomain }}
   csp:
     script-src: ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
     script-src-elem: ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
     connect-src: ["'self'", 'http:', 'https:', 'data:']
   cors:
-    origin: https://backstage-backstage-{{ .TargetNamespace }}.{{ .ClusterDomain }}
+    origin: https://backstage-{{ .RHDHName }}-{{ .RHDHNamespace }}.{{ .ClusterDomain }}
   database:
     client: pg
     connection:
@@ -37,11 +37,12 @@ argocd:
 `
 
 type RHDHConfig struct {
-	TargetNamespace string
-	ArgoCDUsername  string
-	ArgoCDPassword  string
-	ArgoCDUrl       string
-	ArgoCDEnabled   bool
-	BackendSecret   string
-	ClusterDomain   string
+	RHDHNamespace  string
+	RHDHName       string
+	ArgoCDUsername string
+	ArgoCDPassword string
+	ArgoCDUrl      string
+	ArgoCDEnabled  bool
+	BackendSecret  string
+	ClusterDomain  string
 }

@@ -64,7 +64,7 @@ plugins:
   {{- end }}
   {{- end }}
   {{- if and (.ArgoCDEnabled) (.ArgoCDUrl) (.ArgoCDUsername) }}
-  - package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-argocd
+  - package: ./dynamic-plugins/dist/backstage-community-plugin-redhat-argocd 
     disabled: false
   - package: ./dynamic-plugins/dist/roadiehq-backstage-plugin-argo-cd-backend-dynamic
     disabled: false
@@ -127,6 +127,8 @@ plugins:
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-dynamic
     disabled: false
   - package: ./dynamic-plugins/dist/backstage-plugin-signals-backend-dynamic
+    disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
     disabled: false
   {{- if and (.NotificationEmailEnabled) (.NotificationEmailHostname) }}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-module-email-dynamic

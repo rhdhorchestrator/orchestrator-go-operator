@@ -74,10 +74,10 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-03-17T07:57:46Z"
+    createdAt: "2025-03-18T22:59:05Z"
     operators.operatorframework.io/builder: operator-sdk-v1.38.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: orchestrator-operator.v1.5.0-2025-03-17
+  name: orchestrator-operator.v1.5.0-2025-03-18
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -313,7 +313,7 @@ spec:
                 - --health-probe-bind-address=:8081
                 command:
                 - /manager
-                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-17
+                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-18
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -401,4 +401,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 1.5.0-2025-03-17
+  version: 1.5.0-2025-03-18

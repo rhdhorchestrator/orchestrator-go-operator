@@ -308,7 +308,7 @@ function labelNamespaces {
   for a in $(oc get namespace -l rhdh.redhat.com/created-by=orchestrator -oname); do
     oc label $a rhdh.redhat.com/created-by=orchestrator ;
   done
-  if [ -n "$RHDH_NAMESPACE"]; then
+  if [ -n "$RHDH_NAMESPACE" ]; then
     oc label namespace $RHDH_NAMESPACE rhdh.redhat.com/created-by=orchestrator
   fi
   if [ -n "$WORKFLOW_NAMESPACE" ]; then

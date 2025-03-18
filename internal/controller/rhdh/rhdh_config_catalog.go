@@ -24,7 +24,7 @@ const RHDHCatalogTempl = `catalog:
     - type: url
       target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/github-workflows/basic-workflow/template.yaml
     - type: url
-      target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/github-workflows/complex-assessment-workflow/template.yaml
+      target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/scaffolder-templates/github-workflows/advanced-workflow/template.yaml
     - type: url
       target: https://github.com/redhat-developer/rhdh-plugins/blob/main/workspaces/orchestrator/plugins/orchestrator-common/src/generated/docs/api-doc/orchestrator-api.yaml
     - type: url

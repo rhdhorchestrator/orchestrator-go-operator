@@ -305,17 +305,17 @@ function createBackstageSecret {
 }
 
 function labelNamespaces {
-  for a in $(oc get namespace -l rhdh.redhat.com/workflow-namespace -oname); do
-    oc label $a rhdh.redhat.com/workflow-namespace- ;
+  for a in $(oc get namespace -l rhdh.redhat.com/created-by -oname); do
+    oc label $a rhdh.redhat.com/created-by=orchestrator --overwrite;
   done
-  for a in $(oc get namespace -l rhdh.redhat.com/argocd-namespace -oname); do
-    oc label $a rhdh.redhat.com/argocd-namespace- ;
-  done
+  if [ -n "$RHDH_NAMESPACE" ]; then
+    oc label namespace $RHDH_NAMESPACE rhdh.redhat.com/created-by=orchestrator --overwrite
+  fi
   if [ -n "$WORKFLOW_NAMESPACE" ]; then
-    oc label namespace $WORKFLOW_NAMESPACE rhdh.redhat.com/workflow-namespace=
+    oc label namespace $WORKFLOW_NAMESPACE rhdh.redhat.com/created-by=orchestrator --overwrite
   fi
   if [[ -n "$ARGOCD_NAMESPACE" && -n "$ARGOCD_PASSWORD" && -n "$ARGOCD_URL" && -n "$ARGOCD_USERNAME" ]]; then
-    oc label namespace $ARGOCD_NAMESPACE rhdh.redhat.com/argocd-namespace=
+    oc label namespace $ARGOCD_NAMESPACE rhdh.redhat.com/created-by=orchestrator --overwrite
   fi
 }
 
@@ -361,6 +361,7 @@ function main {
   captureSetupNewRHDHDeployment
   captureWorkflowNamespace
   captureArgoCDNamespace
+  captureRHDHNamespace
   captureArgoCDURL
   captureArgoCDCreds
   labelNamespaces
@@ -379,7 +380,6 @@ function main {
       captureNotificationsEmailUsername
       captureNotificationsEmailPassword
     fi
-    captureRHDHNamespace
     createBackstageSecret
   fi
   echo "Setup completed successfully!"

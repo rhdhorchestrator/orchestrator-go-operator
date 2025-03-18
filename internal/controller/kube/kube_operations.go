@@ -47,6 +47,16 @@ func CheckNamespaceExist(ctx context.Context, client client.Client, namespace st
 	if err := client.Get(ctx, types.NamespacedName{Name: namespace}, namespaceObj); err != nil {
 		return false, err
 	}
+	// check and update missing labels
+	labelExist := CheckLabelExist(namespaceObj.Labels)
+	if !labelExist {
+		namespaceObj.Labels[CreatedByLabelKey] = CreatedByLabelValue
+		// update namespace
+		if err := client.Update(ctx, namespaceObj); err != nil {
+			nsLogger.Info("Error occurred when updating namespace labels", "NS", namespace)
+		}
+		nsLogger.Info("Namespace labels updated", "NS", namespace)
+	}
 	return true, nil
 }
 

@@ -50,6 +50,7 @@ func CheckNamespaceExist(ctx context.Context, client client.Client, namespace st
 	// check and update missing labels
 	labelExist := CheckLabelExist(namespaceObj.Labels)
 	if !labelExist {
+		// update namespace label
 		if err := updateNamespaceLabel(namespaceObj, ctx, client); err != nil {
 			nsLogger.Error(err, "Error occurred when updating namespace label", "NS", namespace)
 		}
@@ -310,18 +311,19 @@ func CheckLabelExist(labels map[string]string) bool {
 	return labelValue == CreatedByLabelValue
 }
 
+// updateNamespaceLabel adds a new label to namespace and updates the namespace object.
 func updateNamespaceLabel(namespace *corev1.Namespace, ctx context.Context, client client.Client) error {
 	nsLogger := log.FromContext(ctx)
 
 	namespaceName := namespace.Name
-	nsLogger.Info("Updating namespace labels", "NS", namespaceName)
+	nsLogger.Info("Updating namespace with new label", "NS", namespaceName)
 
+	// add new label to namespace label map
 	namespace.Labels[CreatedByLabelKey] = CreatedByLabelValue
-	// update namespace
 	if err := client.Update(ctx, namespace); err != nil {
-		nsLogger.Info("Error occurred when updating namespace labels", "NS", namespaceName)
+		nsLogger.Info("Error occurred when updating namespace with new label", "NS", namespaceName)
 		return err
 	}
-	nsLogger.Info("Namespace labels updated", "NS", namespaceName)
+	nsLogger.Info("Successfully updated namespace with new label", "NS", namespaceName)
 	return nil
 }

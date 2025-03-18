@@ -73,7 +73,7 @@ func TestCheckNamespaceExist(t *testing.T) {
 		{
 			name:           "Namespace exists",
 			namespace:      orchestratorNamespace,
-			namespaceObj:   &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace}},
+			namespaceObj:   &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: existingLabelMap}},
 			expectedExists: true,
 		},
 		{
@@ -341,4 +341,29 @@ func TestCheckLabelExists(t *testing.T) {
 			assert.Equal(t, tc.expectedExist, labelExist)
 		})
 	}
+}
+
+func TestUpdateNamespaceLabel(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(corev1.AddToScheme(scheme))
+
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: map[string]string{
+			"app.kubernetes.io/created-by": "kustomize",
+		}},
+	}
+
+	t.Run("Update namespace label with no error", func(t *testing.T) {
+		fakeClientWithNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
+		err := updateNamespaceLabel(ns, ctx, fakeClientWithNS)
+		_, exists := ns.Labels[CreatedByLabelKey]
+		assert.NoError(t, err, "Expected no error")
+		assert.True(t, exists, "Expected label created")
+	})
+	t.Run("Update namespace label with no error", func(t *testing.T) {
+		fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&corev1.Namespace{}).Build()
+		err := updateNamespaceLabel(ns, ctx, fakeClientWithoutNS)
+		assert.Error(t, err, "Expected error")
+	})
 }

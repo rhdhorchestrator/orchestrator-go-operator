@@ -306,16 +306,16 @@ function createBackstageSecret {
 
 function labelNamespaces {
   for a in $(oc get namespace -l rhdh.redhat.com/workflow-namespace -oname); do
-    oc label $a rhdh.redhat.com/workflow-namespace- ;
+    oc label $a rhdh.redhat.com/created-by=orchestrator ;
   done
   for a in $(oc get namespace -l rhdh.redhat.com/argocd-namespace -oname); do
-    oc label $a rhdh.redhat.com/argocd-namespace- ;
+    oc label $a rhdh.redhat.com/created-by=orchestrator ;
   done
   if [ -n "$WORKFLOW_NAMESPACE" ]; then
-    oc label namespace $WORKFLOW_NAMESPACE rhdh.redhat.com/workflow-namespace=
+    oc label namespace $WORKFLOW_NAMESPACE rhdh.redhat.com/created-by=orchestrator
   fi
   if [[ -n "$ARGOCD_NAMESPACE" && -n "$ARGOCD_PASSWORD" && -n "$ARGOCD_URL" && -n "$ARGOCD_USERNAME" ]]; then
-    oc label namespace $ARGOCD_NAMESPACE rhdh.redhat.com/argocd-namespace=
+    oc label namespace $ARGOCD_NAMESPACE rhdh.redhat.com/created-by=orchestrator
   fi
 }
 

@@ -35,7 +35,7 @@ import (
 const (
 	CatalogSourceNamespace = "openshift-marketplace"
 	CatalogSourceName      = "redhat-operators"
-	CreatedByLabelKey      = "created-by"
+	CreatedByLabelKey      = "rhdh.redhat.com/created-by"
 	CreatedByLabelValue    = "orchestrator"
 )
 

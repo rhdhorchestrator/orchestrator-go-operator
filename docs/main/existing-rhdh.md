@@ -285,29 +285,21 @@ Register new templates into the catalog from the
 ### Identify Latest Supported Plugin Versions
 The versions of the plugins may undergo updates, leading to changes in their integrity values. The default plugin values in the Orchestrator CRD can be referenced to ensure that the latest supported plugin versions and integrity values are being utilized. The Orchestrator CRD default plugins can be identified with this command:
 ```bash
-oc get crd orchestrators.rhdh.redhat.com -o json | jq '.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.rhdhPlugins.properties'
+oc get crd orchestrators.rhdh.redhat.com -o json | jq '.metadata.annotations | with_entries(select(.key | startswith("orchestrator")))' 
 ```
 
-In the example output below, `.properties.integrity.default` is the integrity value and `.properties.package.default` is the package name:
-```yaml
-  "orchestratorBackend": {
-    "description": "Orchestrator backend plugin information",
-    "properties": {
-      "integrity": {
-        "default": "sha512-2aOHDLFrGMAtyHFiyGZwVBZ9Op+TmKYUwfZxwoaGJ1s6JSy/0qgqineEEE0K3dn/f17XBUj+H1dwa5Al598Ugw==",
-        "description": "Package SHA integrity",
-        "type": "string"
-      },
-      "package": {
-        "default": "backstage-plugin-orchestrator-backend-dynamic@1.4.0",
-        "description": "Package name",
-        "type": "string"
-      }
-    },
-    "type": "object"
-  },
+In the example output below, `orchestrator-backend-dynamic-integrity` is the integrity value and `orchestrator-backend-dynamic-package` is the package name:
+```json
+{
+  "orchestrator-backend-dynamic-integrity": "sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==",
+  "orchestrator-backend-dynamic-package": "@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.2.tgz",
+  "orchestrator-integrity": "sha512-k+oXawNBQa0TFskAoYvExWZ/EOJ9H4s2+y4ujE+RFzsu7rkm4YmElDIrVYMZhJLRqBhSoHgCdGyn7nSPW20rcg==",
+  "orchestrator-package": "@redhat/backstage-plugin-orchestrator-1.5.0-rc.2.tgz",
+  "orchestrator-scaffolder-backend-integrity": "sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==",
+  "orchestrator-scaffolder-backend-package": "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.2.tgz"
+}
 ```
-> Note: The Orchestrator plugin package names in the `dynamic-plugins` ConfigMap must have `@redhat/` prepended to the package name (i.e., `@redhat/backstage-plugin-orchestrator-backend-dynamic@1.4.0`)
+> Note: The Orchestrator plugin package names in the `dynamic-plugins` ConfigMap must have `@redhat/` prepended to the package name (i.e., `@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0`)
 
 ### Upgrade plugin versions - WIP
 To perform an upgrade of the plugin versions, start by acquiring the new plugin version along with its associated integrity value.
@@ -321,6 +313,7 @@ The following script is useful to obtain the required information for updating t
 PLUGINS=(
   "@redhat/backstage-plugin-orchestrator"
   "@redhat/backstage-plugin-orchestrator-backend-dynamic"
+  "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic"
 )
 
 for PLUGIN_NAME in "${PLUGINS[@]}"
@@ -334,12 +327,16 @@ done
 A sample output should look like:
 ```
 Retrieving latest version for plugin: @redhat/backstage-plugin-orchestrator\n
-package: "@redhat/backstage-plugin-orchestrator@1.4.0"
-integrity: sha512-vGGd9hUmDriEMmP2TfzLVa3JSnfot2Blg+aftDnu/lEphsY1s2gdA4Z5lCxUk7aobcKE6JO/f0sIl2jyxZ7ktw==
+package: "@redhat/backstage-plugin-orchestrator@1.5.0"
+integrity: sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==
 ---
 Retrieving latest version for plugin: @redhat/backstage-plugin-orchestrator-backend-dynamic\n
-package: "@redhat/backstage-plugin-orchestrator-backend-dynamic@1.4.0"
-integrity: sha512-tS5cJGwjzP9esdTZvUFjw0O7+w9gGBI/+VvJrtqYJBDGXcEAq9iYixGk67ddQVW5eeUM7Tk1WqJlNj282aAWww==
+package: "@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0"
+integrity: sha512-k+oXawNBQa0TFskAoYvExWZ/EOJ9H4s2+y4ujE+RFzsu7rkm4YmElDIrVYMZhJLRqBhSoHgCdGyn7nSPW20rcg==
+---
+Retrieving latest version for plugin: @redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic\n
+package: "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.5.0"
+integrity: sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==
 ---
 ```
 

@@ -74,7 +74,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-03-18T22:59:05Z"
+    createdAt: "2025-03-19T03:50:37Z"
     operators.operatorframework.io/builder: operator-sdk-v1.38.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
   name: orchestrator-operator.v1.5.0-2025-03-18

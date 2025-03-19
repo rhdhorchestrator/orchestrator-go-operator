@@ -1,7 +1,8 @@
-# Build the manager binary
-FROM golang:1.22 AS builder
 ARG TARGETOS
 ARG TARGETARCH
+
+# Build the manager binary
+FROM --platform=linux/$TARGETARCH brew.registry.redhat.io/rh-osbs/openshift-golang-builder:v1.23 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests

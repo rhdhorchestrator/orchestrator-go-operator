@@ -3,6 +3,12 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
+    orchestrator-backend-dynamic-integrity: sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==
+    orchestrator-backend-dynamic-package: '@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.2.tgz'
+    orchestrator-integrity: sha512-k+oXawNBQa0TFskAoYvExWZ/EOJ9H4s2+y4ujE+RFzsu7rkm4YmElDIrVYMZhJLRqBhSoHgCdGyn7nSPW20rcg==
+    orchestrator-package: '@redhat/backstage-plugin-orchestrator-1.5.0-rc.2.tgz'
+    orchestrator-scaffolder-backend-integrity: sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==
+    orchestrator-scaffolder-backend-package: '@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.2.tgz'
   creationTimestamp: null
   name: orchestrators.rhdh.redhat.com
 spec:

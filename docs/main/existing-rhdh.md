@@ -1,6 +1,6 @@
 # Prerequisites
 - RHDH 1.5 instance deployed with IDP configured (github, gitlab, ...)
-- For using the Orchestrator's [software templates](https://github.com/rhdhorchestrator/workflow-software-templates/tree/v1.4.x), OpenShift GitOps (ArgoCD) and OpenShift Pipelines (Tekton) should be installed and configured in RHDH (to enhance the CI/CD plugins) - [Follow these steps](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
+- For using the Orchestrator's [software templates](https://github.com/rhdhorchestrator/workflow-software-templates/tree/v1.5.x), OpenShift GitOps (ArgoCD) and OpenShift Pipelines (Tekton) should be installed and configured in RHDH (to enhance the CI/CD plugins) - [Follow these steps](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
 - A secret in RHDH's namespace named `dynamic-plugins-npmrc` that points to the plugins npm registry (details will be provided below)
 
 # Installation steps
@@ -12,7 +12,7 @@ In 1.5, the Orchestrator infrastructure is installed using the Orchestrator Oper
    > Note: `${TARGET_NAMESPACE}` should be set to the desired namespace
 
     ```yaml
-    apiVersion: rhdh.redhat.com/v1alpha1
+    apiVersion: rhdh.redhat.com/v1alpha3
     kind: Orchestrator
     metadata:
       name: orchestrator-sample
@@ -273,12 +273,14 @@ Orchestrator software templates rely on the following tools:
 To import the Orchestrator software templates into the catalog via the Backstage UI, follow the instructions outlined in this [document](https://backstage.io/docs/features/software-templates/adding-templates).
 Register new templates into the catalog from the
 - Software templates for GitHub:
-    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.4.x/scaffolder-templates/github-workflows/basic-workflow/template.yaml)
-    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.4.x/scaffolder-templates/github-workflows/advanced-workflow/template.yaml)
+    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/github-workflows/basic-workflow/template.yaml)
+    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/github-workflows/advanced-workflow/template.yaml)
+    - [Convert workflow template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/github-workflows/convert-workflow-to-template/template.yaml)
 - Software templates for GitLab:
-    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.4.x/scaffolder-templates/gitlab-workflows/basic-workflow/template.yaml)
-    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.4.x/scaffolder-templates/gitlab-workflows/advanced-workflow/template.yaml)
-- [Workflow resources (group and system)](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.4.x/entities/workflow-resources.yaml) (optional)
+    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/gitlab-workflows/basic-workflow/template.yaml)
+    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/gitlab-workflows/advanced-workflow/template.yaml)
+    - [Convert workflow template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/gitlab-workflows/convert-workflow-to-template/template.yaml)
+- [Workflow resources (group and system)](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/entities/workflow-resources.yaml) (optional)
 
 ## Plugin Versions
 
@@ -303,7 +305,7 @@ In the example output below, `orchestrator-backend-dynamic-integrity` is the int
 
 ### Upgrade plugin versions - WIP
 To perform an upgrade of the plugin versions, start by acquiring the new plugin version along with its associated integrity value.
-The following script is useful to obtain the required information for updating the plugin version, however, make sure to select plugin version compatible with the Orchestrator operator version (e.g. 1.4.x for both operator and plugins).
+The following script is useful to obtain the required information for updating the plugin version, however, make sure to select plugin version compatible with the Orchestrator operator version (e.g. 1.5.x for both operator and plugins).
 
 > Note: It is recommended to use the Orchestrator Operator default plugins
 

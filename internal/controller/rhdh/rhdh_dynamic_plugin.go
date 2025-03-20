@@ -130,6 +130,8 @@ plugins:
     disabled: false
   - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
     disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-gitlab-dynamic
+    disabled: false
   {{- if and (.NotificationEmailEnabled) (.NotificationEmailHostname) }}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-module-email-dynamic
     disabled: false

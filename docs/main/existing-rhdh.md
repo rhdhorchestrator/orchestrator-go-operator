@@ -219,6 +219,8 @@ Include ArgoCD and Tekton Plugins if using OpenShift Gitops (ArgoCD) and OpenShi
         package: ./dynamic-plugins/dist/backstage-plugin-kubernetes
       - disabled: false
         package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
+      - disabled: false
+        package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-gitlab-dynamic
 ```
 
 ### app-config ConfigMap

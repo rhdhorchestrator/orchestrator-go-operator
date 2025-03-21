@@ -49,6 +49,7 @@ const (
 	knativeBrokerKind                      = "Broker"
 )
 
+// handleServerlessLogicOperatorInstallation performs operator installation for the OSL operand
 func handleServerlessLogicOperatorInstallation(ctx context.Context, client client.Client, olmClientSet olmclientset.Interface) error {
 	sfLogger := log.FromContext(ctx)
 

@@ -2,7 +2,7 @@ ARG TARGETOS
 ARG TARGETARCH
 
 # Build the manager binary
-FROM --platform=linux/$TARGETARCH brew.registry.redhat.io/rh-osbs/openshift-golang-builder:v1.23 as builder
+FROM --platform=linux/$TARGETARCH registry.access.redhat.com/ubi9/go-toolset:1.22.9-1742197705 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -24,9 +24,9 @@ COPY internal/controller/ internal/controller/
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+# Use redhat ubi9 as minimal base image to package the manager binary
+# https://registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi9-minimal:9.5-1741850109
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532

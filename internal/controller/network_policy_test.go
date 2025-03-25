@@ -82,31 +82,18 @@ func TestHandleNetworkPolicy(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			// This conversion will allow passing multiple Network Policy objects to the fake client
-			for _, policy := range tc.existingPolicies {
-				objects = append(objects, policy)
-			}
-
-			fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
-
 			existingNP := &networkingv1.NetworkPolicy{}
+			// Flow for test cases that expect creating Policies
 			if tc.expectCreate {
-				// Verify that the fake client is empty and no Policies exist yet
-				err := fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
-				assert.Error(t, err)
-				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowIntraNamespace, Namespace: testNamespace}, existingNP)
-				assert.Error(t, err)
 
-				if tc.monitoringFlag {
-					err = fakeClient.Get(ctx, types.NamespacedName{Name: allowMonitoringToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
-					assert.Error(t, err)
-				}
+				// Create fake client with no existing Network Policies
+				fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 				// Call handler to Create the Network Policies
 				errors := handleNetworkPolicy(fakeClient, ctx, testNamespace, testRHDHNamespace, testDatabaseNamespace, tc.monitoringFlag)
 
 				// Verify that the fake client is populated with policies after calling the handler
-				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
+				err := fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
 				assert.NoError(t, err)
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowIntraNamespace, Namespace: testNamespace}, existingNP)
 				assert.NoError(t, err)
@@ -117,7 +104,16 @@ func TestHandleNetworkPolicy(t *testing.T) {
 				}
 				assert.Equal(t, tc.errorMap, errors)
 
+				// Flow for test cases that expect updating existing Policies
 			} else if tc.expectUpdate {
+
+				// This conversion will allow passing multiple Network Policy objects to the fake client
+				for _, policy := range tc.existingPolicies {
+					objects = append(objects, policy)
+				}
+
+				// Create the fake client with existing Network Policies
+				fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
 
 				// Verify that the fake client is populated with a policy
 				err := fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
@@ -129,9 +125,7 @@ func TestHandleNetworkPolicy(t *testing.T) {
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
 				assert.NoError(t, err)
 				assert.NotEqual(t, tc.existingPolicies[len(tc.existingPolicies)-1].Spec.Ingress, existingNP)
-
 			}
-
 		})
 	}
 }

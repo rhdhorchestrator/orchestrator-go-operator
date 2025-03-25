@@ -21,6 +21,8 @@ const (
 	testDatabaseNamespace = "test-db-namespace"
 )
 
+var objects []client.Object
+
 func TestHandleNetworkPolicy(t *testing.T) {
 
 	ctx := context.TODO()
@@ -62,10 +64,8 @@ func TestHandleNetworkPolicy(t *testing.T) {
 						Labels:    kubeoperations.AddLabel(),
 					},
 					Spec: networkingv1.NetworkPolicySpec{
-						// This policy applies to all pods within the namespace where the policy is defined
 						PodSelector: metav1.LabelSelector{},
 						PolicyTypes: []networkingv1.PolicyType{
-							// This policy concerns traffic coming into the pods
 							networkingv1.PolicyTypeIngress,
 						},
 						Ingress: []networkingv1.NetworkPolicyIngressRule{},
@@ -82,7 +82,7 @@ func TestHandleNetworkPolicy(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			var objects []client.Object
+			// This conversion will allow passing multiple Network Policy objects to the fake client
 			for _, policy := range tc.existingPolicies {
 				objects = append(objects, policy)
 			}
@@ -90,9 +90,8 @@ func TestHandleNetworkPolicy(t *testing.T) {
 			fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
 
 			existingNP := &networkingv1.NetworkPolicy{}
-			if tc.expectCreate && tc.expectUpdate {
-
-			} else if tc.expectCreate {
+			if tc.expectCreate {
+				// Verify that the fake client is empty and no Policies exist yet
 				err := fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
 				assert.Error(t, err)
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowIntraNamespace, Namespace: testNamespace}, existingNP)
@@ -103,29 +102,32 @@ func TestHandleNetworkPolicy(t *testing.T) {
 					assert.Error(t, err)
 				}
 
+				// Call handler to Create the Network Policies
 				errors := handleNetworkPolicy(fakeClient, ctx, testNamespace, testRHDHNamespace, testDatabaseNamespace, tc.monitoringFlag)
 
+				// Verify that the fake client is populated with policies after calling the handler
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowIntraNamespace, Namespace: testNamespace}, existingNP)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 
 				if tc.monitoringFlag {
 					err = fakeClient.Get(ctx, types.NamespacedName{Name: allowMonitoringToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
-					assert.Nil(t, err)
+					assert.NoError(t, err)
 				}
 				assert.Equal(t, tc.errorMap, errors)
 
 			} else if tc.expectUpdate {
 
+				// Verify that the fake client is populated with a policy
 				err := fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 
 				// Call handler to update the Ingress
 				errors := handleNetworkPolicy(fakeClient, ctx, testNamespace, testRHDHNamespace, testDatabaseNamespace, tc.monitoringFlag)
 				assert.Equal(t, tc.errorMap, errors)
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.NotEqual(t, tc.existingPolicies[len(tc.existingPolicies)-1].Spec.Ingress, existingNP)
 
 			}

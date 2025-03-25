@@ -74,7 +74,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-03-25T02:30:03Z"
+    createdAt: "2025-03-25T02:46:31Z"
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
     features.operators.openshift.io/csi: "false"
@@ -325,7 +325,7 @@ spec:
                 - --health-probe-bind-address=:8081
                 command:
                 - /manager
-                image: jenubah/orchestrator-operator:latest
+                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-24
                 livenessProbe:
                   httpGet:
                     path: /healthz

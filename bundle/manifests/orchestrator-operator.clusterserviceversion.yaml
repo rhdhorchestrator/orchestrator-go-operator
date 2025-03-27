@@ -74,10 +74,22 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-03-19T03:50:37Z"
+    createdAt: "2025-03-25T02:46:31Z"
+    features.operators.openshift.io/cnf: "false"
+    features.operators.openshift.io/cni: "false"
+    features.operators.openshift.io/csi: "false"
+    features.operators.openshift.io/disconnected: "false"
+    features.operators.openshift.io/fips-compliant: "false"
+    features.operators.openshift.io/proxy-aware: "false"
+    features.operators.openshift.io/tls-profiles: "false"
+    features.operators.openshift.io/token-auth-aws: "false"
+    features.operators.openshift.io/token-auth-azure: "false"
+    features.operators.openshift.io/token-auth-gcp: "false"
+    operators.openshift.io/valid-subscription: '["Red Hat Developer Hub"]'
     operators.operatorframework.io/builder: operator-sdk-v1.38.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: orchestrator-operator.v1.5.0-2025-03-18
+    repository: https://github.com/rhdhorchestrator/orchestrator-go-operator
+  name: orchestrator-operator.v1.5.0-2025-03-24
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -313,7 +325,7 @@ spec:
                 - --health-probe-bind-address=:8081
                 command:
                 - /manager
-                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-18
+                image: quay.io/orchestrator/orchestrator-go-operator:1.5.0-2025-03-24
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -401,4 +413,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 1.5.0-2025-03-18
+  version: 1.5.0-2025-03-24

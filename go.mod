@@ -2,8 +2,6 @@ module github.com/rhdhorchestrator/orchestrator-operator
 
 go 1.22.7
 
-toolchain go1.23.5
-
 require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2

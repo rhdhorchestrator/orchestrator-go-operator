@@ -29,7 +29,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o ma
 
 # Use redhat ubi9 as minimal base image to package the manager binary
 # https://registry.access.redhat.com/ubi9/ubi-minimal
-FROM registry.access.redhat.com/ubi9-minimal:9.5-1741850109
+FROM registry.access.redhat.com/ubi9-minimal:9.5-1742914212
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532

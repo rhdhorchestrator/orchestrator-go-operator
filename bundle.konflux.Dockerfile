@@ -1,5 +1,5 @@
 FROM registry.access.redhat.com/ubi9:latest as builder
-ARG IMG=registry.redhat.io/rhdh-orchestrator-dev-preview-beta/controller-rhel9-operator@sha256:497bf64c20a4427dcbc22513c4d75211114a63729622f63f1e61d76c1565218c
+ARG IMG=registry.redhat.io/rhdh-orchestrator-dev-preview-beta/controller-rhel9-operator@sha256:de0bcbc77f0ddb6618e8dde8d01d51915a5df8e21c5e40c87ccdd7b4cc8f9856
 WORKDIR /operator
 COPY . .
 RUN VERSION=$(grep "^VERSION ?="  Makefile | awk -F'= ' '{print $2}') && \
@@ -12,7 +12,7 @@ FROM scratch
 USER 1001
 
 # Expose controller's container image with digest so that we can retrieve it with skopeo when creating the FBC catalog
-LABEL controller="registry.redhat.io/rhdh-orchestrator-dev-preview-beta/controller-rhel9-operator@sha256:497bf64c20a4427dcbc22513c4d75211114a63729622f63f1e61d76c1565218c"
+LABEL controller="registry.redhat.io/rhdh-orchestrator-dev-preview-beta/controller-rhel9-operator@sha256:de0bcbc77f0ddb6618e8dde8d01d51915a5df8e21c5e40c87ccdd7b4cc8f9856"
 
 # Required labels
 LABEL com.redhat.component="RHDH Orchestrator Operator"

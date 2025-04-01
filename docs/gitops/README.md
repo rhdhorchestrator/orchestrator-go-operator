@@ -143,7 +143,7 @@ ssh-keyscan github.com > github_ssh/known_hosts
 ```console
 echo "Host github.com
   HostName github.com
-  IdentityFile github_ssh/id_rsa" > github_ssh/config
+  IdentityFile ~/.ssh/id_rsa" > github_ssh/config
 ```
 
 - Create the secret that the Pipeline uses to store the SSH credentials:
@@ -188,7 +188,7 @@ ssh-keyscan <GitLabHost> > gitlab_ssh/known_hosts
 ```console
 echo "Host <GitLabHost>
 HostName <GitLabHost>
-IdentityFile gitlab_ssh/id_rsa" > gitlab_ssh/config
+IdentityFile ~/.ssh/id_rsa" > gitlab_ssh/config
 ```
 
 - Create the secret that the Pipeline uses to store the SSH credentials:

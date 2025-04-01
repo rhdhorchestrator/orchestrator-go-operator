@@ -115,7 +115,7 @@ func HandleTektonPipeline(client client.Client, ctx context.Context, gitOpsNames
 						{Name: "GIT_USER_NAME", Value: tektonv1.ParamValue{Type: tektonv1.ParamTypeString, StringVal: "The Orchestrator Tekton Pipeline"}},
 						{Name: "GIT_USER_EMAIL", Value: tektonv1.ParamValue{Type: tektonv1.ParamTypeString, StringVal: "rhdhorchestrator@redhat.com"}},
 						{Name: "USER_HOME", Value: tektonv1.ParamValue{Type: tektonv1.ParamTypeString, StringVal: "/home/git"}},
-						{Name: "GIT_SCRIPT", Value: tektonv1.ParamValue{Type: tektonv1.ParamTypeString, StringVal: gitCloneScript}},
+						{Name: "GIT_SCRIPT", Value: tektonv1.ParamValue{Type: tektonv1.ParamTypeString, StringVal: gitCloneGitOpsScript}},
 					},
 				},
 				{

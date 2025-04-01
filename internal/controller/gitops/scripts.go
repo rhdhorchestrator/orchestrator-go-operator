@@ -28,8 +28,7 @@ limitations under the License.
 
 package gitops
 
-const gitCLITaskScript = `
-#!/usr/bin/env sh
+const gitCLITaskScript = `#!/usr/bin/env sh
 set -eu
 
 if [ "${PARAM_VERBOSE}" = "true" ] ; then
@@ -64,8 +63,7 @@ fi
 # Make sure we don't add a trailing newline to the result!
 printf "%s" "$RESULT_SHA" > "$(results.commit.path)"
 `
-const flattenerTaskScript = `
-ROOT=/workspace/workflow
+const flattenerTaskScript = `ROOT=/workspace/workflow
 TARGET=flat
 mkdir -p flat
 
@@ -87,25 +85,21 @@ ls flat/$(params.workflowId)
 curl -L https://raw.githubusercontent.com/rhdhorchestrator/serverless-workflows/main/pipeline/workflow-builder.Dockerfile -o flat/workflow-builder.Dockerfile
 `
 
-const buildManifestTaskScript = `
-microdnf install -y tar gzip
+const buildManifestTaskScript = `microdnf install -y tar gzip
 KN_CLI_URL="https://developers.redhat.com/content-gateway/file/pub/cgw/serverless-logic/1.35.0/kn-workflow-linux-amd64.tar.gz"
 curl -L "$KN_CLI_URL" | tar -xz --no-same-owner && chmod +x kn-workflow-linux-amd64 && mv kn-workflow-linux-amd64 kn-workflow
 ./kn-workflow gen-manifest --namespace ""
 `
 
-const buildGitOpsTaskScript = `
-cp $(workspaces.workflow-source.path)/flat/$(params.workflowId)/manifests/* kustomize/base
+const buildGitOpsTaskScript = `cp $(workspaces.workflow-source.path)/flat/$(params.workflowId)/manifests/* kustomize/base
 microdnf install -y findutils && microdnf clean all
 cd kustomize
 ./updater.sh $(params.workflowId) $(params.imageTag)
 `
 
-const gitScript = `
-WORKFLOW_COMMIT=$(tasks.fetch-workflow.results.commit)
-
+const gitScript = `WORKFLOW_COMMIT=$(tasks.fetch-workflow.results.commit)
 eval "$(ssh-agent -s)"
-ssh-add "${PARAM_USER_HOME}/.ssh/id_rsa"
+ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
 
 cd workflow-gitops
 git add .
@@ -113,12 +107,15 @@ git diff
 # TODO: create PR
 git commit -m "Deployment for workflow commit $WORKFLOW_COMMIT from $(params.gitUrl)"
 # TODO: parametrize branch
-git push origin main
+GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=${PARAM_USER_HOME}/.ssh/known_hosts" git push origin main
 `
 
-const gitCloneScript = `
-eval "$(ssh-agent -s)"
-ssh-add "${PARAM_USER_HOME}/.ssh/id_rsa"
-git clone $(params.gitUrl) workflow
+const gitCloneScript = `eval "$(ssh-agent -s)"
+ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
+GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=${PARAM_USER_HOME}/.ssh/known_hosts" git clone $(params.gitUrl) workflow
 cd workflow
+`
+const gitCloneGitOpsScript = `eval "$(ssh-agent -s)"
+ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
+GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=${PARAM_USER_HOME}/.ssh/known_hosts" git clone $(params.gitOpsUrl) workflow-gitops
 `

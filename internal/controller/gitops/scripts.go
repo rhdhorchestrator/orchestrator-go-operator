@@ -111,13 +111,11 @@ GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=${PARAM_USER_HOME}/.ssh/known_hosts" 
 `
 
 const gitCloneScript = `eval "$(ssh-agent -s)"
-echo "${PARAM_USER_HOME}"
 ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
 GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=${PARAM_USER_HOME}/.ssh/known_hosts" git clone $(params.gitUrl) workflow
 cd workflow
 `
 const gitCloneGitOpsScript = `eval "$(ssh-agent -s)"
-echo "${PARAM_USER_HOME}"
 ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
 GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=${PARAM_USER_HOME}/.ssh/known_hosts" git clone $(params.gitOpsUrl) workflow-gitops
 `

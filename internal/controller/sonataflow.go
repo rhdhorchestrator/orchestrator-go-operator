@@ -47,6 +47,7 @@ const (
 	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.35.0"
 	knativeBrokerAPIVersion                = "eventing.knative.dev/v1"
 	knativeBrokerKind                      = "Broker"
+	sonataFlowPlatformReference            = "sonataflow-platform"
 )
 
 // handleServerlessLogicOperatorInstallation performs operator installation for the OSL operand
@@ -175,9 +176,8 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 					Kind:       sonataFlowClusterPlatformKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      sonataFlowClusterPlatformCRName,
-					Namespace: namespace,
-					Labels:    kube.AddLabel(),
+					Name:   sonataFlowClusterPlatformCRName,
+					Labels: kube.AddLabel(),
 				},
 				Spec: getSonataFlowClusterSpec(namespace),
 			}
@@ -199,7 +199,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 func getSonataFlowClusterSpec(namespace string) sonataapi.SonataFlowClusterPlatformSpec {
 	return sonataapi.SonataFlowClusterPlatformSpec{
 		PlatformRef: sonataapi.SonataFlowPlatformRef{
-			Name:      sonataFlowClusterPlatformCRName,
+			Name:      sonataFlowPlatformReference,
 			Namespace: namespace,
 		},
 	}

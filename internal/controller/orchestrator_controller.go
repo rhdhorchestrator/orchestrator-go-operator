@@ -50,7 +50,7 @@ import (
 const (
 	// Definition to manage Orchestrator condition status.
 	TypeAvailable string = "Available"
-	//TypeProgressing string = "Progressing"
+	TypeCompleted string = "Completed"
 	TypeDegrading string = "Degrading"
 
 	// Finalizer Definition
@@ -235,11 +235,12 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		})
 		return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, err
 	}
+
 	_ = r.UpdateStatus(ctx, orchestrator, orchestratorv1alpha2.CompletedPhase, metav1.Condition{
-		Type:               TypeDegrading,
-		Status:             metav1.ConditionFalse,
+		Type:               TypeCompleted,
+		Status:             metav1.ConditionTrue,
 		Reason:             "ReconciliationCompleted",
-		Message:            "Reconciliation is completed",
+		Message:            "Reconciliation has completed",
 		LastTransitionTime: metav1.Now(),
 	})
 	return ctrl.Result{}, nil
@@ -426,10 +427,13 @@ func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator
 // UpdateStatus sets the status of orchestrator.
 func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator, phase orchestratorv1alpha2.OrchestratorPhase, condition metav1.Condition) error {
 	logger := log.FromContext(ctx)
+
+	patch := client.MergeFrom(orchestrator.DeepCopy())
 	orchestrator.Status.Phase = phase
 	meta.SetStatusCondition(&orchestrator.Status.Conditions, condition)
 
-	err := r.Status().Update(ctx, orchestrator)
+	//err := r.Status().Update(ctx, orchestrator)
+	err := r.Status().Patch(ctx, orchestrator, patch)
 	if err != nil {
 		logger.Error(err, "Failed to update Orchestrator status")
 		return err

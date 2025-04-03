@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/orchestrator/orchestrator-go-operator
-  newTag: 1.5.0-2025-04-01
+  newTag: 1.5.0-2025-04-03

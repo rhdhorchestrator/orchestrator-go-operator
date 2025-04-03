@@ -428,12 +428,10 @@ func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator
 func (r *OrchestratorReconciler) UpdateStatus(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator, phase orchestratorv1alpha2.OrchestratorPhase, condition metav1.Condition) error {
 	logger := log.FromContext(ctx)
 
-	patch := client.MergeFrom(orchestrator.DeepCopy())
 	orchestrator.Status.Phase = phase
 	meta.SetStatusCondition(&orchestrator.Status.Conditions, condition)
 
-	//err := r.Status().Update(ctx, orchestrator)
-	err := r.Status().Patch(ctx, orchestrator, patch)
+	err := r.Status().Update(ctx, orchestrator)
 	if err != nil {
 		logger.Error(err, "Failed to update Orchestrator status")
 		return err

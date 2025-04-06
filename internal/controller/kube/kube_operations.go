@@ -342,15 +342,18 @@ func RemoveCustomResourcesInNamespace[T client.ObjectList, I client.Object](ctx 
 
 	// List the CRs
 	if err := k8client.List(ctx, objList, listOptions...); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Custom resource not found in namespace", "NS", namespace)
+			return nil
+		}
 		logger.Error(err, "Error occurred when listing resources")
-		return nil
+		return err
 	}
 	for _, item := range getItems(objList) {
 		if err := k8client.Delete(ctx, item); err != nil {
-			logger.Error(err, "failed to delete resource %s: %w", item.GetName(), err)
+			logger.Error(err, "Error occurred when to delete resource", "CR-Name", item.GetName())
 			return err
 		}
 	}
-
 	return nil
 }

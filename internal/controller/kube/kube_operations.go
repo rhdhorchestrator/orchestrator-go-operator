@@ -62,7 +62,7 @@ func CreateNamespace(ctx context.Context, client client.Client, namespace string
 	nsLogger := log.FromContext(ctx)
 	nsLogger.Info("Creating namespace", "Namespace", namespace)
 	// create new namespace
-	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace, Labels: AddLabel()}}
+	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace, Labels: GetOrchestratorLabel()}}
 	err := client.Create(ctx, newNamespace)
 	if err != nil {
 		nsLogger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)
@@ -182,7 +182,7 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      subscriptionName,
-			Labels:    AddLabel(),
+			Labels:    GetOrchestratorLabel(),
 		},
 		Spec: &v1alpha1.SubscriptionSpec{
 			Channel:                channel,
@@ -297,7 +297,7 @@ func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.In
 	return err
 }
 
-func AddLabel() map[string]string {
+func GetOrchestratorLabel() map[string]string {
 	return map[string]string{
 		CreatedByLabelKey: CreatedByLabelValue,
 	}

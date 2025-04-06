@@ -99,7 +99,7 @@ func createGitCLITaskObject(gitOpsNamespace string) *tektonv1.Task {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      gitCLITask,
 			Namespace: gitOpsNamespace,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 			Annotations: map[string]string{
 				"tekton.dev/pipelines.minVersion": "0.21.0",
 				"tekton.dev/categories":           "Git",
@@ -223,7 +223,7 @@ func createFlattenerTaskObject(gitOpsNamespace string) *tektonv1.Task {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      flattenerTask,
 			Namespace: gitOpsNamespace,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: tektonv1.TaskSpec{
 			Workspaces: []tektonv1.WorkspaceDeclaration{
@@ -268,7 +268,7 @@ func createBuildManifestTaskObject(gitOpsNamespace string) *tektonv1.Task {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      buildManifestTask,
 			Namespace: gitOpsNamespace,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: tektonv1.TaskSpec{
 			Workspaces: []tektonv1.WorkspaceDeclaration{
@@ -304,7 +304,7 @@ func createBuildGitOpsTaskObject(gitOpsNamespace string) *tektonv1.Task {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      buildGitOpsTask,
 			Namespace: gitOpsNamespace,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: tektonv1.TaskSpec{
 			Workspaces: []tektonv1.WorkspaceDeclaration{

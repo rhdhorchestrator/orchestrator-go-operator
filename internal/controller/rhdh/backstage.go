@@ -112,7 +112,7 @@ func CreateRHDHSecret(secretNamespace string, ctx context.Context, client client
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      RegistrySecretName,
 					Namespace: secretNamespace,
-					Labels:    kubeoperations.AddLabel(),
+					Labels:    kubeoperations.GetOrchestratorLabel(),
 				},
 				Type: corev1.SecretTypeOpaque,
 				StringData: map[string]string{
@@ -168,7 +168,7 @@ func HandleRHDHCR(
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      rhdhName,
 					Namespace: rhdhConfig.Namespace,
-					Labels:    kubeoperations.AddLabel(),
+					Labels:    kubeoperations.GetOrchestratorLabel(),
 				},
 				Spec: rhdhv1alpha3.BackstageSpec{
 					Application: &rhdhv1alpha3.Application{
@@ -243,7 +243,7 @@ func CreateConfigMap(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    kubeoperations.AddLabel(),
+			Labels:    kubeoperations.GetOrchestratorLabel(),
 		},
 		Data: map[string]string{
 			configDataKey: configValue,

@@ -64,7 +64,7 @@ func handleArgoCDProject(gitOpsNamespace string, client client.Client, ctx conte
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      argoCDCRName,
 			Namespace: gitOpsNamespace,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: argocdv1alpha1.AppProjectSpec{
 			Destinations: []argocdv1alpha1.ApplicationDestination{

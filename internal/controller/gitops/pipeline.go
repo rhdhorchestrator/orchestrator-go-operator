@@ -43,7 +43,7 @@ func HandleTektonPipeline(client client.Client, ctx context.Context, gitOpsNames
 		ObjectMeta: ctrl.ObjectMeta{
 			Name:      pipelineName,
 			Namespace: gitOpsNamespace,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: tektonv1.PipelineSpec{
 			Description: "This pipeline clones a git repo, builds a Docker image with Kaniko, and pushes it to a registry",

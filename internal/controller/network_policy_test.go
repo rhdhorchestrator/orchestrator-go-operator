@@ -61,7 +61,7 @@ func TestHandleNetworkPolicy(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      allowRHDHToSonataflowWorkflows,
 						Namespace: testNamespace,
-						Labels:    kubeoperations.AddLabel(),
+						Labels:    kubeoperations.GetOrchestratorLabel(),
 					},
 					Spec: networkingv1.NetworkPolicySpec{
 						PodSelector: metav1.LabelSelector{},

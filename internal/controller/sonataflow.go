@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
@@ -177,7 +178,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   sonataFlowClusterPlatformCRName,
-					Labels: kube.AddLabel(),
+					Labels: kube.GetOrchestratorLabel(),
 				},
 				Spec: getSonataFlowClusterSpec(namespace),
 			}
@@ -231,7 +232,7 @@ func handleSonataFlowPlatformCR(
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      sonataFlowPlatformCRName,
 					Namespace: namespace,
-					Labels:    kube.AddLabel(),
+					Labels:    kube.GetOrchestratorLabel(),
 				},
 				Spec: getSonataFlowPlatformSpec(ctx, orchestrator),
 			}

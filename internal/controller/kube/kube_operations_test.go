@@ -42,7 +42,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      subscriptionName,
 			Namespace: orchestratorNamespace,
-			Labels:    AddLabel(),
+			Labels:    GetOrchestratorLabel(),
 		},
 		Spec: &v1alpha1.SubscriptionSpec{
 			Channel:                "channel",
@@ -113,7 +113,7 @@ func TestCreateNamespace(t *testing.T) {
 		{
 			name:          "Create namespace with error",
 			namespace:     "fake-namespace",
-			namespaceObj:  &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "fake-namespace", Labels: AddLabel()}},
+			namespaceObj:  &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "fake-namespace", Labels: GetOrchestratorLabel()}},
 			expectedError: apierrors.NewAlreadyExists(schema.GroupResource{}, "fake-namespace"),
 		},
 	}
@@ -293,7 +293,7 @@ func TestCleanUpNamespace(t *testing.T) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 
 	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: AddLabel()},
+		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: GetOrchestratorLabel()},
 	}
 	t.Run("Clean up namespace with no error", func(t *testing.T) {
 		fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
@@ -308,7 +308,7 @@ func TestAddLabel(t *testing.T) {
 	}
 
 	t.Run("Add label", func(t *testing.T) {
-		labelMap := AddLabel()
+		labelMap := GetOrchestratorLabel()
 		assert.NotNil(t, labelMap, "Expected labelMap to not be nil")
 		assert.Equal(t, expectedLabels, labelMap, "Expected labelMap to match expectedLabels")
 		assert.Equal(t, len(expectedLabels), len(labelMap), "Expected labelMap to have the same length")

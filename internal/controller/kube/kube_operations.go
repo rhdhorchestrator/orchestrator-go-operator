@@ -327,3 +327,30 @@ func updateNamespaceLabel(namespace *corev1.Namespace, ctx context.Context, clie
 	nsLogger.Info("Successfully updated namespace with new label", "NS", namespaceName)
 	return nil
 }
+
+func RemoveCustomResourcesInNamespace[T client.ObjectList, I client.Object](ctx context.Context,
+	k8client client.Client,
+	objList T, getItems func(T) []I,
+	namespace string) error {
+
+	logger := log.FromContext(ctx)
+	logger.Info("Removing custom resources in namespace", "NS", namespace)
+
+	listOptions := []client.ListOption{
+		client.InNamespace(namespace),
+		client.MatchingLabels(GetOrchestratorLabel())}
+
+	// List the CRs
+	if err := k8client.List(ctx, objList, listOptions...); err != nil {
+		logger.Error(err, "Error occurred when listing resources")
+		return nil
+	}
+	for _, item := range getItems(objList) {
+		if err := k8client.Delete(ctx, item); err != nil {
+			logger.Error(err, "failed to delete resource %s: %w", item.GetName(), err)
+			return err
+		}
+	}
+
+	return nil
+}

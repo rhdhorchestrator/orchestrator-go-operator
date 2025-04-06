@@ -298,9 +298,9 @@ func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, nam
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Clean Up for Serverless Logic ...")
 
-	// remove operand namespace
-	if err := kube.CleanUpNamespace(ctx, namespace, client); err != nil {
-		logger.Error(err, "Error occurred when deleting namespace", "NS", namespace)
+	// remove operand resources: sonataflowclusterplatform and sonataflowplatform
+	if err := handleRemovalOfOSLCRs(ctx, client, namespace); err != nil {
+		logger.Error(err, "Error occurred when removing OSL CR", "NS", namespace)
 		return err
 	}
 
@@ -332,4 +332,52 @@ func createEventingSpec(ctx context.Context, orchestrator *orchestratorv1alpha2.
 			},
 		},
 	}
+}
+
+func handleRemovalOfOSLCRs(ctx context.Context, k8Client client.Client, namespace string) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Starting Clean Up for OSL CR Removal", "NS", namespace)
+
+	type crCleanupObj struct {
+		name     string
+		objList  client.ObjectList
+		getItems func(client.ObjectList) []client.Object
+	}
+
+	cleanups := []crCleanupObj{
+		{
+			name:    "SonataFlowPlatform",
+			objList: &sonataapi.SonataFlowPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				typedList := list.(*sonataapi.SonataFlowPlatformList)
+				objs := make([]client.Object, len(typedList.Items))
+				for i := range typedList.Items {
+					objs[i] = &typedList.Items[i]
+				}
+				return objs
+			},
+		},
+		{
+			name:    "SonataFlowClusterPlatform",
+			objList: &sonataapi.SonataFlowClusterPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				typedList := list.(*sonataapi.SonataFlowClusterPlatformList)
+				objs := make([]client.Object, len(typedList.Items))
+				for i := range typedList.Items {
+					objs[i] = &typedList.Items[i]
+				}
+				return objs
+			},
+		},
+	}
+
+	for _, crCleanup := range cleanups {
+		sfpErr := kube.RemoveCustomResourcesInNamespace(ctx, k8Client, crCleanup.objList, crCleanup.getItems, namespace)
+		if sfpErr != nil {
+			logger.Error(sfpErr, fmt.Sprintf("Error occurred when removing %s CR", crCleanup.name), "NS", namespace)
+			continue
+		}
+		logger.Info(fmt.Sprintf("Successfully removed %s CR", crCleanup.name), "NS", namespace)
+	}
+	return nil
 }

@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/errors"
 	"reflect"
 
 	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
@@ -371,13 +372,17 @@ func handleRemovalOfOSLCRs(ctx context.Context, k8Client client.Client, namespac
 		},
 	}
 
+	var errorList []error
 	for _, crCleanup := range cleanups {
 		sfpErr := kube.RemoveCustomResourcesInNamespace(ctx, k8Client, crCleanup.objList, crCleanup.getItems, namespace)
 		if sfpErr != nil {
 			logger.Error(sfpErr, fmt.Sprintf("Error occurred when removing %s CR", crCleanup.name), "NS", namespace)
-			continue
+			errorList = append(errorList, sfpErr)
 		}
-		logger.Info(fmt.Sprintf("Successfully removed %s CR", crCleanup.name), "NS", namespace)
 	}
+	if len(errorList) > 0 {
+		return errors.NewAggregate(errorList)
+	}
+	logger.Info(fmt.Sprintf("Successfully removed Orchestrator labelled CRs "), "NS", namespace)
 	return nil
 }

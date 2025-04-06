@@ -28,6 +28,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -328,6 +329,8 @@ func updateNamespaceLabel(namespace *corev1.Namespace, ctx context.Context, clie
 	return nil
 }
 
+// RemoveCustomResourcesInNamespace removes orchestrator labelled CR in a given namespace
+// returns error
 func RemoveCustomResourcesInNamespace[T client.ObjectList, I client.Object](ctx context.Context,
 	k8client client.Client,
 	objList T, getItems func(T) []I,
@@ -349,11 +352,15 @@ func RemoveCustomResourcesInNamespace[T client.ObjectList, I client.Object](ctx 
 		logger.Error(err, "Error occurred when listing resources")
 		return err
 	}
+	var errorList []error
 	for _, item := range getItems(objList) {
 		if err := k8client.Delete(ctx, item); err != nil {
-			logger.Error(err, "Error occurred when to delete resource", "CR-Name", item.GetName())
-			return err
+			logger.Error(err, "Error occurred when deleting custom resource", "CR-Name", item.GetName())
+			errorList = append(errorList, err)
 		}
+	}
+	if len(errorList) > 0 {
+		return errors.NewAggregate(errorList)
 	}
 	return nil
 }

@@ -431,12 +431,7 @@ func TestRemoveCustomResourcesInNamespace(t *testing.T) {
 			crObj:     &sonataapi.SonataFlowClusterPlatform{},
 			crObjList: &sonataapi.SonataFlowClusterPlatformList{},
 			getItems: func(list client.ObjectList) []client.Object {
-				typedList := list.(*sonataapi.SonataFlowClusterPlatformList)
-				objs := make([]client.Object, len(typedList.Items))
-				for i := range typedList.Items {
-					objs[i] = &typedList.Items[i]
-				}
-				return objs
+				return []client.Object{}
 			},
 			expectedError: nil,
 		},

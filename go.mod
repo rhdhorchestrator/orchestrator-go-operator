@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 )
 

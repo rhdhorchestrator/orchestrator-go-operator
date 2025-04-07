@@ -160,7 +160,7 @@ func handleKnativeEventingCR(ctx context.Context, client client.Client) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      knativeEventingNamespacedName,
 			Namespace: knativeEventingNamespacedName,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: knative.KnativeEventingSpec{},
 	}
@@ -205,7 +205,7 @@ func handleKnativeServingCR(ctx context.Context, client client.Client) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      knativeServingNamespacedName,
 			Namespace: knativeServingNamespacedName,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: knative.KnativeServingSpec{},
 	}

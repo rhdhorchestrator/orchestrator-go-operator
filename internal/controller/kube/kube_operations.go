@@ -28,6 +28,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -62,7 +63,7 @@ func CreateNamespace(ctx context.Context, client client.Client, namespace string
 	nsLogger := log.FromContext(ctx)
 	nsLogger.Info("Creating namespace", "Namespace", namespace)
 	// create new namespace
-	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace, Labels: AddLabel()}}
+	newNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace, Labels: GetOrchestratorLabel()}}
 	err := client.Create(ctx, newNamespace)
 	if err != nil {
 		nsLogger.Error(err, "Error occurred when creating namespace", "Namespace", namespace)
@@ -182,7 +183,7 @@ func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV 
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      subscriptionName,
-			Labels:    AddLabel(),
+			Labels:    GetOrchestratorLabel(),
 		},
 		Spec: &v1alpha1.SubscriptionSpec{
 			Channel:                channel,
@@ -297,7 +298,7 @@ func CleanUpSubscriptionAndCSV(ctx context.Context, olmClientSet olmclientset.In
 	return err
 }
 
-func AddLabel() map[string]string {
+func GetOrchestratorLabel() map[string]string {
 	return map[string]string{
 		CreatedByLabelKey: CreatedByLabelValue,
 	}
@@ -325,5 +326,41 @@ func updateNamespaceLabel(namespace *corev1.Namespace, ctx context.Context, clie
 		return err
 	}
 	nsLogger.Info("Successfully updated namespace with new label", "NS", namespaceName)
+	return nil
+}
+
+// RemoveCustomResourcesInNamespace removes orchestrator labelled CR in a given namespace
+// returns error
+func RemoveCustomResourcesInNamespace[T client.ObjectList, I client.Object](ctx context.Context,
+	k8client client.Client,
+	objList T, getItems func(T) []I,
+	namespace string) error {
+
+	logger := log.FromContext(ctx)
+	logger.Info("Removing custom resources in namespace", "NS", namespace)
+
+	listOptions := []client.ListOption{
+		client.InNamespace(namespace),
+		client.MatchingLabels(GetOrchestratorLabel())}
+
+	// List the CRs
+	if err := k8client.List(ctx, objList, listOptions...); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Custom resource not found in namespace", "NS", namespace)
+			return nil
+		}
+		logger.Error(err, "Error occurred when listing resources")
+		return err
+	}
+	var errorList []error
+	for _, item := range getItems(objList) {
+		if err := k8client.Delete(ctx, item); err != nil {
+			logger.Error(err, "Error occurred when deleting custom resource", "CR-Name", item.GetName())
+			errorList = append(errorList, err)
+		}
+	}
+	if len(errorList) > 0 {
+		return errors.NewAggregate(errorList)
+	}
 	return nil
 }

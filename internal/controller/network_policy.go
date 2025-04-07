@@ -48,7 +48,7 @@ func handleNetworkPolicy(client client.Client, ctx context.Context,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      NetworkPolicyName,
 				Namespace: networkAndServerlessWorkflowNamespace,
-				Labels:    kubeoperations.AddLabel(),
+				Labels:    kubeoperations.GetOrchestratorLabel(),
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				// This policy applies to all pods within the namespace where the policy is defined

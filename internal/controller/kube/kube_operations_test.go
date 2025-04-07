@@ -18,6 +18,7 @@ package kube
 
 import (
 	"context"
+	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmclientsetfake "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/fake"
@@ -30,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
@@ -42,7 +44,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      subscriptionName,
 			Namespace: orchestratorNamespace,
-			Labels:    AddLabel(),
+			Labels:    GetOrchestratorLabel(),
 		},
 		Spec: &v1alpha1.SubscriptionSpec{
 			Channel:                "channel",
@@ -113,7 +115,7 @@ func TestCreateNamespace(t *testing.T) {
 		{
 			name:          "Create namespace with error",
 			namespace:     "fake-namespace",
-			namespaceObj:  &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "fake-namespace", Labels: AddLabel()}},
+			namespaceObj:  &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "fake-namespace", Labels: GetOrchestratorLabel()}},
 			expectedError: apierrors.NewAlreadyExists(schema.GroupResource{}, "fake-namespace"),
 		},
 	}
@@ -293,7 +295,7 @@ func TestCleanUpNamespace(t *testing.T) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 
 	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: AddLabel()},
+		ObjectMeta: metav1.ObjectMeta{Name: orchestratorNamespace, Labels: GetOrchestratorLabel()},
 	}
 	t.Run("Clean up namespace with no error", func(t *testing.T) {
 		fakeClientWithoutNS := fake.NewClientBuilder().WithScheme(scheme).WithObjects(ns).Build()
@@ -302,13 +304,13 @@ func TestCleanUpNamespace(t *testing.T) {
 	})
 }
 
-func TestAddLabel(t *testing.T) {
+func TestGetOrchestratorLabel(t *testing.T) {
 	expectedLabels := map[string]string{
 		CreatedByLabelKey: CreatedByLabelValue,
 	}
 
 	t.Run("Add label", func(t *testing.T) {
-		labelMap := AddLabel()
+		labelMap := GetOrchestratorLabel()
 		assert.NotNil(t, labelMap, "Expected labelMap to not be nil")
 		assert.Equal(t, expectedLabels, labelMap, "Expected labelMap to match expectedLabels")
 		assert.Equal(t, len(expectedLabels), len(labelMap), "Expected labelMap to have the same length")
@@ -366,4 +368,81 @@ func TestUpdateNamespaceLabel(t *testing.T) {
 		err := updateNamespaceLabel(ns, ctx, fakeClientWithoutNS)
 		assert.Error(t, err, "Expected error")
 	})
+}
+
+func TestRemoveCustomResourcesInNamespace(t *testing.T) {
+	ctx := context.TODO()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(sonataapi.AddToScheme(scheme))
+
+	testCases := []struct {
+		name          string
+		namespace     string
+		crObj         client.Object
+		crObjList     client.ObjectList
+		getItems      func(list client.ObjectList) []client.Object
+		expectedError error
+	}{
+		{
+			name:      "Remove SonataFlowPlatform custom resources",
+			namespace: orchestratorNamespace,
+			crObj: &sonataapi.SonataFlowPlatform{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sonataflow-platform",
+					Namespace: orchestratorNamespace,
+					Labels:    existingLabelMap,
+				},
+			},
+			crObjList: &sonataapi.SonataFlowPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				typedList := list.(*sonataapi.SonataFlowPlatformList)
+				objs := make([]client.Object, len(typedList.Items))
+				for i := range typedList.Items {
+					objs[i] = &typedList.Items[i]
+				}
+				return objs
+			},
+			expectedError: nil,
+		},
+		{
+			name:      "Remove SonataFlowClusterPlatform custom resources",
+			namespace: orchestratorNamespace,
+			crObj: &sonataapi.SonataFlowClusterPlatform{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cluster-platform",
+					Namespace: orchestratorNamespace,
+					Labels:    existingLabelMap,
+				},
+			},
+			crObjList: &sonataapi.SonataFlowClusterPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				typedList := list.(*sonataapi.SonataFlowClusterPlatformList)
+				objs := make([]client.Object, len(typedList.Items))
+				for i := range typedList.Items {
+					objs[i] = &typedList.Items[i]
+				}
+				return objs
+			},
+			expectedError: nil,
+		},
+		{
+			name:      "Remove non existent custom resources",
+			namespace: orchestratorNamespace,
+			crObj:     &sonataapi.SonataFlowClusterPlatform{},
+			crObjList: &sonataapi.SonataFlowClusterPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				return []client.Object{}
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.crObj).Build()
+			err := RemoveCustomResourcesInNamespace(ctx, fakeClient, tc.crObjList, tc.getItems, tc.namespace)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+
 }

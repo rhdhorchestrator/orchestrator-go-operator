@@ -16,6 +16,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"k8s.io/apimachinery/pkg/util/errors"
 	"reflect"
 
 	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
@@ -177,7 +179,7 @@ func handleSonataFlowClusterCR(ctx context.Context, client client.Client, crName
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   sonataFlowClusterPlatformCRName,
-					Labels: kube.AddLabel(),
+					Labels: kube.GetOrchestratorLabel(),
 				},
 				Spec: getSonataFlowClusterSpec(namespace),
 			}
@@ -231,7 +233,7 @@ func handleSonataFlowPlatformCR(
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      sonataFlowPlatformCRName,
 					Namespace: namespace,
-					Labels:    kube.AddLabel(),
+					Labels:    kube.GetOrchestratorLabel(),
 				},
 				Spec: getSonataFlowPlatformSpec(ctx, orchestrator),
 			}
@@ -297,9 +299,9 @@ func handleServerlessLogicCleanUp(ctx context.Context, client client.Client, nam
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Clean Up for Serverless Logic ...")
 
-	// remove operand namespace
-	if err := kube.CleanUpNamespace(ctx, namespace, client); err != nil {
-		logger.Error(err, "Error occurred when deleting namespace", "NS", namespace)
+	// remove operand resources: sonataflowclusterplatform and sonataflowplatform
+	if err := handleRemovalOfOSLCRs(ctx, client, namespace); err != nil {
+		logger.Error(err, "Error occurred when removing OSL CR", "NS", namespace)
 		return err
 	}
 
@@ -331,4 +333,56 @@ func createEventingSpec(ctx context.Context, orchestrator *orchestratorv1alpha2.
 			},
 		},
 	}
+}
+
+func handleRemovalOfOSLCRs(ctx context.Context, k8Client client.Client, namespace string) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Starting Clean Up for OSL CR Removal", "NS", namespace)
+
+	type crCleanupObj struct {
+		name     string
+		objList  client.ObjectList
+		getItems func(client.ObjectList) []client.Object
+	}
+
+	cleanups := []crCleanupObj{
+		{
+			name:    "SonataFlowPlatform",
+			objList: &sonataapi.SonataFlowPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				typedList := list.(*sonataapi.SonataFlowPlatformList)
+				objs := make([]client.Object, len(typedList.Items))
+				for i := range typedList.Items {
+					objs[i] = &typedList.Items[i]
+				}
+				return objs
+			},
+		},
+		{
+			name:    "SonataFlowClusterPlatform",
+			objList: &sonataapi.SonataFlowClusterPlatformList{},
+			getItems: func(list client.ObjectList) []client.Object {
+				typedList := list.(*sonataapi.SonataFlowClusterPlatformList)
+				objs := make([]client.Object, len(typedList.Items))
+				for i := range typedList.Items {
+					objs[i] = &typedList.Items[i]
+				}
+				return objs
+			},
+		},
+	}
+
+	var errorList []error
+	for _, crCleanup := range cleanups {
+		sfpErr := kube.RemoveCustomResourcesInNamespace(ctx, k8Client, crCleanup.objList, crCleanup.getItems, namespace)
+		if sfpErr != nil {
+			logger.Error(sfpErr, fmt.Sprintf("Error occurred when removing %s CR", crCleanup.name), "NS", namespace)
+			errorList = append(errorList, sfpErr)
+		}
+	}
+	if len(errorList) > 0 {
+		return errors.NewAggregate(errorList)
+	}
+	logger.Info(fmt.Sprintf("Successfully removed Orchestrator labelled CRs "), "NS", namespace)
+	return nil
 }

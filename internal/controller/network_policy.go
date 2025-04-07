@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
+	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrros "k8s.io/apimachinery/pkg/api/errors"
@@ -114,7 +115,7 @@ func createIngressRHDHSonataflowWorkflows(networkAndServerlessWorkflowNamespace,
 					// Allows traffic from pods in the K-Native Eventing namespace
 					NamespaceSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
-							metaDataNameLabel: knativeEventingNamespacedName,
+							metaDataNameLabel: knative.KnativeEventingNamespacedName,
 						},
 					},
 				},
@@ -122,7 +123,7 @@ func createIngressRHDHSonataflowWorkflows(networkAndServerlessWorkflowNamespace,
 					// Allows traffic from pods in the K-Native Serving namespace
 					NamespaceSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
-							metaDataNameLabel: knativeServingNamespacedName,
+							metaDataNameLabel: knative.KnativeServingNamespacedName,
 						},
 					},
 				},

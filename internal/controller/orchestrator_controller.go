@@ -27,6 +27,7 @@ import (
 
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/rhdh"
+	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
@@ -307,20 +308,20 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !serverlessOperator.InstallOperator {
 		// handle cleanup
-		if err := handleKnativeCleanUp(ctx, r.Client); err != nil {
+		if err := knative.HandleKnativeCleanUp(ctx, r.Client); err != nil {
 			return err
 		}
 		return nil
 	}
 
 	// Subscription is enabled;
-	if err := handleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
+	if err := knative.HandleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient); err != nil {
 		knativeLogger.Error(err, "Error occurred when installing Knative Operator resources")
 		return err
 	}
 
 	// handle knative CRs
-	if err := handleKnativeCR(ctx, r.Client); err != nil {
+	if err := knative.HandleKnativeCR(ctx, r.Client); err != nil {
 		knativeLogger.Error(err, "Error occurred when handling Knative Custom Resources")
 		return err
 	}
@@ -410,7 +411,7 @@ func (r *OrchestratorReconciler) addFinalizers(ctx context.Context, orchestrator
 
 func (r *OrchestratorReconciler) handleCleanUp(ctx context.Context, orchestrator *orchestratorv1alpha2.Orchestrator) error {
 	// cleanup Knative
-	if err := handleKnativeCleanUp(ctx, r.Client); err != nil {
+	if err := knative.HandleKnativeCleanUp(ctx, r.Client); err != nil {
 		return err
 	}
 	// cleanup Serverless Logic
@@ -503,8 +504,8 @@ func (r *OrchestratorReconciler) reconcileSubscription(ctx context.Context, obje
 				return nil
 			}
 		}
-		if (subscriptionObject.Namespace == knativeOperatorNamespace) && (subscriptionObject.Name == knativeSubscriptionName) {
-			err := handleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient)
+		if (subscriptionObject.Namespace == knative.KnativeOperatorNamespace) && (subscriptionObject.Name == knative.KnativeSubscriptionName) {
+			err := knative.HandleKNativeOperatorInstallation(ctx, r.Client, r.OLMClient)
 			if err != nil && !apierrors.IsNotFound(err) {
 				logger.Error(err, "Error occurred when reconciling Serverless(K-Native) Operator's Subscription resource")
 				return nil

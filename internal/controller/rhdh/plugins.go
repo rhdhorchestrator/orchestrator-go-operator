@@ -12,16 +12,16 @@ const ScaffolderBackendOrchestrator string = "scaffolderBackendOrchestrator"
 func getPlugins() map[string]Plugin {
 	return map[string]Plugin{
 		Orchestrator: {
-			Package:   "backstage-plugin-orchestrator-1.5.0-rc.2.tgz",
-			Integrity: "sha512-k+oXawNBQa0TFskAoYvExWZ/EOJ9H4s2+y4ujE+RFzsu7rkm4YmElDIrVYMZhJLRqBhSoHgCdGyn7nSPW20rcg==",
+			Package:   "backstage-plugin-orchestrator-1.5.0-rc.3.tgz",
+			Integrity: "sha512-SkvEkftCmeta/0hBbWFkLAgfkJenL/xn23kpHS4cXlkSaXN6Cn7V/tsLIoYiDuBghQ3jbivNiU0EcNgBkCIK2w==",
 		},
 		OrchestratorBackend: {
-			Package:   "backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.2.tgz",
-			Integrity: "sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==",
+			Package:   "backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.3.tgz",
+			Integrity: "sha512-TTUyOStMrjipF3i7Bzyz4GxAW+g6KBA8x5rlFE2jJjh4gtI8K1w2zNOGRfq0dniSxkZOYdhO15SX6CenFf4UrA==",
 		},
 		ScaffolderBackendOrchestrator: {
-			Package:   "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.2.tgz",
-			Integrity: "sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==",
+			Package:   "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.3.tgz",
+			Integrity: "sha512-C+iazAp/i+x/iCtlA/l2Vc/AVO4TMfDxwn0hrXVEVbO9FHdaKt63EdLQ2dvtWslEnlhv/9eDAGp0L8Ct6lbRZA==",
 		},
 	}
 

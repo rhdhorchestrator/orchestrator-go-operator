@@ -53,11 +53,8 @@ func HandleKNativeOperatorInstallation(ctx context.Context, client client.Client
 			KnativeLogger.Info("Creating namespace", "NS", KnativeOperatorNamespace)
 			if err := kube.CreateNamespace(ctx, client, KnativeOperatorNamespace); err != nil {
 				KnativeLogger.Error(err, "Error occurred when creating namespace", "NS", KnativeOperatorNamespace)
-				return nil
+				return err
 			}
-		} else {
-			KnativeLogger.Error(err, "Error occurred when checking namespace exist", "NS", KnativeOperatorNamespace)
-			return err
 		}
 	}
 
@@ -163,7 +160,7 @@ func HandleKnativeEventingCR(ctx context.Context, client client.Client) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      KnativeEventingNamespacedName,
 			Namespace: KnativeEventingNamespacedName,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: Knative.KnativeEventingSpec{},
 	}
@@ -208,7 +205,7 @@ func HandleKnativeServingCR(ctx context.Context, client client.Client) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      KnativeServingNamespacedName,
 			Namespace: KnativeServingNamespacedName,
-			Labels:    kube.AddLabel(),
+			Labels:    kube.GetOrchestratorLabel(),
 		},
 		Spec: Knative.KnativeServingSpec{},
 	}

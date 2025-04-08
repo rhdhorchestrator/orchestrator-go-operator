@@ -1,6 +1,18 @@
 # Releasing the GO Operator
 This outlines the process of releasing a version of the go operator.
 
+## Update the orchestrator plugin (if needed)
+If you need to update the orchestrator plugin version, then:
+
+1. Update Plugin Details  
+Modify the
+[plugins.go](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/internal/controller/rhdh/plugins.go)
+to include the new package and integrity values for each plugin.
+1. Adjust Scope Configuration (if necessary)  
+Update the scope in the
+[configmap_ref.go](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/internal/controller/rhdh/configmap_ref.go#L9)
+This step is required if there are changes in the plugin source, such as
+switching from GitHub releases to npm registries (staging or production).
 
 ## Preparing the code for releasing
 

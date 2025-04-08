@@ -239,12 +239,12 @@ type OrchestratorStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=".metadata.creationTimestamp",description="Age"
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=".status.phase",description="Status"
-// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-package=@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.2.tgz
-// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-integrity=sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==
-// +kubebuilder:metadata:annotations=orchestrator-package=@redhat/backstage-plugin-orchestrator-1.5.0-rc.2.tgz
-// +kubebuilder:metadata:annotations=orchestrator-integrity=sha512-k+oXawNBQa0TFskAoYvExWZ/EOJ9H4s2+y4ujE+RFzsu7rkm4YmElDIrVYMZhJLRqBhSoHgCdGyn7nSPW20rcg==
-// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-package=@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.2.tgz
-// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-integrity=sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==
+// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-package=@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.3.tgz
+// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-integrity=sha512-TTUyOStMrjipF3i7Bzyz4GxAW+g6KBA8x5rlFE2jJjh4gtI8K1w2zNOGRfq0dniSxkZOYdhO15SX6CenFf4UrA==
+// +kubebuilder:metadata:annotations=orchestrator-package=@redhat/backstage-plugin-orchestrator-1.5.0-rc.3.tgz
+// +kubebuilder:metadata:annotations=orchestrator-integrity=sha512-SkvEkftCmeta/0hBbWFkLAgfkJenL/xn23kpHS4cXlkSaXN6Cn7V/tsLIoYiDuBghQ3jbivNiU0EcNgBkCIK2w==
+// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-package=@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.3.tgz
+// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-integrity=sha512-C+iazAp/i+x/iCtlA/l2Vc/AVO4TMfDxwn0hrXVEVbO9FHdaKt63EdLQ2dvtWslEnlhv/9eDAGp0L8Ct6lbRZA==
 type Orchestrator struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -36,7 +36,7 @@ process has already been introduced by someone else with understanding,
 otherwise the document might seem confusing and not clear on the goals.
 
 For further reading on Konflux, visit their [documentation
-website](https://konflux-ci.dev/docs/advanced-how-tos/releasing/) to get
+website](https://konflux-ci.dev/docs/releasing/) to get
 acquainted with it and understand the release process as described in it.
 
 ## Prerequisites:

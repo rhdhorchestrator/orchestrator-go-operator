@@ -153,24 +153,26 @@ repository and to automatically trigger the Tekton pipelines as needed.
 1. Run the following commands to determine when the installation is completed:
 
    ```console
-   wget https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-helm-operator/main/hack/wait_for_operator_installed.sh -O /tmp/wait_for_operator_installed.sh && chmod u+x /tmp/wait_for_operator_installed.sh && /tmp/wait_for_operator_installed.sh
+   wget https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/main/hack/wait_for_operator_installed.sh -O /tmp/wait_for_operator_installed.sh && chmod u+x /tmp/wait_for_operator_installed.sh && /tmp/wait_for_operator_installed.sh
    ```
 
-   During the installation process, Kubernetes cronjobs are created by the operator to monitor the lifecycle of the CRs
-   managed by the operator: RHDH operator, OpenShift Serverless operator and OpenShift Serverless Logic operator. When
-   deleting one of the previously mentioned CRs, a job is triggered that ensures the CR is removed before the operator
-   is.
-   In case of any failure at this stage, these jobs remain active, facilitating administrators in retrieving detailed
-   diagnostic information to identify and address the cause of the failure.
+   During the installation process, the Orchestrator Operator creates and monitors the lifecycle of the sub-components
+   operators: RHDH operator, OpenShift Serverless operator and OpenShift Serverless Logic operator. Furthermore, it
+   creates the necessary CRs and resources needed for orchestrator to function properly.
 
 1. Apply the Orchestrator custom resource (CR) on the cluster to create an instance of RHDH and resources of OpenShift
-   Serverless Operator and OpenShift Serverless Operator Logic.
+   Serverless Operator and OpenShift Serverless Logic Operator.
    Make any changes to
    the [CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml)
    before applying it, or test the default Orchestrator CR:
     ```console
     oc apply -n orchestrator -f https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/main/config/samples/_v1alpha3_orchestrator.yaml
     ```
+   Note: After the first reconciliation of the Orchestrator CR, changes to some of the fields in the CR may not be
+   propagated/reconciled to the intended resource. For simplicity sake, that is the current design and may be revisited
+   in the near future. Please refer to
+   the [CRD Parameter List](https://github.com/jenniferubah/orchestrator-go-operator/blob/main/docs/crd) to know which
+   fields can be reconciled.
 
 ### Running The Setup Script
 
@@ -209,9 +211,11 @@ appear in the secret:
 > - `GITHUB_TOKEN`: This value is prompted from the user during script execution and is not predefined.
 > - `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`: The value for both these fields are used to authenticate against
     GitHub. For more information open this [link](https://backstage.io/docs/auth/github/provider/).
+> - `GITLAB_HOST` and `GITLAB_TOKEN`: The value for both these fields are used to authenticate against
+    GitLab.
 > - `ARGOCD_URL`: This value is dynamically obtained based on the first ArgoCD instance available.
 > - `ARGOCD_USERNAME`: Default value is set to `admin`.
-> - `ARGOCD_PASSWORD`: This value is dynamically obtained based on the first ArgoCD instance available.
+> - `ARGOCD_PASSWORD`: This value is dynamically obtained based on the ArgoCD instance available.
 
 Keys will not be added to the secret if they have no values associated. So for instance, when deploying in a cluster
 without the GitOps operators, the `ARGOCD_URL`, `ARGOCD_USERNAME` and `ARGOCD_PASSWORD` keys will be omitted in the
@@ -220,7 +224,7 @@ secret.
 Sample of a secret created in a GitOps environment:
 
 ```console
-$> oc get secret -n rhdh-operator -o yaml backstage-backend-auth-secret
+$> oc get secret -n rhdh -o yaml backstage-backend-auth-secret
 apiVersion: v1
 data:
   ARGOCD_PASSWORD: ...
@@ -245,17 +249,16 @@ type: Opaque
 If you want to enable monitoring for workflows, you shall enable it in the `Orchestrator` CR as follows:
 
 ```yaml
-apiVersion: rhdh.redhat.com/v1alpha2
+apiVersion: rhdh.redhat.com/v1alpha3
 kind: Orchestrator
 metadata:
   name: ...
 spec:
   ...
-  orchestrator:
+  platform:
     ...
-    sonataflowPlatform:
-      monitoring:
-        enabled: true
+    monitoring:
+      enabled: true
       ...
 ```
 
@@ -293,9 +296,9 @@ several essential steps must be followed:
 
 1. **Allow Traffic from the Workflow Namespace:**
    To allow Sonataflow services to accept traffic from workflows, either create an additional network policy or update
-   the exiting policy with the new workflow namespace.
+   the existing policy with the new workflow namespace.
 
-   ######  Create Additional Network Policy
+   ###### Create Additional Network Policy
    ```console
    oc create -f - <<EOF
    apiVersion: networking.k8s.io/v1
@@ -311,43 +314,52 @@ several essential steps must be followed:
          - namespaceSelector:
              matchLabels:
                # Allow Sonataflow services to communicate with new/additional workflow namespace.
-               kubernetes.io/metadata.name: <workflow-namespace>
+               kubernetes.io/metadata.name: <new-workflow-namespace>
    EOF
    ```
-   ######  Update Existing Network Policy
+   ###### Alternatively - Update Existing Network Policy
     ```console
-   oc -n sonataflow-infra patch
-    ```
+   oc -n sonataflow-infra patch networkpolicy allow-rhdh-to-sonataflow-and-workflows --type='json' \
+   -p='[
+    {
+      "op": "add",
+      "path": "/spec/ingress/0/from/-",
+      "value": {
+        "namespaceSelector": {
+          "matchLabels": {
+            "kubernetes.io/metadata.name": <new-workflow-namespace>
+          }
+        }          
+      }
+    }]'
 
 2. **Identify the RHDH Namespace:**
    Retrieve the namespace where RHDH is running by executing:
    ```console
-      oc get backstage -A
+   oc get backstage -A
    ```
-   Store the namespace value in RHDH_NAMESPACE in the Network Policy manifest below.
+
+   Store the namespace value in `$RHDH_NAMESPACE` in the Network Policy manifest below.
+
 3. **Identify the Sonataflow Services Namespace:**
    Check the namespace where Sonataflow services are deployed:
    ```console
-      oc get sonataflowclusterplatform -A
+   oc get sonataflowclusterplatform -A
    ```
    If there is no cluster platform, check for a namespace-specific platform:
    ```console
-      oc get sonataflowplatform -A
+   oc get sonataflowplatform -A
    ```
-   Store the namespace value in SONATAFLOW_PLATFORM_NAMESPACE.
+   Store the namespace value in `$WORKFLOW_NAMESPACE`.
 
 4. **Set Up a Network Policy:**
-   Configure a network policy to allow traffic only between RHDH, Sonataflow services, and the workflows. The policy can
-   be derived
-   from [here](https://github.com/rhdhorchestrator/orchestrator-helm-operator/blob/main/helm-charts/orchestrator/templates/network-policies.yaml)
-
+   Configure a network policy to allow traffic only between RHDH, Knative, Sonataflow services, and workflows.
    ```console
    oc create -f - <<EOF
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
    metadata:
      name: allow-rhdh-to-sonataflow-and-workflows
-     # Sonataflow and Workflows are using the same namespace.
      namespace: $ADDITIONAL_NAMESPACE
    spec:
      podSelector: {}
@@ -355,14 +367,44 @@ several essential steps must be followed:
        - from:
          - namespaceSelector:
              matchLabels:
-               # Allow RHDH namespace to communicate with workflows.
+               # Allows traffic from pods in the RHDH namespace.
                kubernetes.io/metadata.name: $RHDH_NAMESPACE
          - namespaceSelector:
              matchLabels:
-               # Allow Sonataflow services to communicate with workflows.
-               kubernetes.io/metadata.name: $SONATAFLOW_PLATFORM_NAMESPACE
+               # Allow traffic from pods in the in the Workflow namespace.
+               kubernetes.io/metadata.name: $WORKFLOW_NAMESPACE
+         - namespaceSelector:
+             matchLabels:
+               # Allows traffic from pods in the K-Native Eventing namespace.
+               kubernetes.io/metadata.name: knative-eventing
+         - namespaceSelector:
+             matchLabels:
+               # Allows traffic from pods in the K-Native Serving namespace.
+               kubernetes.io/metadata.name: knative-serving
    EOF
    ```
+   To allow unrestricted communication between all pods within the workflow's namespace, create the
+   `allow-intra-namespace` network policy.
+    ```console
+   oc create -f - <<EOF
+   apiVersion: networking.k8s.io/v1
+   kind: NetworkPolicy
+   metadata:
+     name: allow-intra-namespace
+     namespace:  $ADDITIONAL_NAMESPACE
+   spec:
+     # Apply this policy to all pods in the namespace
+     podSelector: {}
+     # Specify policy type as 'Ingress' to control incoming traffic rules
+     policyTypes:
+       - Ingress
+     ingress:
+       - from:
+           # Allow ingress from any pod within the same namespace
+           - podSelector: {}
+   EOF
+   ```
+
 5. **Ensure Persistence for the Workflow:**
    If persistence is required, follow these steps:
 
@@ -403,11 +445,11 @@ reference the service in a different namespace.
 ### GitOps environment
 
 See the
-dedicated [document](https://github.com/rhdhorchestrator/orchestrator-helm-operator/blob/main/docs/gitops/README.md)
+dedicated [document](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
 
 ### Deploying PostgreSQL reference implementation
 
-See [here](https://github.com/rhdhorchestrator/orchestrator-helm-operator/blob/main/docs/postgresql/README.md)
+See [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/README.md)
 
 ### ArgoCD and workflow namespace
 
@@ -427,19 +469,20 @@ Follow [Workflows Installation](https://www.rhdhorchestrator.io/serverless-workf
 **\/!\\ Before removing the orchestrator, make sure you have first removed any installed workflows. Otherwise the
 deletion may become hung in a terminating state.**
 
-To remove the operator from the cluster, delete the subscription:
+To remove the operator, first remove the operand resources
+
+Run:
 
 ```console
-oc delete subscriptions.operators.coreos.com orchestrator-operator -n openshift-operators
+oc delete namespace orchestrator
 ```
 
-Note that the CRDs created during the installation process will remain in the cluster.
+to delete the Orchestrator CR. This will remove the OSL, Serverless and RHDH Operators, Sonataflow CRs.
 
-To clean the rest of the resources, run:
+To clean up the rest of resources run
 
 ```console
-oc get crd -o name | grep -e sonataflow -e rhdh | xargs oc delete
-oc delete namespace orchestrator sonataflow-infra rhdh-operator
+oc delete namespace sonataflow-infra rhdh
 ```
 
 If you want to remove *knative* related resources, you may also run:
@@ -447,3 +490,11 @@ If you want to remove *knative* related resources, you may also run:
 ```console
 oc get crd -o name | grep -e knative | xargs oc delete
 ```
+
+To remove the operator from the cluster, delete the subscription:
+
+```console
+oc delete subscriptions.operators.coreos.com orchestrator-operator -n openshift-operators
+```
+
+Note that the CRDs created during the installation process will remain in the cluster.

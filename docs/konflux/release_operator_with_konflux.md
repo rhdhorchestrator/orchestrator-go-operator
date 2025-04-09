@@ -724,7 +724,7 @@ application, in our case the controller and bundle.
 
 
 Now we're ready to retrieve the snapshots and filter by those that were
-triggered by a nudge. The following commands sorts all the snapshots for the
+triggered by a nudge. The following commands sort all the snapshots for the
 go operator application that were created as a result of a nudge, by timestamp
 in ascending order and displays the name, integration tests success status and
 the merge PR number and remote branch used in the commit.
@@ -761,7 +761,7 @@ if [ -n "$controllerInBundle" ] && [ "$controllerSHAInBundle" = "$controllerSHAI
 ```
 
 * Verify that the bundle and controller release label also matches. Run the
-  following command to extract and compare the release label for the bundle and
+  following commands to extract and compare the release label for the bundle and
   controller images.
 ```console
 releaseLabelInBundle=$(skopeo inspect docker://$bundle --format "{{.Labels.release}}")
@@ -775,7 +775,7 @@ releaseName=$(bash -c "oc create -f - <<EOF
 apiVersion: appstudio.redhat.com/v1alpha1
 kind: Release
 metadata:
-  generateName: operator-staging$releaseVersion-
+  generateName: operator-staging$releaseVersion
   namespace: orchestrator-releng-tenant
 spec:
   releasePlan: operator-staging$releaseVersion
@@ -882,9 +882,10 @@ schema: olm.bundle
   publishes of the catalog where the initial bundle was referencing this
   pullspec instead of staging or production.
 
-* Create a PR with the changes and merge it once it's green. Ensure that the
-  on-push and ECP pipelines finish before proceeding. You'll need the snapshot
-  generated from the ECP pipeline to release the FBC fragment to the index.
+* Create a PR with the changes and merge it once pipelines all finish
+  successfully. Ensure that the on-push and ECP pipelines finish before
+  proceeding. You'll need the snapshot generated from the ECP pipeline to
+  release the FBC fragment to the index.
 
 * Follow these steps for each OCP version:
 

@@ -650,7 +650,7 @@ update the `target_branch` from main to `release-1.x`
 
 #### Update Main branch Via PR
 * Navigate to the [.tekton folder](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/.tekton)
-  and update the pipeline files names suffixed with the incremental (next) release `xxx-1.x.yaml`
+  and update the pipeline file names that are suffixed with the incremental (next) release `xxx-1.x.yaml`
 Example assuming 1.6 is the next release.
 ```console
 - controller-rhel9-operator-on-pull-request-1-6.yaml

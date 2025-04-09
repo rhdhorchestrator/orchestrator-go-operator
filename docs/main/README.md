@@ -171,7 +171,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
    Note: After the first reconciliation of the Orchestrator CR, changes to some of the fields in the CR may not be
    propagated/reconciled to the intended resource. For simplicity sake, that is the current design and may be revisited
    in the near future. Please refer to
-   the [CRD Parameter List](https://github.com/jenniferubah/orchestrator-go-operator/blob/main/docs/crd) to know which
+   the [CRD Parameter List](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/crd) to know which
    fields can be reconciled.
 
 ### Running The Setup Script

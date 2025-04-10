@@ -105,15 +105,15 @@ To incorporate the Orchestrator plugins, append the following configuration to t
   ```
 ```yaml
       - disabled: false
-        package: "@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.3.tgz"
-        integrity: sha512-TTUyOStMrjipF3i7Bzyz4GxAW+g6KBA8x5rlFE2jJjh4gtI8K1w2zNOGRfq0dniSxkZOYdhO15SX6CenFf4UrA==
+        package: "@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.1.tgz"
+        integrity: sha512-VIenFStdq9QvvmgmEMG8O7b2wqIebvEcqNeJ9SWZ8jen9t+efTK6D3Rde74LQ1no1QaHLx8RoxNCOuTUEF8O/g==
         pluginConfig:
           orchestrator:
             dataIndexService:
               url: http://sonataflow-platform-data-index-service.sonataflow-infra
       - disabled: false
-        package: "@redhat/backstage-plugin-orchestrator-1.5.0-rc.3.tgz"
-        integrity: sha512-SkvEkftCmeta/0hBbWFkLAgfkJenL/xn23kpHS4cXlkSaXN6Cn7V/tsLIoYiDuBghQ3jbivNiU0EcNgBkCIK2w==
+        package: "@redhat/backstage-plugin-orchestrator-1.5.1.tgz"
+        integrity: sha512-7VOe+XGTUzrdO/av0DNHbydOjB3Lo+XdCs6fj3JVODLP7Ypd3GXHf/nssYxG5ZYC9F1t9MNeguE2bZOB6ckqTA==
         pluginConfig:
           dynamicPlugins:
             frontend:
@@ -130,8 +130,8 @@ To incorporate the Orchestrator plugins, append the following configuration to t
                     module: OrchestratorPlugin
                     path: /orchestrator
       - disabled: false
-        package: "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.3.tgz"
-        integrity: sha512-C+iazAp/i+x/iCtlA/l2Vc/AVO4TMfDxwn0hrXVEVbO9FHdaKt63EdLQ2dvtWslEnlhv/9eDAGp0L8Ct6lbRZA==  
+        package: "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.1.tgz"
+        integrity: sha512-bnVQjVsUZ470Vgm2kd5Lo/bVa2fF0q4GufBDc/8oTQsnP3zZJQqKFvFElBTCjY76RqkECydlvZ1UFybSzvockQ==  
         pluginConfig:
           orchestrator:
             dataIndexService:
@@ -295,12 +295,12 @@ oc get crd orchestrators.rhdh.redhat.com -o json | jq '.metadata.annotations | w
 In the example output below, `orchestrator-backend-dynamic-integrity` is the integrity value and `orchestrator-backend-dynamic-package` is the package name:
 ```json
 {
-  "orchestrator-backend-dynamic-integrity": "sha512-TTUyOStMrjipF3i7Bzyz4GxAW+g6KBA8x5rlFE2jJjh4gtI8K1w2zNOGRfq0dniSxkZOYdhO15SX6CenFf4UrA==",
-  "orchestrator-backend-dynamic-package": "@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.0-rc.3.tgz",
-  "orchestrator-integrity": "sha512-SkvEkftCmeta/0hBbWFkLAgfkJenL/xn23kpHS4cXlkSaXN6Cn7V/tsLIoYiDuBghQ3jbivNiU0EcNgBkCIK2w==",
-  "orchestrator-package": "@redhat/backstage-plugin-orchestrator-1.5.0-rc.3.tgz",
-  "orchestrator-scaffolder-backend-integrity": "sha512-C+iazAp/i+x/iCtlA/l2Vc/AVO4TMfDxwn0hrXVEVbO9FHdaKt63EdLQ2dvtWslEnlhv/9eDAGp0L8Ct6lbRZA==",
-  "orchestrator-scaffolder-backend-package": "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.0-rc.3.tgz"
+  "orchestrator-backend-dynamic-integrity": "sha512-VIenFStdq9QvvmgmEMG8O7b2wqIebvEcqNeJ9SWZ8jen9t+efTK6D3Rde74LQ1no1QaHLx8RoxNCOuTUEF8O/g==",
+  "orchestrator-backend-dynamic-package": "@redhat/backstage-plugin-orchestrator-backend-dynamic-1.5.1.tgz",
+  "orchestrator-integrity": "sha512-7VOe+XGTUzrdO/av0DNHbydOjB3Lo+XdCs6fj3JVODLP7Ypd3GXHf/nssYxG5ZYC9F1t9MNeguE2bZOB6ckqTA==",
+  "orchestrator-package": "@redhat/backstage-plugin-orchestrator-1.5.1.tgz",
+  "orchestrator-scaffolder-backend-integrity": "sha512-bnVQjVsUZ470Vgm2kd5Lo/bVa2fF0q4GufBDc/8oTQsnP3zZJQqKFvFElBTCjY76RqkECydlvZ1UFybSzvockQ==",
+  "orchestrator-scaffolder-backend-package": "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.1.tgz"
 }
 ```
 > Note: The Orchestrator plugin package names in the `dynamic-plugins` ConfigMap must have `@redhat/` prepended to the package name (i.e., `@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0`)

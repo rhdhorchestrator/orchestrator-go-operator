@@ -119,7 +119,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
     1. If any service does not become available, verify the logs for that service or
        consult [troubleshooting steps](https://www.rhdhorchestrator.io/main/docs/serverless-workflows/troubleshooting/).
 
-### Manual Install
+### Manual Installation
 
 1. Deploy the PostgreSQL reference implementation for persistence support in SonataFlow following
    these [instructions](https://github.com/rhdhorchestrator/orchestrator-helm-operator/blob/main/docs/postgresql/README.md)
@@ -160,7 +160,8 @@ repository and to automatically trigger the Tekton pipelines as needed.
    operators: RHDH operator, OpenShift Serverless operator and OpenShift Serverless Logic operator. Furthermore, it
    creates the necessary CRs and resources needed for orchestrator to function properly.
 
-1. Apply the Orchestrator custom resource (CR) on the cluster to create an instance of RHDH and resources of OpenShift
+1. Apply the Orchestrator custom resource (CR) on the cluster to create an instance of RHDH and resources of
+   OpenShift
    Serverless Operator and OpenShift Serverless Logic Operator.
    Make any changes to
    the [CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml)
@@ -169,10 +170,11 @@ repository and to automatically trigger the Tekton pipelines as needed.
     oc apply -n orchestrator -f https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/main/config/samples/_v1alpha3_orchestrator.yaml
     ```
    Note: After the first reconciliation of the Orchestrator CR, changes to some of the fields in the CR may not be
-   propagated/reconciled to the intended resource. For simplicity sake, that is the current design and may be revisited
-   in the near future. Please refer to
-   the [CRD Parameter List](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/crd) to know which
-   fields can be reconciled.
+   propagated/reconciled to the intended resource. For example, changing the `platform.resources.requests` field in
+   the Orchestrator CR will not have any effect on the running instance of the SonataFlowPlatform (SFP) resource.
+   For simplicity sake, that is the current design and may be revisited in the near future. Please refer to
+   the [CRD Parameter List](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/crd)
+   to know which fields can be reconciled.
 
 ### Running The Setup Script
 
@@ -268,13 +270,12 @@ Prometheus, Grafana and the sample Grafana dashboard.
 
 ### Using Knative eventing communication
 
-If you want to use a Knative broker for communication between the different components (Data Index, Job Service and
-Workflows), you should use a broker.
-
-Kafka is a good candidate as it fulfills the reliability need. You can find the list of available brokers for Knative is
+To enable eventing communication communication between the different components (Data Index, Job Service and
+Workflows), a broker should be used. Kafka is a good candidate as it fulfills the reliability need. You can find the
+list of available brokers for Knative is
 here: https://knative.dev/docs/eventing/brokers/broker-types/
 
-You could also use an in-memory broker but you should not use it for production purposes.
+Alternatively, an in-memory broker could also be used, however it is not recommended to use it for production purposes.
 
 Follow
 these [instructions](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-helm-operator/refs/heads/main/docs/main/eventing-communication/README.md)
@@ -338,7 +339,6 @@ several essential steps must be followed:
    ```console
    oc get backstage -A
    ```
-
    Store the namespace value in `$RHDH_NAMESPACE` in the Network Policy manifest below.
 
 3. **Identify the Sonataflow Services Namespace:**

@@ -159,6 +159,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
    During the installation process, the Orchestrator Operator creates and monitors the lifecycle of the sub-components
    operators: RHDH operator, OpenShift Serverless operator and OpenShift Serverless Logic operator. Furthermore, it
    creates the necessary CRs and resources needed for orchestrator to function properly.
+   Please refer to the [troubleshooting-section](#troubleshooting) for known issues with the operator resources.
 
 1. Apply the Orchestrator custom resource (CR) on the cluster to create an instance of RHDH and resources of
    OpenShift
@@ -498,3 +499,29 @@ oc delete subscriptions.operators.coreos.com orchestrator-operator -n openshift-
 ```
 
 Note that the CRDs created during the installation process will remain in the cluster.
+
+## Troubleshooting
+
+### Zip bomb detected with Orchestrator Plugin
+
+Currently, there is a known issue with RHDH pod starting up due to the size in the orchestrator plugin.
+The error `Zip bomb detected in backstage-plugin-orchestrator-1.5.0` will be seen and this can be resolved by
+increasing the `MAX_ENTRY_SIZE"` of the initContainer which downloads the plugins. This will be resolved in the next
+operator release.
+More information can be
+found [here](https://docs.redhat.com/en/documentation/red_hat_developer_hub/1.0/html/administration_guide_for_red_hat_developer_hub/rhdh-installing-dynamic-plugins#basic-configuration-of-dynamic-plugins).
+
+To fix this issue, please run patch command within the RHDH instance namespace:
+
+```console
+oc -n <rhdh-namespace> patch deployment <deployment-name> --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/initContainers/0/env/-",
+    "value": {
+      "name": "MAX_ENTRY_SIZE",
+      "value": "30000000"
+    }
+  }
+]'
+```

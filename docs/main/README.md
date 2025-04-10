@@ -500,11 +500,11 @@ oc delete subscriptions.operators.coreos.com orchestrator-operator -n openshift-
 
 Note that the CRDs created during the installation process will remain in the cluster.
 
-## Troubleshooting
+## Troubleshooting/Known Issue
 
 ### Zip bomb detected with Orchestrator Plugin
 
-Currently, there is a known issue with RHDH pod starting up due to the size in the orchestrator plugin.
+Currently, there is a known issue with RHDH pod starting up due to the size of the orchestrator plugin.
 The error `Zip bomb detected in backstage-plugin-orchestrator-1.5.0` will be seen and this can be resolved by
 increasing the `MAX_ENTRY_SIZE"` of the initContainer which downloads the plugins. This will be resolved in the next
 operator release.

@@ -1,25 +1,33 @@
 # Orchestrator Operator Documentation
-Welcome to the go-based Orchestrator documentation. This is still a work in progress document. Much more to come.
+
+Welcome to the **Orchestrator Operator Documentation**. This folder contains supplemental information and resources related to the Orchestrator operator project. For the complete and official documentation, please visit the [Orchestrator Documentation](https://www.rhdhorchestrator.io/).
 
 ## Overview
-This will contain an overview of what the document will and list out related resource.
 
-**Compatibility Matrix between Orchestrator and Dependencies**
+The **Orchestrator** project facilitates the automation of complex workflows across various systems.
 
-| Orchestrator/Dependency | RHDH/Go-version | OSL/Go-version | Serverless/Go-version |
-|-------------------------|-----------------|----------------|-----------------------|
-| Orchestrator 1.3        | 1.3.0/1.3.0     | 1.34.0/999.0.0 | 1.34/0.42.5           |
-| Orchestrator 1.4        |                 |                |                       |
+- **crd/**
+  - Documentation for crd parameters 
 
-**Compatibility Matrix for Plugins**
+- **gitops/**
+  - Documentation for initializing the GitOps Environment
 
-| Plugin/Orchestrator | Orchestrator 1.3                                             | Orchestrator 1.4 |
-|---------------------|--------------------------------------------------------------|------------------|
-| Signals             | plugin-signals-dynamic@1.3.0-rc.3                            |                  |
-| SignalsBackend      | plugin-signals-backend-dynamic@1.3.0-rc.3                    |                  |
-| NotificationsEmail  | plugin-notifications-backend-module-email-dynamic@1.3.0-rc.3 |                  |
-| NotificationBackend | plugin-notifications-backend-dynamic@1.3.0-rc.3              |                  |
-| Notification        | plugin-notifications-dynamic@1.3.0-rc.3                      |                  |
-| OrchestratorBackend | backstage-plugin-orchestrator-backend-dynamic@1.3.0-rc.3     |                  |
-| Orchestrator        | backstage-plugin-orchestrator@1.3.0-rc.3                     |                  |
+- **konflux/**
+  - Documentation for preparing and releasing with Konflux
 
+- **postgresql/**
+  - Documentation for installing PostgreSQL Server
+
+- **main/**
+  - Installation instructions, and configuration details specific to main branch of the Orchestrator project.
+
+- **operator-release/**
+  - Documentation on how to release the operator
+
+- **release-x.y/**
+  - Installation instructions, and configuration details specific to version x.y of the Orchestrator project.
+
+## Additional Resources
+
+- For the official and comprehensive documentation, please refer to the [Orchestrator Official Documentation](https://www.rhdhorchestrator.io/).
+- If you encounter any issues or need further assistance, please open an issue on our [GitHub Issues](https://github.com/rhdhorchestrator/orchestrator-helm-operator/issues) page.

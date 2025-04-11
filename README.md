@@ -1,6 +1,8 @@
 # Orchestrator Operator
 
 Go based operator for deploying the Orchestrator.
+For more comprehensive information about Orchestrator, please refer to
+the [Orchestrator Official Documentation](https://www.rhdhorchestrator.io/).
 
 ## Installing the operator
 
@@ -34,7 +36,7 @@ and follow the instructions.
 The mechanism for upgrading the operator currently involves removing the existing operator and its operand resources and
 installing the new version.
 Follow
-his [section in the guide](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#cleanup) to
+this [section in the guide](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#cleanup) to
 clean up resources and follow
 this [section in the guide](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#installing-the-orchestrator-go-operator)
 to install the latest version.

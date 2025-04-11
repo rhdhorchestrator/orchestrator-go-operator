@@ -512,7 +512,7 @@ Note that the CRDs created during the installation process will remain in the cl
 |---------------------------------------------------------------------------------------------------------|--------------------------------|
 | Orchestrator Backend (backstage-plugin-orchestrator-backend-dynamic@1.5.1)                              | 1.5.0                          |
 | Orchestrator (backstage-plugin-orchestrator@1.5.1)                                                      | 1.5.0                          |
-| Orchestrator Scaffolder Backend (backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.5.1) | 1.5.0                          |
+| Orchestrator Scaffolder Backend (backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.5.1) | 1.5.0                          |
 
 ## Troubleshooting/Known Issue
 

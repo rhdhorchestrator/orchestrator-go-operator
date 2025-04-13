@@ -1,6 +1,8 @@
 module github.com/rhdhorchestrator/orchestrator-operator
 
-go 1.22.7
+go 1.23.0
+
+toolchain go1.23.8
 
 require (
 	github.com/onsi/ginkgo/v2 v2.22.2
@@ -171,7 +173,7 @@ require (
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.6.0 // indirect

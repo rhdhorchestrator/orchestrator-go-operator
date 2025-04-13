@@ -5,7 +5,7 @@ go 1.22.7
 require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
-	github.com/operator-framework/operator-lifecycle-manager v0.22.0
+	github.com/operator-framework/operator-lifecycle-manager v0.31.0
 	k8s.io/api v0.31.3
 	k8s.io/apimachinery v0.31.3
 	k8s.io/client-go v0.31.3

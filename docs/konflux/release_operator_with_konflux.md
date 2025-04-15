@@ -181,7 +181,7 @@ go operator application that were created as a result of a nudge, by timestamp
 in ascending order and displays the name, integration tests success status and
 the merge PR number and remote branch used in the commit.
 ```console
-oc get snapshots --sort-by .metadata.creationTimestamp -l pac.test.appstudio.openshift.io/event-type=push,appstudio.openshift.io/component=$orchestrator_operator_bundle -ojsonpath='{range .items[*]}{@.metadata.name}{"\t"}{@.status.conditions[?(@.type=="AppStudioTestSucceeded")].status}{"\t"}{@.metadata.annotations.pac\.test\.appstudio\.openshift\.io/sha-title}{"\n"}{end}' | grep rhdhorchestrator/konflux/component-updates
+oc get snapshots --sort-by .metadata.creationTimestamp -l pac.test.appstudio.openshift.io/event-type=push,appstudio.openshift.io/component=$orchestrator_operator_bundle -ojsonpath='{range .items[*]}{@.metadata.name}{"\t"}{@.status.conditions[?(@.type=="AppStudioTestSucceeded")].status}{"\t"}{@.metadata.annotations.pac\.test\.appstudio\.openshift\.io/sha-title}{"\n"}{end}' | grep "Update controller-rhel9-operator"
 ```
 Example:
 ```console

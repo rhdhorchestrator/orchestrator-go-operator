@@ -227,7 +227,7 @@ releaseName=$(bash -c "oc create -f - <<EOF
 apiVersion: appstudio.redhat.com/v1alpha1
 kind: Release
 metadata:
-  generateName: operator-staging$releaseVersion
+  generateName: operator-staging$releaseVersion-
   namespace: orchestrator-releng-tenant
 spec:
   releasePlan: operator-staging$releaseVersion

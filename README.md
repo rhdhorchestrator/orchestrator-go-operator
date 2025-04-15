@@ -1,114 +1,82 @@
-# orchestrator-operator
-// TODO(user): Add simple overview of use/purpose
+# Orchestrator Operator
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+Go based operator for deploying the Orchestrator.
+For more comprehensive information about Orchestrator, please refer to
+the [Orchestrator Official Documentation](https://www.rhdhorchestrator.io/).
 
-## Getting Started
+## Installing the operator
 
-### Prerequisites
-- go version v1.21.0+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+Please visit the [README.md](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/README.md)
+page and follow the guide to install the operator in your cluster.
 
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
+## Releasing the operator
 
-```sh
-make docker-build docker-push IMG=<some-registry>/orchestrator-operator:tag
-```
+Please visit
+the [README.md](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/operator-release/operator-release.md)
+page and follow the guide to release the operator.
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+## Updating the Orchestrator Plugins
 
-**Install the CRDs into the cluster:**
+Please visit the section in
+this [Guide](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/operator-release/operator-release.md#update-the-orchestrator-plugin-if-needed)
+and follow the instructions.
 
-```sh
-make install
-```
+## Contributing to the operator
 
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
+This project is generated using the operator-sdk. For general knowledge on how to use build the go based operator using
+the
+operator-sdk tool, please visit: [go-based-operator](https://sdk.operatorframework.io/docs/building-operators/golang/).
 
-```sh
-make deploy IMG=<some-registry>/orchestrator-operator:tag
-```
+#### Fork the Project
 
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
+To fork the project into a local repository, follow
+this [guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
+After making code changes, create a pull request and add reviewers from the maintainer list.
 
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
+#### Code change rules
 
-```sh
-kubectl apply -k config/samples/
-```
+1. Ensure to run `make generate manifests` after modifying the `orchestrator_types.go` file.
+1. Ensure to run `make manifests` if any changes to
+the [kubebuilder makers in the reconciler](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/internal/controller/orchestrator_controller.go#L71)
+for rbac changes to be propagated in the `config/rbac` directory.
+1. Ensure to run `make bundle` for changes in the config directory to be reflected in the bundle directory.
+1. Ensure to add unit tests for any new feature or update. Reference
+the [kube package](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/internal/controller/kube).
 
->**NOTE**: Ensure that the samples has default values to test it out.
+#### Installation
 
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
+For local installation, login to an OCP cluster. Currently, the operator has been tested only on OCP clusters.\
+Run `make docker-build docker-push` to build and push to your local docker repository.\
+Run `make deploy` to install the operator on the OCP cluster.\
+Apply a Custom Resource - find sample
+CR [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml).
 
-```sh
-kubectl delete -k config/samples/
-```
+#### Uninstallation
 
-**Delete the APIs(CRDs) from the cluster:**
+Remove the custom resource and run `make undeploy` to remove the operator resources.
 
-```sh
-make uninstall
-```
+**NOTE**: Run `make help` for more information on all potential make targets
 
-**UnDeploy the controller from the cluster:**
+#### Prerequisites for dev tools
 
-```sh
-make undeploy
-```
+- go version v1.22.0+
+- operator-sdk v1.38.0+
+- docker version 27.03+.
+- kubectl version v1.20.0+.
+- Access to a OCP cluster v4.14+.
 
-## Project Distribution
+## Upgrading the operator
 
-Following are the steps to build the installer and distribute this project to users.
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/orchestrator-operator:tag
-```
-
-NOTE: The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without
-its dependencies.
-
-2. Using the installer
-
-Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/orchestrator-operator/<tag or branch>/dist/install.yaml
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-**NOTE:** Run `make help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+The mechanism for upgrading the operator currently involves removing the existing operator and its operand resources and
+installing the new version.
+Follow
+this [section in the guide](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#cleanup) to
+clean up resources and follow
+this [section in the guide](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#installing-the-orchestrator-go-operator)
+to install the latest version.
 
 ## License
 
-Copyright 2024.
+See the [LICENSE](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/LICENSE) file for details.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 

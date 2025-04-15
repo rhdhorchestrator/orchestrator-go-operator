@@ -500,6 +500,20 @@ oc delete subscriptions.operators.coreos.com orchestrator-operator -n openshift-
 
 Note that the CRDs created during the installation process will remain in the cluster.
 
+**Compatibility Matrix between Orchestrator Operator and Dependencies**
+
+| Orchestrator Operator | RHDH  | OSL    | Serverless |
+|-----------------------|-------|--------|------------|
+| Orchestrator 1.5.0    | 1.5.1 | 1.35.0 | 1.35.0     |
+
+**Compatibility Matrix for Orchestrator Plugins**
+
+| Orchestrator Plugins  Version                                                                           | Orchestrator Operator  Version |
+|---------------------------------------------------------------------------------------------------------|--------------------------------|
+| Orchestrator Backend (backstage-plugin-orchestrator-backend-dynamic@1.5.1)                              | 1.5.0                          |
+| Orchestrator (backstage-plugin-orchestrator@1.5.1)                                                      | 1.5.0                          |
+| Orchestrator Scaffolder Backend (backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.5.1) | 1.5.0                          |
+
 ## Troubleshooting/Known Issue
 
 ### Zip bomb detected with Orchestrator Plugin

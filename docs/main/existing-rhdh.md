@@ -6,8 +6,8 @@
 # Installation steps
 
 ## Install the Orchestrator Operator
-In 1.6, the Orchestrator infrastructure is installed using the Orchestrator Operator.
-1. Install the Orchestrator Operator 1.6 from OperatorHub.
+In 1.5, the Orchestrator infrastructure is installed using the Orchestrator Operator.
+1. Install the Orchestrator Operator 1.5 from OperatorHub.
 1. Create orchestrator resource (operand) instance - ensure `rhdh: installOperator: False` is set, e.g.
    > Note: `${TARGET_NAMESPACE}` should be set to the desired namespace
 

@@ -55,7 +55,7 @@ chips is not supported.
 
 If you plan to deploy in a GitOps environment, make sure you have installed the `ArgoCD/Red Hat OpenShift GitOps` and
 the `Tekton/Red Hat Openshift Pipelines Install` operators following
-these [instructions](https://github.com/rhdhorchestrator/orchestrator-helm-operator/blob/main/docs/gitops/README.md).
+these [instructions](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md).
 The Orchestrator installs RHDH and imports software templates designed for bootstrapping workflow development. These
 templates are crafted to ease the development lifecycle, including a Tekton pipeline to build workflow images and
 generate workflow K8s custom resources. Furthermore, ArgoCD is utilized to monitor any changes made to the workflow
@@ -64,7 +64,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
 - `ArgoCD/OpenShift GitOps` operator
     - Ensure at least one instance of `ArgoCD` exists in the designated namespace (referenced by `ARGOCD_NAMESPACE`
       environment variable).
-      Example [here](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-helm-operator/main/docs/gitops/resources/argocd-example.yaml)
+      Example [here](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/main/docs/gitops/resources/argocd-example.yaml)
     - Validated API is `argoproj.io/v1alpha1/AppProject`
 - `Tekton/OpenShift Pipelines` operator
     - Validated APIs are `tekton.dev/v1beta1/Task` and `tekton.dev/v1/Pipeline`
@@ -122,7 +122,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
 ### Manual Installation
 
 1. Deploy the PostgreSQL reference implementation for persistence support in SonataFlow following
-   these [instructions](https://github.com/rhdhorchestrator/orchestrator-helm-operator/blob/main/docs/postgresql/README.md)
+   these [instructions](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/README.md)
 
 1. Create a namespace for the Orchestrator solution:
 
@@ -279,7 +279,7 @@ here: https://knative.dev/docs/eventing/brokers/broker-types/
 Alternatively, an in-memory broker could also be used, however it is not recommended to use it for production purposes.
 
 Follow
-these [instructions](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-helm-operator/refs/heads/main/docs/main/eventing-communication/README.md)
+these [instructions](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/main/docs/main/eventing-communication/README.md)
 to setup the Knative broker communication.
 
 ## Additional information

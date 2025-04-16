@@ -1,5 +1,5 @@
 # Prerequisites
-- RHDH 1.6 instance deployed with IDP configured (github, gitlab, ...)
+- RHDH 1.5 instance deployed with IDP configured (GitHub, GitLab, ...)
 - For using the Orchestrator's [software templates](https://github.com/rhdhorchestrator/workflow-software-templates/tree/v1.5.x), OpenShift GitOps (ArgoCD) and OpenShift Pipelines (Tekton) should be installed and configured in RHDH (to enhance the CI/CD plugins) - [Follow these steps](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
 - A secret in RHDH's namespace named `dynamic-plugins-npmrc` that points to the plugins npm registry (details will be provided below)
 

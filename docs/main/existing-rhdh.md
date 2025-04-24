@@ -79,12 +79,18 @@ If there is a need to point to multiple registries, modify the content of the se
     .npmrc: |
       registry=https://npm.registry.redhat.com
 ```
-to
+to the desired one. Uncomment and edit the content to your needs:
 ```yaml
   stringData:
     .npmrc: |
+      # registry for pulling the Orchestrator plugins
       @redhat:registry=https://npm.registry.redhat.com
-      @<other-scope>:registry=<other-registry>
+
+      # if needed organization registry for a specific scope
+      # @<my-org-scope>:registry=<other-registry>
+
+      # a global registry
+      # registry=<global registry>
 ```
 
 Edit the Backstage CR to increase the `MAX_ENTRY_SIZE` since the Orchestrator plugin size exceeds the default:

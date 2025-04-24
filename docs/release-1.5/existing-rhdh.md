@@ -91,6 +91,29 @@ to
       registry=<global registry>
 ```
 
+Edit the Backstage CR to increase the `MAX_ENTRY_SIZE` since the Orchestraotr plugin size exceeds the default.
+The following value should be sufficient:
+```
+oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
+    {
+      "op": "add",
+      "path": "/spec/deployment/patch/spec/template/spec/initContainers",
+      "value": [
+        {
+          "name": "install-dynamic-plugins",
+          "env": [
+            {
+              "name": "MAX_ENTRY_SIZE",
+              "value": "30000000"
+            }
+          ]
+        }
+      ]
+    }
+  ]'
+
+```
+
 ### Proxy configuration
 
 If you configured a proxy in your RHDH instance then you need to edit the `NO_PROXY` configuration. You need to add the namespaces where the workflows are deployed and also the namespace `sonataflow-infra`. E.g. NO_PROXY=current-value-of-no-proxy, `.sonataflow-infra`,`.my-workflow-names

@@ -91,8 +91,7 @@ to
       registry=<global registry>
 ```
 
-Edit the Backstage CR to increase the `MAX_ENTRY_SIZE` since the Orchestraotr plugin size exceeds the default.
-The following value should be sufficient:
+Edit the Backstage CR to increase the `MAX_ENTRY_SIZE` since the Orchestrator plugin size exceeds the default:
 ```
 oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
     {
@@ -112,6 +111,7 @@ oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
     }
   ]'
 ```
+Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/release-1.5#zip-bomb-detected-with-orchestrator-plugin).
 
 ### Proxy configuration
 

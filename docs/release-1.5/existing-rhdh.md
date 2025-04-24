@@ -84,7 +84,11 @@ to
   stringData:
     .npmrc: |
       @redhat:registry=https://npm.registry.redhat.com
-      @<other-scope>:registry=<other-registry>
+
+      # if needed
+      # @<my-org>:registry=<other-registry>
+
+      registry=<global registry>
 ```
 
 ### Proxy configuration

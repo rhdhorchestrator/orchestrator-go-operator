@@ -111,7 +111,6 @@ oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
       ]
     }
   ]'
-
 ```
 
 ### Proxy configuration

@@ -84,8 +84,18 @@ to
   stringData:
     .npmrc: |
       @redhat:registry=https://npm.registry.redhat.com
-      @<other-scope>:registry=<other-registry>
+      registry=<other-registry>
 ```
+
+or if needed a specific registry per scope:
+```yaml
+  stringData:
+    .npmrc: |
+      @redhat:registry=https://npm.registry.redhat.com
+      @<other-scope>:registry=<other-registry>
+      registry=<other-registry>
+```
+
 
 ### Proxy configuration
 

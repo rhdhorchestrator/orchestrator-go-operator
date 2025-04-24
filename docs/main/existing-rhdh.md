@@ -108,6 +108,8 @@ oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
   ]'
 ```
 
+Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#zip-bomb-detected-with-orchestrator-plugin).
+
 ### Proxy configuration
 
 If you configured a proxy in your RHDH instance then you need to edit the `NO_PROXY` configuration. You need to add the namespaces where the workflows are deployed and also the namespace `sonataflow-infra`. E.g. NO_PROXY=current-value-of-no-proxy, `.sonataflow-infra`,`.my-workflow-names

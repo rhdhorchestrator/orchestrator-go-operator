@@ -1,6 +1,6 @@
 module github.com/rhdhorchestrator/orchestrator-operator
 
-go 1.22.7
+go 1.23
 
 require (
 	github.com/onsi/ginkgo/v2 v2.22.2

@@ -74,7 +74,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-04-14T16:50:08Z"
+    createdAt: "2025-05-05T08:54:46Z"
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
     features.operators.openshift.io/csi: "false"

@@ -19,15 +19,16 @@ package controller
 import (
 	"context"
 	"fmt"
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
 
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/rhdh"
-	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
@@ -191,7 +192,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// handle RHDH
 	rhdhConfig := orchestrator.Spec.RHDHConfig
 	if err := r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
 		}
 		logger.Error(err, "Error occurred when creating RHDH resources")

@@ -356,7 +356,7 @@ PLUGINS=(
 for PLUGIN_NAME in "${PLUGINS[@]}"
 do
      echo "Retrieving latest version for plugin: $PLUGIN_NAME\n";
-     curl -s -q "https://npm.stage.registry.redhat.com/${PLUGIN_NAME}/" | jq -r '.versions | keys_unsorted[-1] as $latest_version | .[$latest_version] | "package: \"\(.name)@\(.version)\"\nintegrity: \(.dist.integrity)"';
+     curl -s -q "https://npm.registry.redhat.com/${PLUGIN_NAME}/" | jq -r '.versions | keys_unsorted[-1] as $latest_version | .[$latest_version] | "package: \"\(.name)@\(.version)\"\nintegrity: \(.dist.integrity)"';
      echo "---"
 done
 ```

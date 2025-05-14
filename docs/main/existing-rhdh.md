@@ -324,12 +324,16 @@ oc get crd orchestrators.rhdh.redhat.com -o json | jq '.metadata.annotations | w
 In the example output below, `orchestrator-backend-dynamic-integrity` is the integrity value and `orchestrator-backend-dynamic-package` is the package name:
 ```json
 {
-  "orchestrator-backend-dynamic-integrity": "sha512-VIenFStdq9QvvmgmEMG8O7b2wqIebvEcqNeJ9SWZ8jen9t+efTK6D3Rde74LQ1no1QaHLx8RoxNCOuTUEF8O/g==",
-  "orchestrator-backend-dynamic-package": "@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.1",
-  "orchestrator-integrity": "sha512-7VOe+XGTUzrdO/av0DNHbydOjB3Lo+XdCs6fj3JVODLP7Ypd3GXHf/nssYxG5ZYC9F1t9MNeguE2bZOB6ckqTA==",
-  "orchestrator-package": "@redhat/backstage-plugin-orchestrator@1.5.1",
-  "orchestrator-scaffolder-backend-integrity": "sha512-bnVQjVsUZ470Vgm2kd5Lo/bVa2fF0q4GufBDc/8oTQsnP3zZJQqKFvFElBTCjY76RqkECydlvZ1UFybSzvockQ==",
-  "orchestrator-scaffolder-backend-package": "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.5.1"
+{
+  "orchestrator-backend-dynamic-integrity": "sha512-ghGboDXc24f5jZLUMNkw86l8P+FDPYIvea8OMrcSrCCGRiSazEAgZd7IwzbJ61s0tIY5m5bDd7PHJOfleizXqQ==",
+  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.3.tgz",
+  "orchestrator-integrity": "sha512-b0Px4lYGVgwr0pd3VFg6bFt26B8Mkv/HYfTDlhqC3jFRdb8WZGYOSIbSjCegpE12uRxBn+P3e+4qqqg2NS3lMQ==",
+  "orchestrator-package": "backstage-plugin-orchestrator-1.6.0-rc.3.tgz",
+  "orchestrator-scaffolder-backend-integrity": "sha512-L94IksLT0BF0YRB1BQ+IAEoG0NkCNojy2tQtD6e39JgsbC/Ht9mytNLxWRAa/+ppV+yz+mFGHDyiqaa1YQaRTA==",
+  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.3.tgz",
+  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.3.tgz",
+  "orchestrator-form-widgets-integrity": "sha512-86TWZctRwmQC0MPTa2QBxwBgE4k26CN633jDv0F4iaT0TKRfr9fhT4HZEAOyBxmPe/P2QlPj5BQchF7T7YTkzA=="
+}
 }
 ```
 > Note: The Orchestrator plugin package names in the `dynamic-plugins` ConfigMap must have `@redhat/` prepended to the package name (i.e., `@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0`)
@@ -359,17 +363,21 @@ done
 
 A sample output should look like:
 ```
-Retrieving latest version for plugin: @redhat/backstage-plugin-orchestrator\n
-package: "@redhat/backstage-plugin-orchestrator@1.5.0"
-integrity: sha512-TmG54OazZLSuzPFmqQSi11koChBE+T8q0ZA7zVkSZZHZjkxvXy2fjqi4Vozz/2hYDUuXRXMJFJ806ijlsiwUsw==
+Retrieving latest version for plugin: backstage-plugin-orchestrator\n
+package: "backstage-plugin-orchestrator-1.6.0-rc.3.tgz"
+integrity: sha512-b0Px4lYGVgwr0pd3VFg6bFt26B8Mkv/HYfTDlhqC3jFRdb8WZGYOSIbSjCegpE12uRxBn+P3e+4qqqg2NS3lMQ==
 ---
-Retrieving latest version for plugin: @redhat/backstage-plugin-orchestrator-backend-dynamic\n
-package: "@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0"
-integrity: sha512-k+oXawNBQa0TFskAoYvExWZ/EOJ9H4s2+y4ujE+RFzsu7rkm4YmElDIrVYMZhJLRqBhSoHgCdGyn7nSPW20rcg==
+Retrieving latest version for plugin: backstage-plugin-orchestrator-backend-dynamic\n
+package: "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.3.tgz"
+integrity: sha512-ghGboDXc24f5jZLUMNkw86l8P+FDPYIvea8OMrcSrCCGRiSazEAgZd7IwzbJ61s0tIY5m5bDd7PHJOfleizXqQ==
 ---
-Retrieving latest version for plugin: @redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic\n
-package: "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.5.0"
-integrity: sha512-vBosJHdFdgN1FaVjRRBdjQ41rSRBsAAlX+6eD0F2DAAgkjLfERp2SMNHhSV3q18QIGqxJ03KZeX7uPypyw+qVA==
+Retrieving latest version for plugin: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic\n
+package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.3.tgz"
+integrity: sha512-L94IksLT0BF0YRB1BQ+IAEoG0NkCNojy2tQtD6e39JgsbC/Ht9mytNLxWRAa/+ppV+yz+mFGHDyiqaa1YQaRTA==
+---
+Retrieving latest version for plugin: backstage-plugin-orchestrator-form-widgets\n
+package: "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.3.tgz"
+integrity: sha512-86TWZctRwmQC0MPTa2QBxwBgE4k26CN633jDv0F4iaT0TKRfr9fhT4HZEAOyBxmPe/P2QlPj5BQchF7T7YTkzA==
 ---
 ```
 

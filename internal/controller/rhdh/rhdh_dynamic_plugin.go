@@ -23,6 +23,8 @@ type RHDHDynamicPluginConfig struct {
 	WorkflowNamespace                      string
 	ScaffolderBackendOrchestratorPackage   string
 	ScaffolderBackendOrchestratorIntegrity string
+	OrchestratorFormWidgetsPackage         string
+	OrchestratorFormWidgetsIntegrity       string
 }
 
 const RHDHDynamicPluginTempl = `includes:
@@ -87,14 +89,12 @@ plugins:
           red-hat-developer-hub.backstage-plugin-orchestrator:
             appIcons:
               - importName: OrchestratorIcon
-                module: OrchestratorPlugin
                 name: orchestratorIcon
             dynamicRoutes:
               - importName: OrchestratorPage
                 menuItem:
                   icon: orchestratorIcon
                   text: Orchestrator
-                module: OrchestratorPlugin
                 path: /orchestrator
   - package: "{{ .Scope }}/{{ .ScaffolderBackendOrchestratorPackage }}"
     disabled: false
@@ -103,6 +103,13 @@ plugins:
       orchestrator:
         dataIndexService:
           url: http://sonataflow-platform-data-index-service.{{ .WorkflowNamespace }}
+  
+  - disabled: false 
+    integrity: {{ .OrchestratorFormWidgetsIntegrity }}
+    package: "{{ .Scope }}/{{ .OrchestratorFormWidgetsPackage }}"
+      dynamicPlugins:
+          frontend:
+            red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets: {}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications
     disabled: false
     pluginConfig:

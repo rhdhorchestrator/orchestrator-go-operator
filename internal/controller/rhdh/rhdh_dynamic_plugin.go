@@ -103,13 +103,13 @@ plugins:
       orchestrator:
         dataIndexService:
           url: http://sonataflow-platform-data-index-service.{{ .WorkflowNamespace }}
-  
-  - disabled: false 
+  - package: "{{ .Scope }}/{{ .OrchestratorFormWidgetsPackage }}"
+    disabled: false
     integrity: {{ .OrchestratorFormWidgetsIntegrity }}
-    package: "{{ .Scope }}/{{ .OrchestratorFormWidgetsPackage }}"
+    pluginConfig:
       dynamicPlugins:
-          frontend:
-            red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets: {}
+        frontend:
+          red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets: {}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications
     disabled: false
     pluginConfig:
@@ -139,7 +139,7 @@ plugins:
     disabled: false
   - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-gitlab-dynamic
     disabled: false
-  {{- if and (.NotificationEmailEnabled) (.NotificationEmailHostname) }}
+{{- if and (.NotificationEmailEnabled) (.NotificationEmailHostname) }}
   - package: ./dynamic-plugins/dist/backstage-plugin-notifications-backend-module-email-dynamic
     disabled: false
     pluginConfig:
@@ -167,4 +167,5 @@ plugins:
             cache:
               ttl:
                 days: 1
-  {{- end }}`
+{{- end }}
+`

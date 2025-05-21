@@ -139,7 +139,7 @@ To incorporate the Orchestrator plugins, append the following configuration to t
       pluginConfig:
         orchestrator:
           dataIndexService:
-            url: http://sonataflow-platform-data-index-service.fordemo
+            url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disabled: false
       integrity: sha512-tT7IVjCMxmVvpKG1yClC/W2y1/ObHvACLYmR+W0MLMuSB5Jnsdj1OmCd0gGbdpmaUySpNi7vc7mJ1alJ8/JvHw==
       package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-1.6.0-rc.7.tgz
@@ -159,13 +159,15 @@ To incorporate the Orchestrator plugins, append the following configuration to t
     - disabled: false
       integrity: sha512-OtPqBNtuPJ35gjagRG6DDplrjwQYQerkYJA8cA7zjdzeJGBJtEGReG4EEjzaXj4sOyvQ6lXhIUFbYYs1Qnni/A==
       package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.7.tgz
-      dynamicPlugins:
-        orchestrator:
-          dataIndexService:
-            url: http://sonataflow-platform-data-index-service.fordemo
+      pluginConfig:
+        dynamicPlugins:
+          orchestrator:
+            dataIndexService:
+              url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disbaled: false
       integrity: sha512-VWX/taVAqFTvpBDujPbtUB6VLPbg3Lxhf0GI43yt5Jlm0zyxR54h1yOAwRmuxRD41X0txPxawN4uxE3WSpOYrQ==
       package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-form-widgets-1.6.0-rc.7.tgz
+      pluginConfig:
         dynamicPlugins:
           frontend:
             red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets: {}

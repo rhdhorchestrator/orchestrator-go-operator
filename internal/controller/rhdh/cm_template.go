@@ -3,8 +3,9 @@ package rhdh
 import (
 	"bytes"
 	"fmt"
-	"github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 	"text/template"
+
+	"github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 )
 
 func ConfigMapTemplateFactory(
@@ -78,6 +79,8 @@ func ConfigMapTemplateFactory(
 			WorkflowNamespace:                      serverlessWorkflowNamespace,
 			ScaffolderBackendOrchestratorPackage:   pluginsMap[ScaffolderBackendOrchestrator].Package,
 			ScaffolderBackendOrchestratorIntegrity: pluginsMap[ScaffolderBackendOrchestrator].Integrity,
+			OrchestratorFormWidgetsPackage:         pluginsMap[OrchestratorFormWidgets].Package,
+			OrchestratorFormWidgetsIntegrity:       pluginsMap[OrchestratorFormWidgets].Integrity,
 		}
 		formattedConfig, err := parseConfigTemplate(RHDHDynamicPluginTempl, configData)
 		if err != nil {

@@ -19,6 +19,7 @@ package kube
 import (
 	"context"
 	"fmt"
+
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -34,10 +35,11 @@ import (
 )
 
 const (
-	CatalogSourceNamespace = "openshift-marketplace"
-	CatalogSourceName      = "redhat-operators"
-	CreatedByLabelKey      = "rhdh.redhat.com/created-by"
-	CreatedByLabelValue    = "orchestrator"
+	CatalogSourceNamespace      = "openshift-marketplace"
+	CatalogSourceName           = "redhat-operators"
+	CatalogSourceNameSonataFlow = "sonataflow-operator-catalog" // Remove after Sonataflow Release
+	CreatedByLabelKey           = "rhdh.redhat.com/created-by"
+	CreatedByLabelValue         = "orchestrator"
 )
 
 func CheckNamespaceExist(ctx context.Context, client client.Client, namespace string) (bool, error) {
@@ -178,6 +180,25 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV string) *v1alpha1.Subscription {
 	logger := log.Log.WithName("subscriptionObject")
 	logger.Info("Creating subscription object")
+
+	if subscriptionName == "sonataflow-operator" {
+		subscriptionObject := &v1alpha1.Subscription{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: namespace,
+				Name:      subscriptionName,
+				Labels:    GetOrchestratorLabel(),
+			},
+			Spec: &v1alpha1.SubscriptionSpec{
+				Channel:                channel,
+				InstallPlanApproval:    v1alpha1.ApprovalManual,
+				CatalogSource:          CatalogSourceNameSonataFlow,
+				StartingCSV:            startingCSV,
+				CatalogSourceNamespace: CatalogSourceNamespace,
+				Package:                subscriptionName,
+			},
+		}
+		return subscriptionObject
+	}
 
 	subscriptionObject := &v1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{

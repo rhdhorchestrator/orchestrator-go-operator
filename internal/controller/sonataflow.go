@@ -51,6 +51,7 @@ const (
 	knativeBrokerAPIVersion                = "eventing.knative.dev/v1"
 	knativeBrokerKind                      = "Broker"
 	sonataFlowPlatformReference            = "sonataflow-platform"
+	CatalogSourceNameSonataFlow            = "sonataflow-operator-catalog" // Remove after Sonataflow Release
 )
 
 // handleServerlessLogicOperatorInstallation performs operator installation for the OSL operand

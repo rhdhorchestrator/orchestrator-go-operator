@@ -527,21 +527,29 @@ found [here](https://docs.redhat.com/en/documentation/red_hat_developer_hub/1.0/
 To fix this issue, please run patch command within the RHDH instance namespace:
 
 ```console
-oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
-    {
-      "op": "add",
-      "path": "/spec/deployment/patch/spec/template/spec/initContainers",
-      "value": [
-        {
-          "name": "install-dynamic-plugins",
-          "env": [
-            {
-              "name": "MAX_ENTRY_SIZE",
-              "value": "30000000"
+oc -n <rhdh-namespace> patch backstage <rhdh-name> --type=merge -p '{
+    "spec": {
+      "deployment": {
+        "patch": {
+          "spec": {
+            "template": {
+              "spec": {
+                "initContainers": [
+                  {
+                    "name": "install-dynamic-plugins",
+                    "env": [
+                      {
+                        "name": "MAX_ENTRY_SIZE",
+                        "value": "30000000"
+                      }
+                    ]
+                  }
+                ]
+              }
             }
-          ]
+          }
         }
-      ]
+      }
     }
-  ]'
+  }'
 ```

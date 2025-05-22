@@ -75,7 +75,8 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 		serverlessLogicSubscriptionName,
 		serverlessLogicOperatorNamespace,
 		serverlessLogicSubscriptionChannel,
-		serverlessLogicSubscriptionStartingCSV)
+		serverlessLogicSubscriptionStartingCSV,
+		CatalogSourceNameSonataFlow)
 
 	subscriptionExists, existingSubscription, err := kube.CheckSubscriptionExists(ctx, olmClientSet, oslSubscription)
 	if err != nil {

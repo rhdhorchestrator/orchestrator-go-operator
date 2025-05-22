@@ -37,7 +37,6 @@ import (
 const (
 	CatalogSourceNamespace      = "openshift-marketplace"
 	CatalogSourceName           = "redhat-operators"
-	CatalogSourceNameSonataFlow = "sonataflow-operator-catalog" // Remove after Sonataflow Release
 	CreatedByLabelKey           = "rhdh.redhat.com/created-by"
 	CreatedByLabelValue         = "orchestrator"
 )

@@ -74,7 +74,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-05-21T10:37:53Z"
+    createdAt: "2025-05-27T01:16:17Z"
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
     features.operators.openshift.io/csi: "false"
@@ -220,6 +220,7 @@ spec:
           - get
           - list
           - patch
+          - update
           - watch
         - apiGroups:
           - rhdh.redhat.com

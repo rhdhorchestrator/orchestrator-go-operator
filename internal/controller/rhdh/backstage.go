@@ -2,12 +2,14 @@ package rhdh
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -155,6 +157,13 @@ func HandleRHDHCR(
 	rhdhNamespace := rhdhConfig.Namespace
 	rhdhName := rhdhConfig.Name
 
+	backstageInitContainerInBytes, err := getPatchObjectForBackstageCR(ctx)
+	if err != nil {
+		rhdhLogger.Error(err, "Error occurred when parsing deployment patch for Backstage InitContainer",
+			"BackstageInitContainer", backstageInitContainerInBytes)
+		return err
+	}
+
 	if err := client.Get(ctx, types.NamespacedName{Namespace: rhdhNamespace, Name: rhdhName}, &rhdhv1alpha3.Backstage{}); err != nil {
 		if apierrors.IsNotFound(err) {
 			secret := rhdhv1alpha3.EnvObjectRef{
@@ -179,6 +188,10 @@ func HandleRHDHCR(
 						},
 						Replicas: util.MakePointer(rhdhReplica),
 					},
+					Deployment: &rhdhv1alpha3.BackstageDeployment{
+						Patch: &apiextensionsv1.JSON{
+							Raw: backstageInitContainerInBytes,
+						}},
 				},
 			}
 			rhdhLogger.Info("Creating Backstage CR", "CR-Name", backstageCR.Name)
@@ -303,4 +316,36 @@ func listBackstageCRs(ctx context.Context, k8client client.Client, namespace str
 
 	rhdhLogger.Info("Successfully listed RHDH CRs", "Total", len(crList.Items))
 	return crList.Items, nil
+}
+
+func getPatchObjectForBackstageCR(ctx context.Context) ([]byte, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("Creating Deployment Patch Object for Backstage CR...")
+
+	patch := make(map[string]interface{})
+
+	spec := util.ValidateMap(patch, "spec")
+	template := util.ValidateMap(spec, "template")
+	templateSpec := util.ValidateMap(template, "spec")
+	initContainers, _ := templateSpec["initContainers"].([]interface{})
+
+	initContainers = append(initContainers, map[string]interface{}{
+		"name": "install-dynamic-plugins",
+		"env": []interface{}{
+			map[string]interface{}{
+				"name":  "MAX_ENTRY_SIZE",
+				"value": "30000000",
+			},
+		},
+	})
+	templateSpec["initContainers"] = initContainers
+
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		logger.Error(err, "Error occurred when marshalling patch", "patch", patch)
+		return nil, fmt.Errorf("failed to marshal modified patch: %w", err)
+	}
+
+	logger.Info("Successfully created deployment patch object for Backstage CR")
+	return patchBytes, nil
 }

@@ -17,8 +17,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/errors"
 	"reflect"
+
+	"k8s.io/apimachinery/pkg/util/errors"
 
 	sonataapi "github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api/v1alpha08"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
@@ -45,11 +46,12 @@ const (
 	serverlessOperatorGroupName            = "serverless-operator-group"
 	serverlessLogicSubscriptionChannel     = "alpha"
 	serverlessLogicOperatorNamespace       = "openshift-serverless-logic"
-	serverlessLogicSubscriptionName        = "logic-operator-rhel8"
-	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.35.0"
+	serverlessLogicSubscriptionName        = "sonataflow-operator"
+	serverlessLogicSubscriptionStartingCSV = "sonataflow-operator.v0.0.0"
 	knativeBrokerAPIVersion                = "eventing.knative.dev/v1"
 	knativeBrokerKind                      = "Broker"
 	sonataFlowPlatformReference            = "sonataflow-platform"
+	CatalogSourceNameSonataFlow            = "sonataflow-operator-catalog" // Remove after Sonataflow Release
 )
 
 // handleServerlessLogicOperatorInstallation performs operator installation for the OSL operand
@@ -73,7 +75,8 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 		serverlessLogicSubscriptionName,
 		serverlessLogicOperatorNamespace,
 		serverlessLogicSubscriptionChannel,
-		serverlessLogicSubscriptionStartingCSV)
+		serverlessLogicSubscriptionStartingCSV,
+		CatalogSourceNameSonataFlow)
 
 	subscriptionExists, existingSubscription, err := kube.CheckSubscriptionExists(ctx, olmClientSet, oslSubscription)
 	if err != nil {

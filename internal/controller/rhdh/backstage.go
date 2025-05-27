@@ -322,23 +322,13 @@ func getPatchObjectForBackstageCR(ctx context.Context) ([]byte, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Creating Deployment Patch Object for Backstage CR...")
 
-	patch := make(map[string]interface{})
-
-	spec := util.ValidateMap(patch, "spec")
-	template := util.ValidateMap(spec, "template")
-	templateSpec := util.ValidateMap(template, "spec")
-	initContainers, _ := templateSpec["initContainers"].([]interface{})
-
-	initContainers = append(initContainers, map[string]interface{}{
-		"name": "install-dynamic-plugins",
-		"env": []interface{}{
-			map[string]interface{}{
-				"name":  "MAX_ENTRY_SIZE",
-				"value": "30000000",
-			},
+	patch := PatchSpec{}
+	patch.Spec.Template.Spec.InitContainers = append(patch.Spec.Template.Spec.InitContainers, InitContainer{
+		Name: "install-dynamic-plugins",
+		Env: []ContainerEnvVar{
+			{Name: "MAX_ENTRY_SIZE", Value: "30000000"},
 		},
 	})
-	templateSpec["initContainers"] = initContainers
 
 	patchBytes, err := json.Marshal(patch)
 	if err != nil {

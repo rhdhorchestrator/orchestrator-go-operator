@@ -260,8 +260,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	// check if install operator is disabled and handle clean up if necessary
 	if !serverlessLogicOperator.InstallOperator {
 		sfLogger.Info("Operator is disabled. Handle Clean up process if necessary")
-		// handle clean up
-		return handleServerlessLogicCleanUp(ctx, r.Client, serverlessWorkflowNamespace)
+		return nil
 	}
 	// Subscription is enabled; check namespace exist
 	if _, err := kube.CheckNamespaceExist(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
@@ -307,10 +306,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !serverlessOperator.InstallOperator {
-		// handle cleanup
-		if err := knative.HandleKnativeCleanUp(ctx, r.Client); err != nil {
-			return err
-		}
+		knativeLogger.Info("Operator is disabled. Handle Clean up process if necessary")
 		return nil
 	}
 
@@ -337,15 +333,11 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Reconciliation for RHDH")
 
-	subscriptionName := rhdhConfig.Name
 	namespace := rhdhConfig.Namespace
 
 	// if install operator is disabled; handle clean up
 	if !rhdhConfig.InstallOperator {
-		if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, namespace); err != nil {
-			logger.Error(err, "Error occurred when cleaning up RHDH", "SubscriptionName", subscriptionName)
-			return err
-		}
+		logger.Info("Operator is disabled. Handle Clean up process if necessary")
 		return nil
 	}
 

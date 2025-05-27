@@ -332,10 +332,7 @@ func patchBackstageInitContainer(ctx context.Context, rhdhName, rhdhNamespace st
 	spec := util.ValidateMap(patch, "spec")
 	template := util.ValidateMap(spec, "template")
 	templateSpec := util.ValidateMap(template, "spec")
-	initContainers, ok := templateSpec["initContainers"].([]interface{})
-	if !ok {
-		initContainers = []interface{}{}
-	}
+	initContainers, _ := templateSpec["initContainers"].([]interface{})
 
 	// find "install-dynamic-plugins" container
 	for i, c := range initContainers {
@@ -343,9 +340,7 @@ func patchBackstageInitContainer(ctx context.Context, rhdhName, rhdhNamespace st
 		if !ok {
 			continue
 		}
-		logger.Info("Current Init Container value", "initContainer", container)
 		if container["name"] == "install-dynamic-plugins" {
-			logger.Info("Current ENV value", "ENV", container)
 			envList := util.ValidateSlice(container, "env")
 			container["env"] = append(envList, map[string]interface{}{
 				"name":  "MAX_ENTRY_SIZE",

@@ -2,12 +2,14 @@ package rhdh
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	olmclientset "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	orchestratorv1alpha2 "github.com/rhdhorchestrator/orchestrator-operator/api/v1alpha3"
 	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/util"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -192,6 +194,11 @@ func HandleRHDHCR(
 		rhdhLogger.Error(err, "Error occurred when retrieving RHDH resource", "CR-Name", rhdhName)
 		return err
 	}
+
+	if err := patchBackstageInitContainer(ctx, rhdhName, rhdhNamespace, client); err != nil {
+		rhdhLogger.Error(err, "Error occurred when patching backstage init container", "CR-Name", rhdhName)
+		return err
+	}
 	return nil
 }
 
@@ -303,4 +310,72 @@ func listBackstageCRs(ctx context.Context, k8client client.Client, namespace str
 
 	rhdhLogger.Info("Successfully listed RHDH CRs", "Total", len(crList.Items))
 	return crList.Items, nil
+}
+
+func patchBackstageInitContainer(ctx context.Context, rhdhName, rhdhNamespace string, client client.Client) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Patching Backstage CR for init container")
+
+	namespacedName := types.NamespacedName{
+		Name:      rhdhName,
+		Namespace: rhdhNamespace,
+	}
+
+	backstageCR := &rhdhv1alpha3.Backstage{}
+	if err := client.Get(ctx, namespacedName, backstageCR); err != nil {
+		logger.Error(err, "Error occurred when getting Backstage CR", "Backstage", rhdhName)
+		return fmt.Errorf("failed to get Backstage CR: %w", err)
+	}
+
+	patch := make(map[string]interface{})
+
+	spec := util.ValidateMap(patch, "spec")
+	template := util.ValidateMap(spec, "template")
+	templateSpec := util.ValidateMap(template, "spec")
+	initContainers, ok := templateSpec["initContainers"].([]interface{})
+	if !ok {
+		initContainers = []interface{}{}
+	}
+
+	// find "install-dynamic-plugins" container
+	for i, c := range initContainers {
+		container, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		logger.Info("Current Init Container value", "initContainer", container)
+		if container["name"] == "install-dynamic-plugins" {
+			logger.Info("Current ENV value", "ENV", container)
+			envList := util.ValidateSlice(container, "env")
+			container["env"] = append(envList, map[string]interface{}{
+				"name":  "MAX_ENTRY_SIZE",
+				"value": "30000000",
+			})
+			initContainers[i] = container
+			break
+		}
+	}
+
+	templateSpec["initContainers"] = initContainers
+
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		logger.Error(err, "Error occurred when marshalling patch", "patch", patch)
+		return fmt.Errorf("failed to marshal modified patch: %w", err)
+	}
+
+	if backstageCR.Spec.Deployment == nil {
+		backstageCR.Spec.Deployment = &rhdhv1alpha3.BackstageDeployment{}
+	}
+
+	backstageCR.Spec.Deployment.Patch = &apiextensionsv1.JSON{
+		Raw: patchBytes,
+	}
+
+	// Update the Backstage CR
+	if err := client.Update(ctx, backstageCR); err != nil {
+		return fmt.Errorf("failed to update Backstage CR: %w", err)
+	}
+	logger.Info("Successfully patched Backstage CR", "Backstage", backstageCR.Name)
+	return nil
 }

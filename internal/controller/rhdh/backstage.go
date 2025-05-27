@@ -157,6 +157,13 @@ func HandleRHDHCR(
 	rhdhNamespace := rhdhConfig.Namespace
 	rhdhName := rhdhConfig.Name
 
+	backstageInitContainerInBytes, err := getPatchObjectForBackstageCR(ctx)
+	if err != nil {
+		rhdhLogger.Error(err, "Error occurred when parsing deployment patch for Backstage InitContainer",
+			"BackstageInitContainer", backstageInitContainerInBytes)
+		return err
+	}
+
 	if err := client.Get(ctx, types.NamespacedName{Namespace: rhdhNamespace, Name: rhdhName}, &rhdhv1alpha3.Backstage{}); err != nil {
 		if apierrors.IsNotFound(err) {
 			secret := rhdhv1alpha3.EnvObjectRef{
@@ -181,6 +188,10 @@ func HandleRHDHCR(
 						},
 						Replicas: util.MakePointer(rhdhReplica),
 					},
+					Deployment: &rhdhv1alpha3.BackstageDeployment{
+						Patch: &apiextensionsv1.JSON{
+							Raw: backstageInitContainerInBytes,
+						}},
 				},
 			}
 			rhdhLogger.Info("Creating Backstage CR", "CR-Name", backstageCR.Name)
@@ -192,11 +203,6 @@ func HandleRHDHCR(
 			return nil
 		}
 		rhdhLogger.Error(err, "Error occurred when retrieving RHDH resource", "CR-Name", rhdhName)
-		return err
-	}
-
-	if err := patchBackstageInitContainer(ctx, rhdhName, rhdhNamespace, client); err != nil {
-		rhdhLogger.Error(err, "Error occurred when patching backstage init container", "CR-Name", rhdhName)
 		return err
 	}
 	return nil
@@ -312,20 +318,9 @@ func listBackstageCRs(ctx context.Context, k8client client.Client, namespace str
 	return crList.Items, nil
 }
 
-func patchBackstageInitContainer(ctx context.Context, rhdhName, rhdhNamespace string, client client.Client) error {
+func getPatchObjectForBackstageCR(ctx context.Context) ([]byte, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Patching Backstage CR for init container")
-
-	namespacedName := types.NamespacedName{
-		Name:      rhdhName,
-		Namespace: rhdhNamespace,
-	}
-
-	backstageCR := &rhdhv1alpha3.Backstage{}
-	if err := client.Get(ctx, namespacedName, backstageCR); err != nil {
-		logger.Error(err, "Error occurred when getting Backstage CR", "Backstage", rhdhName)
-		return fmt.Errorf("failed to get Backstage CR: %w", err)
-	}
+	logger.Info("Creating Deployment Patch Object for Backstage CR...")
 
 	patch := make(map[string]interface{})
 
@@ -334,43 +329,23 @@ func patchBackstageInitContainer(ctx context.Context, rhdhName, rhdhNamespace st
 	templateSpec := util.ValidateMap(template, "spec")
 	initContainers, _ := templateSpec["initContainers"].([]interface{})
 
-	// find "install-dynamic-plugins" container
-	for i, c := range initContainers {
-		container, ok := c.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if container["name"] == "install-dynamic-plugins" {
-			envList := util.ValidateSlice(container, "env")
-			container["env"] = append(envList, map[string]interface{}{
+	initContainers = append(initContainers, map[string]interface{}{
+		"name": "install-dynamic-plugins",
+		"env": []interface{}{
+			map[string]interface{}{
 				"name":  "MAX_ENTRY_SIZE",
 				"value": "30000000",
-			})
-			initContainers[i] = container
-			break
-		}
-	}
-
+			},
+		},
+	})
 	templateSpec["initContainers"] = initContainers
 
 	patchBytes, err := json.Marshal(patch)
 	if err != nil {
 		logger.Error(err, "Error occurred when marshalling patch", "patch", patch)
-		return fmt.Errorf("failed to marshal modified patch: %w", err)
+		return nil, fmt.Errorf("failed to marshal modified patch: %w", err)
 	}
 
-	if backstageCR.Spec.Deployment == nil {
-		backstageCR.Spec.Deployment = &rhdhv1alpha3.BackstageDeployment{}
-	}
-
-	backstageCR.Spec.Deployment.Patch = &apiextensionsv1.JSON{
-		Raw: patchBytes,
-	}
-
-	// Update the Backstage CR
-	if err := client.Update(ctx, backstageCR); err != nil {
-		return fmt.Errorf("failed to update Backstage CR: %w", err)
-	}
-	logger.Info("Successfully patched Backstage CR", "Backstage", backstageCR.Name)
-	return nil
+	logger.Info("Successfully created deployment patch object for Backstage CR")
+	return patchBytes, nil
 }

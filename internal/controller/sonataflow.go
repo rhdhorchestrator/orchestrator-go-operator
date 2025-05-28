@@ -46,7 +46,7 @@ const (
 	serverlessLogicSubscriptionChannel     = "alpha"
 	serverlessLogicOperatorNamespace       = "openshift-serverless-logic"
 	serverlessLogicSubscriptionName        = "logic-operator-rhel8"
-	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.35.0"
+	serverlessLogicSubscriptionStartingCSV = "logic-operator-rhel8.v1.36.0"
 	knativeBrokerAPIVersion                = "eventing.knative.dev/v1"
 	knativeBrokerKind                      = "Broker"
 	sonataFlowPlatformReference            = "sonataflow-platform"

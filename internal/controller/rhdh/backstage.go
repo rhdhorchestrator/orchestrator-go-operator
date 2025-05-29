@@ -28,7 +28,7 @@ const (
 	rhdhSubscriptionName              = "rhdh"
 	rhdhSubscriptionChannel           = "fast-1.6"
 	rhdhOperatorNamespace             = "rhdh-operator"
-	rhdhSubscriptionStartingCSV       = "rhdh-operator.v1.6.0"
+	rhdhSubscriptionStartingCSV       = "rhdh-operator.v1.6.1"
 )
 
 var ConfigMapNameAndConfigDataKey = map[string]string{

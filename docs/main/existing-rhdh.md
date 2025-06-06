@@ -134,15 +134,15 @@ To incorporate the Orchestrator plugins, append the following configuration to t
   ```
 ```yaml
     - disabled: false
-      integrity: sha512-mW6stwzp/Nl4aU9kkzG7XsQrFwRtUGdMN2qMv86Vo7ketyG+WzQ7g5v36bbGS/1rNLZa8R0+ksulMqOON2J3JQ==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.7.tgz
+      integrity: sha512-LQVUYGUSelYDubbwMG5PT9ITYlaghsTCp37ktIsLjC9Qlr2NeA20xAIV4oDhtNVkoRraR6iFmVVKXnD/D2yrLg==
+      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.9.tgz
       pluginConfig:
         orchestrator:
           dataIndexService:
             url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disabled: false
-      integrity: sha512-tT7IVjCMxmVvpKG1yClC/W2y1/ObHvACLYmR+W0MLMuSB5Jnsdj1OmCd0gGbdpmaUySpNi7vc7mJ1alJ8/JvHw==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-1.6.0-rc.7.tgz
+      integrity: sha512-0/Eo9SqRtC9AmWkdJk+nhJSmSDBvKg1eWl0to5rOqsQiWRk57MUEaWRLwjK6fwu9975EJw3XvrTrmgYmFsI0mg==
+      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-1.6.0-rc.9.tgz
       pluginConfig:
         dynamicPlugins:
           frontend:
@@ -157,16 +157,16 @@ To incorporate the Orchestrator plugins, append the following configuration to t
                   text: Orchestrator
                 path: /orchestrator
     - disabled: false
-      integrity: sha512-OtPqBNtuPJ35gjagRG6DDplrjwQYQerkYJA8cA7zjdzeJGBJtEGReG4EEjzaXj4sOyvQ6lXhIUFbYYs1Qnni/A==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.7.tgz
+      integrity: sha512-4F563LxlAzGakDx4J63szF0i8YyO6ZVRz0i9Bp/Qessdp1E+zlRCgyIqHWSgQGUopzVzNrT20LmHQUzosH0naw==
+      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.9.tgz
       pluginConfig:
         dynamicPlugins:
           orchestrator:
             dataIndexService:
               url: http://sonataflow-platform-data-index-service.sonataflow-infra
-    - disbaled: false
-      integrity: sha512-VWX/taVAqFTvpBDujPbtUB6VLPbg3Lxhf0GI43yt5Jlm0zyxR54h1yOAwRmuxRD41X0txPxawN4uxE3WSpOYrQ==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-form-widgets-1.6.0-rc.7.tgz
+    - disabled: false
+      integrity: sha512-O5lwQ4dezu6ueZEHJ3rUXsjBGs8N5zTK540L8nAufx2DYyKApBuEMj4PJStW6rKFuA53HB49+y35wUhS40Fw1g==
+      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.7/backstage-plugin-orchestrator-form-widgets-1.6.0-rc.9.tgz
       pluginConfig:
         dynamicPlugins:
           frontend:
@@ -332,14 +332,14 @@ In the example output below, `orchestrator-backend-dynamic-integrity` is the int
 ```json
 {
 {
-  "orchestrator-package": "backstage-plugin-orchestrator-1.6.0-rc.7.tgz",
-  "orchestrator-integrity": "sha512-tT7IVjCMxmVvpKG1yClC/W2y1/ObHvACLYmR+W0MLMuSB5Jnsdj1OmCd0gGbdpmaUySpNi7vc7mJ1alJ8/JvHw==",
-  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.7.tgz",
-  "orchestrator-backend-dynamic-integrity": "sha512-mW6stwzp/Nl4aU9kkzG7XsQrFwRtUGdMN2qMv86Vo7ketyG+WzQ7g5v36bbGS/1rNLZa8R0+ksulMqOON2J3JQ==",
-  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.7.tgz",
-  "orchestrator-scaffolder-backend-integrity": "sha512-OtPqBNtuPJ35gjagRG6DDplrjwQYQerkYJA8cA7zjdzeJGBJtEGReG4EEjzaXj4sOyvQ6lXhIUFbYYs1Qnni/A==",
-  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.7.tgz",
-  "orchestrator-form-widgets-integrity": "sha512-VWX/taVAqFTvpBDujPbtUB6VLPbg3Lxhf0GI43yt5Jlm0zyxR54h1yOAwRmuxRD41X0txPxawN4uxE3WSpOYrQ=="
+  "orchestrator-package": "backstage-plugin-orchestrator-1.6.0-rc.9.tgz",
+  "orchestrator-integrity": "sha512-0/Eo9SqRtC9AmWkdJk+nhJSmSDBvKg1eWl0to5rOqsQiWRk57MUEaWRLwjK6fwu9975EJw3XvrTrmgYmFsI0mg==",
+  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.9.tgz",
+  "orchestrator-backend-dynamic-integrity": "sha512-LQVUYGUSelYDubbwMG5PT9ITYlaghsTCp37ktIsLjC9Qlr2NeA20xAIV4oDhtNVkoRraR6iFmVVKXnD/D2yrLg==",
+  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.9.tgz",
+  "orchestrator-scaffolder-backend-integrity": "sha512-4F563LxlAzGakDx4J63szF0i8YyO6ZVRz0i9Bp/Qessdp1E+zlRCgyIqHWSgQGUopzVzNrT20LmHQUzosH0naw==",
+  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.9.tgz",
+  "orchestrator-form-widgets-integrity": "sha512-O5lwQ4dezu6ueZEHJ3rUXsjBGs8N5zTK540L8nAufx2DYyKApBuEMj4PJStW6rKFuA53HB49+y35wUhS40Fw1g=="
 }
 }
 ```
@@ -371,20 +371,20 @@ done
 A sample output should look like:
 ```
 Retrieving latest version for plugin: backstage-plugin-orchestrator
-package: "backstage-plugin-orchestrator-1.6.0-rc.7.tgz"
-integrity: sha512-tT7IVjCMxmVvpKG1yClC/W2y1/ObHvACLYmR+W0MLMuSB5Jnsdj1OmCd0gGbdpmaUySpNi7vc7mJ1alJ8/JvHw==
+package: "backstage-plugin-orchestrator-1.6.0-rc.9.tgz"
+integrity: sha512-0/Eo9SqRtC9AmWkdJk+nhJSmSDBvKg1eWl0to5rOqsQiWRk57MUEaWRLwjK6fwu9975EJw3XvrTrmgYmFsI0mg==
 ---
 Retrieving latest version for plugin: backstage-plugin-orchestrator-backend-dynamic
-package: "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.7.tgz"
-integrity: sha512-mW6stwzp/Nl4aU9kkzG7XsQrFwRtUGdMN2qMv86Vo7ketyG+WzQ7g5v36bbGS/1rNLZa8R0+ksulMqOON2J3JQ==
+package: "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.9.tgz"
+integrity: sha512-LQVUYGUSelYDubbwMG5PT9ITYlaghsTCp37ktIsLjC9Qlr2NeA20xAIV4oDhtNVkoRraR6iFmVVKXnD/D2yrLg==
 ---
 Retrieving latest version for plugin: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic
-package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.7.tgz"
-integrity: sha512-OtPqBNtuPJ35gjagRG6DDplrjwQYQerkYJA8cA7zjdzeJGBJtEGReG4EEjzaXj4sOyvQ6lXhIUFbYYs1Qnni/A==
+package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.9.tgz"
+integrity: sha512-4F563LxlAzGakDx4J63szF0i8YyO6ZVRz0i9Bp/Qessdp1E+zlRCgyIqHWSgQGUopzVzNrT20LmHQUzosH0naw==
 ---
 Retrieving latest version for plugin: backstage-plugin-orchestrator-form-widgets
-package: "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.7.tgz"
-integrity: sha512-VWX/taVAqFTvpBDujPbtUB6VLPbg3Lxhf0GI43yt5Jlm0zyxR54h1yOAwRmuxRD41X0txPxawN4uxE3WSpOYrQ==
+package: "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.9.tgz"
+integrity: sha512-O5lwQ4dezu6ueZEHJ3rUXsjBGs8N5zTK540L8nAufx2DYyKApBuEMj4PJStW6rKFuA53HB49+y35wUhS40Fw1g==
 
 
 ---

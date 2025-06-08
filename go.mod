@@ -14,7 +14,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.19.4
 )
 
-replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8
+replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator ba4762f7bdef
 
 require (
 	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69

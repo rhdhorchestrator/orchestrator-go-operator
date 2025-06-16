@@ -175,16 +175,11 @@ func getOperatorGroup(ctx context.Context, client client.Client,
 	return nil
 }
 
-func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV string, extraCatalogSourceNames ...string) *v1alpha1.Subscription {
+func CreateSubscriptionObject(subscriptionName, namespace, channel, startingCSV string) *v1alpha1.Subscription {
 	logger := log.Log.WithName("subscriptionObject")
 	logger.Info("Creating subscription object")
 
 	SourceName := CatalogSourceName
-
-	// Override default source with custom source name, from paramaters
-	if len(extraCatalogSourceNames) > 0 {
-		SourceName = extraCatalogSourceNames[0]
-	}
 
 	subscriptionObject := &v1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{

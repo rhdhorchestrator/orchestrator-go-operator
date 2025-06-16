@@ -50,7 +50,6 @@ const (
 	knativeBrokerAPIVersion                = "eventing.knative.dev/v1"
 	knativeBrokerKind                      = "Broker"
 	sonataFlowPlatformReference            = "sonataflow-platform"
-	CatalogSourceNameSonataFlow            = "logic-136-cr1" // Remove after Sonataflow Release
 )
 
 // handleServerlessLogicOperatorInstallation performs operator installation for the OSL operand
@@ -75,7 +74,7 @@ func handleServerlessLogicOperatorInstallation(ctx context.Context, client clien
 		serverlessLogicOperatorNamespace,
 		serverlessLogicSubscriptionChannel,
 		serverlessLogicSubscriptionStartingCSV,
-		CatalogSourceNameSonataFlow)
+	)
 
 	subscriptionExists, existingSubscription, err := kube.CheckSubscriptionExists(ctx, olmClientSet, oslSubscription)
 	if err != nil {

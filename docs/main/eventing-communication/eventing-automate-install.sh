@@ -7,9 +7,10 @@ program_name=$0
 KNATIVE_VERSION=1.15.8
 
 function usage {
-    echo -e "Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESPACE=BROKER_NAMESPACE [KAFKA_REPLICATION_FACTOR=KAFKA_REPLICATION_FACTOR] [ORCHESTRATOR_NAMESPACE=openshift-operators] [BROKER_TYPE=Kafka] [INSTALL_KAFKA_CLUSTER=true] $program_name"
+    echo -e "Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESPACE=BROKER_NAMESPACE [KAFKA_REPLICATION_FACTOR=KAFKA_REPLICATION_FACTOR] [ORCHESTRATOR_NAMESPACE=openshift-operators] [WORKFLOW_NAMESPACE=sonataflow-infra] [BROKER_TYPE=Kafka] [INSTALL_KAFKA_CLUSTER=true] $program_name"
     echo "  ORCHESTRATOR_NAME                   Name of the installed orchestrator CR"
     echo "  ORCHESTRATOR_NAMESPACE              Optional, namespace in which the orchestrator operator is deployed. Default is openshift-operators"
+    echo "  WORKFLOW_NAMESPACE                  Optional, namespace in which the workflows are deployed. Default is sonataflow-infra
     echo "  BROKER_NAME                         Name of the broker to install"
     echo "  BROKER_NAMESPACE                    Namespace in which the broker must be installed"
     echo "  BROKER_TYPE                         Optional , type of the broker. Either 'Kafka' or 'in-memory'. Default is: 'Kafka'"
@@ -31,6 +32,10 @@ fi
 
 if [[ -z "${ORCHESTRATOR_NAMESPACE}" ]]; then
   ORCHESTRATOR_NAMESPACE=openshift-operators
+fi
+
+if [[ -z "${WORKFLOW_NAMESPACE}" ]]; then
+  WORKFLOW_NAMESPACE=sonataflow-infra
 fi
 
 if [[ -z "${ORCHESTRATOR_NAME}" ]]; then
@@ -124,7 +129,7 @@ fi
 
 echo "Updating SonataflowPlatform to set the eventing spec"
 
-oc -n <workflow-namespace> patch sonataflowplatform sonataflow-platform --type merge \
+oc -n ${WORKFLOW_NAMESPACE} patch sonataflowplatform sonataflow-platform --type merge \
    -p '
 {
   "spec": {
@@ -142,8 +147,8 @@ oc -n <workflow-namespace> patch sonataflowplatform sonataflow-platform --type m
   }'
 
 echo "Restarting Job service and data index deployments"
-oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=0
-oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=0
+oc scale deployment sonataflow-platform-jobs-service -n ${WORKFLOW_NAMESPACE} --replicas=0
+oc scale deployment sonataflow-platform-data-index-service -n ${WORKFLOW_NAMESPACE} --replicas=0
 
-oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=1
-oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=1
+oc scale deployment sonataflow-platform-jobs-service -n ${WORKFLOW_NAMESPACE} --replicas=1
+oc scale deployment sonataflow-platform-data-index-service -n ${WORKFLOW_NAMESPACE} --replicas=1

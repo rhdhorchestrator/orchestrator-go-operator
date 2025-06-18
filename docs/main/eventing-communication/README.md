@@ -28,9 +28,10 @@ You can follow an automated or a manual approach:
 ## Automated installation steps
 Usage:
 ```
-Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESPACE=BROKER_NAMESPACE [KAFKA_REPLICATION_FACTOR=KAFKA_REPLICATION_FACTOR] [ORCHESTRATOR_NAMESPACE=openshift-operators] [BROKER_TYPE=Kafka] [INSTALL_KAFKA_CLUSTER=true] ./eventing-automate-install.sh
+Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESPACE=BROKER_NAMESPACE [KAFKA_REPLICATION_FACTOR=KAFKA_REPLICATION_FACTOR] [WORKFLOW_NAMESPACE=sonataflow-infra] [ORCHESTRATOR_NAMESPACE=openshift-operators] [BROKER_TYPE=Kafka] [INSTALL_KAFKA_CLUSTER=true] ./eventing-automate-install.sh
   ORCHESTRATOR_NAME                   Name of the installed orchestrator CR
   ORCHESTRATOR_NAMESPACE              Optional, namespace in which the orchestrator operator is deployed. Default is openshift-operators
+  WORKFLOW_NAMESPACE                  Optional, namespace in which the workflows are deployed. Default is sonataflow-infra
   BROKER_NAME                         Name of the broker to install
   BROKER_NAMESPACE                    Namespace in which the broker must be installed
   BROKER_TYPE                         Optional , type of the broker. Either 'Kafka' or 'in-memory'. Default is: 'Kafka'
@@ -41,6 +42,7 @@ Usage: ORCHESTRATOR_NAME=ORCHESTRATOR_NAME BROKER_NAME=BROKER_NAME BROKER_NAMESP
 #### With pre-existing Kafka cluster
 ```console
 ORCHESTRATOR_NAME=orchestrator-sample \
+WORKFLOW_NAMESPACE=sonataflow-infra \
 BROKER_NAME=kafka-broker \
 BROKER_NAMESPACE=sonataflow-infra \
 INSTALL_KAFKA_CLUSTER=false \
@@ -49,6 +51,7 @@ KAFKA_REPLICATION_FACTOR=1 ./eventing-automate-install.sh
 #### Without existing Kafka cluster
 ```console
 ORCHESTRATOR_NAME=orchestrator-sample \
+WORKFLOW_NAMESPACE=sonataflow-infra \
 BROKER_NAME=kafka-broker \
 BROKER_NAMESPACE=sonataflow-infra \
 INSTALL_KAFKA_CLUSTER=true ./eventing-automate-install.sh
@@ -57,6 +60,7 @@ INSTALL_KAFKA_CLUSTER=true ./eventing-automate-install.sh
 ```console
 BROKER_TYPE=in-memory \
 ORCHESTRATOR_NAME=orchestrator-sample \
+WORKFLOW_NAMESPACE=sonataflow-infra \
 BROKER_NAME=simple-broker \
 BROKER_NAMESPACE=sonataflow-infra ./eventing-automate-install.sh
 ```
@@ -146,7 +150,7 @@ metadata:
 1. Configure the `sonataflowplatform` with your Broker's information. 
 
 ```console
-oc -n <workflow-namespace> patch sonataflowplatform sonataflow-platform --type merge \
+oc -n ${WORKFLOW_NAMESPACE} patch sonataflowplatform sonataflow-platform --type merge \
    -p '
 {
   "spec": {
@@ -166,13 +170,13 @@ oc -n <workflow-namespace> patch sonataflowplatform sonataflow-platform --type m
 Scale the Job service and data index service deployments:
 
 ```console
-oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=0
+oc scale deployment sonataflow-platform-jobs-service -n ${WORKFLOW_NAMESPACE} --replicas=0
 
-oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=0
+oc scale deployment sonataflow-platform-data-index-service -n ${WORKFLOW_NAMESPACE} --replicas=0
 
-oc scale deployment sonataflow-platform-jobs-service -n <workflow-namespace> --replicas=1
+oc scale deployment sonataflow-platform-jobs-service -n ${WORKFLOW_NAMESPACE} --replicas=1
 
-oc scale deployment sonataflow-platform-data-index-service -n <workflow-namespace> --replicas=1
+oc scale deployment sonataflow-platform-data-index-service -n ${WORKFLOW_NAMESPACE} --replicas=1
 ```
 
 The `sinkbinding` and `trigger` resources should be automatically created by the OpenShift Serverless Logic operator:

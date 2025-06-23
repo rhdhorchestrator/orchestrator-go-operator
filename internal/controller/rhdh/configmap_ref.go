@@ -6,6 +6,6 @@ const (
 	AppConfigRHDHCatalogName       = "app-config-rhdh-catalog"
 	AppConfigRHDHDynamicPluginName = "dynamic-plugins-rhdh"
 	NpmRegistry                    = "https://npm.registry.redhat.com"
-	Scope                          = "https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.10"
+	Scope                          = "https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.11"
 	CatalogBranch                  = "v1.6.x"
 )

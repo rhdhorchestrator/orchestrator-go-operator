@@ -199,7 +199,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	k8s.io/kubectl v0.31.2 // indirect
 	k8s.io/kubernetes v1.31.6 // indirect
-	k8s.io/utils v0.0.0-20241210054802-24370beab758 // indirect
+	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	oras.land/oras-go/v2 v2.5.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect

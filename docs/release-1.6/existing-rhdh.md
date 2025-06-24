@@ -1,6 +1,6 @@
 # Prerequisites
 - RHDH 1.6 instance deployed with IDP configured (GitHub, GitLab, ...)
-- For using the Orchestrator's [software templates](https://github.com/rhdhorchestrator/workflow-software-templates/tree/v1.5.x), OpenShift GitOps (ArgoCD) and OpenShift Pipelines (Tekton) should be installed and configured in RHDH (to enhance the CI/CD plugins) - [Follow these steps](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
+- For using the Orchestrator's [software templates](https://github.com/rhdhorchestrator/workflow-software-templates/tree/v1.6.x), OpenShift GitOps (ArgoCD) and OpenShift Pipelines (Tekton) should be installed and configured in RHDH (to enhance the CI/CD plugins) - [Follow these steps](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
 - A secret in RHDH's namespace named `dynamic-plugins-npmrc` that points to the plugins npm registry (details will be provided below)
 
 # Installation steps
@@ -113,8 +113,7 @@ oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
     }
   ]'
 ```
-
-Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#zip-bomb-detected-with-orchestrator-plugin).
+Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/release-1.5#zip-bomb-detected-with-orchestrator-plugin).
 
 ### Proxy configuration
 
@@ -311,14 +310,14 @@ Orchestrator software templates rely on the following tools:
 To import the Orchestrator software templates into the catalog via the Backstage UI, follow the instructions outlined in this [document](https://backstage.io/docs/features/software-templates/adding-templates).
 Register new templates into the catalog from the
 - Software templates for GitHub:
-    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/github-workflows/basic-workflow/template.yaml)
-    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/github-workflows/advanced-workflow/template.yaml)
-    - [Convert workflow template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/github-workflows/convert-workflow-to-template/template.yaml)
+    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/scaffolder-templates/github-workflows/basic-workflow/template.yaml)
+    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/scaffolder-templates/github-workflows/advanced-workflow/template.yaml)
+    - [Convert workflow template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/scaffolder-templates/github-workflows/convert-workflow-to-template/template.yaml)
 - Software templates for GitLab:
-    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/gitlab-workflows/basic-workflow/template.yaml)
-    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/gitlab-workflows/advanced-workflow/template.yaml)
-    - [Convert workflow template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/scaffolder-templates/gitlab-workflows/convert-workflow-to-template/template.yaml)
-- [Workflow resources (group and system)](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.5.x/entities/workflow-resources.yaml) (optional)
+    - [Basic template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/scaffolder-templates/gitlab-workflows/basic-workflow/template.yaml)
+    - [Advanced template - workflow with custom Java code](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/scaffolder-templates/gitlab-workflows/advanced-workflow/template.yaml)
+    - [Convert workflow template](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/scaffolder-templates/gitlab-workflows/convert-workflow-to-template/template.yaml)
+- [Workflow resources (group and system)](https://github.com/rhdhorchestrator/workflow-software-templates/blob/v1.6.x/entities/workflow-resources.yaml) (optional)
 
 ## Plugin Versions
 
@@ -330,7 +329,7 @@ oc get crd orchestrators.rhdh.redhat.com -o json | jq '.metadata.annotations | w
 
 In the example output below, `orchestrator-backend-dynamic-integrity` is the integrity value and `orchestrator-backend-dynamic-package` is the package name:
 ```json
-{
+
 {
   "orchestrator-package": "backstage-plugin-orchestrator-1.6.0-rc.11.tgz",
   "orchestrator-integrity": "sha512-jZNnWMh4Hjs9cem5uvmt89j3Yded61EVYk/NbzeqPfW9NFP7oOzNwyfQeG59hsNQ/PEiL7XIEzGp0vIHbHL+Cg==",
@@ -340,7 +339,6 @@ In the example output below, `orchestrator-backend-dynamic-integrity` is the int
   "orchestrator-scaffolder-backend-integrity": "sha512-4F563LxlAzGakDx4J63szF0i8YyO6ZVRz0i9Bp/Qessdp1E+zlRCgyIqHWSgQGUopzVzNrT20LmHQUzosH0naw==",
   "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.11.tgz",
   "orchestrator-form-widgets-integrity": "sha512-cZwpaHA1MoydTxRU3404AqgjzX+IeW1/2jnqzSHn4XwYNAg5xk5udTSq+zVabmimdeeKXWB3iCWi1sP4bLkdKQ=="
-}
 }
 ```
 > Note: The Orchestrator plugin package names in the `dynamic-plugins` ConfigMap must have `@redhat/` prepended to the package name (i.e., `@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0`)

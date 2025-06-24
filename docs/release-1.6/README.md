@@ -71,7 +71,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
     - Requires ArgoCD installed since the manifests are deployed in the same namespace as the ArgoCD instance.
 
   Remember to
-  enable [argocd](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml#L51)
+  enable [argocd](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.6/config/samples/_v1alpha3_orchestrator.yaml#L51)
   in your CR instance.
 
 ## Detailed Installation Guide
@@ -86,7 +86,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
       ensure that the default settings in
       the [PostgreSQL values](https://github.com/rhdhorchestrator/orchestrator-helm-chart/blob/main/postgresql/values.yaml)
       file match the `postgres` field provided in
-      the [Orchestrator CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml#L23)
+      the [Orchestrator CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.6/config/samples/_v1alpha3_orchestrator.yaml#L23)
       file.
 1. Install Orchestrator operator
     1. Go to OperatorHub in your OpenShift Console.
@@ -122,7 +122,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
 ### Manual Installation
 
 1. Deploy the PostgreSQL reference implementation for persistence support in SonataFlow following
-   these [instructions](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/README.md)
+   these [instructions](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.6/docs/postgresql/README.md)
 
 1. Create a namespace for the Orchestrator solution:
 
@@ -153,7 +153,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
 1. Run the following commands to determine when the installation is completed:
 
    ```console
-   wget https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/main/hack/wait_for_operator_installed.sh -O /tmp/wait_for_operator_installed.sh && chmod u+x /tmp/wait_for_operator_installed.sh && /tmp/wait_for_operator_installed.sh
+   wget https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/release-1.6/hack/wait_for_operator_installed.sh -O /tmp/wait_for_operator_installed.sh && chmod u+x /tmp/wait_for_operator_installed.sh && /tmp/wait_for_operator_installed.sh
    ```
 
    During the installation process, the Orchestrator Operator creates the sub-components
@@ -164,7 +164,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
    OpenShift
    Serverless Operator and OpenShift Serverless Logic Operator.
    Make any changes to
-   the [CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml)
+   the [CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.6/config/samples/_v1alpha3_orchestrator.yaml)
    before applying it, or test the default Orchestrator CR:
     ```console
     oc apply -n orchestrator -f https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/main/config/samples/_v1alpha3_orchestrator.yaml
@@ -173,7 +173,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
    propagated/reconciled to the intended resource. For example, changing the `platform.resources.requests` field in
    the Orchestrator CR will not have any effect on the running instance of the SonataFlowPlatform (SFP) resource.
    For the sake of simplicity, that is the current design and may be revisited in the near future. Please refer to
-   the [CRD Parameter List](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/crd)
+   the [CRD Parameter List](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.6/docs/crd)
    to know which fields can be reconciled.
 
 ### Running The Setup Script
@@ -192,7 +192,7 @@ and labeling GitOps namespaces based on the cluster configuration.
    namespaces:
 
    ```console
-   wget https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/main/hack/setup.sh -O /tmp/setup.sh && chmod u+x /tmp/setup.sh
+   wget https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/release-1.6/hack/setup.sh -O /tmp/setup.sh && chmod u+x /tmp/setup.sh
    ```
 
 1. Run the script:
@@ -278,7 +278,7 @@ here: https://knative.dev/docs/eventing/brokers/broker-types/
 Alternatively, an in-memory broker could also be used, however it is not recommended to use it for production purposes.
 
 Follow
-these [instructions](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/main/docs/main/eventing-communication/README.md)
+these [instructions](https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/release-1.6/docs/release-1.6/eventing-communication/README.md)
 to setup the Knative broker communication.
 
 ## Additional information

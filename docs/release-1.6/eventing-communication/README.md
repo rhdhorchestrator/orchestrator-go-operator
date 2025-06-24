@@ -17,11 +17,11 @@ platform:
       name: "my-knative" # Name of existing Broker instance.
       namespace: "knative" # Namespace of existing Broker instance.
 ```
-Please not that this can only be done during the first CR application, otherwise you would have to follow the Enabling Eventing Post Orchestrator CR Application flow. 
+Please note that this can only be done during the first CR application, otherwise you would have to follow the Enabling Eventing Post Orchestrator CR Application flow. 
 
 ## Enabling Eventing Post Orchestrator CR Application
 
-This flow will including having no Eventing Broker configured in the Orchestrator CR, rather patching the SonataflowPlatform post-installation with the Knative broker. 
+This flow will include having no Eventing Broker configured in the Orchestrator CR, rather patching the SonataflowPlatform post-installation with the Knative broker. 
 
 You can follow an automated or a manual approach:
 
@@ -68,7 +68,7 @@ BROKER_NAMESPACE=sonataflow-infra ./eventing-automate-install.sh
 ## Manual installation steps
 
 ### Using Kafka broker
-A Kafka broker will bring resiliency and reliability to event losses to the sontaflow eventing context.
+A Kafka broker will bring resiliency and reliability to event losses in the sonataflow eventing context.
 
 #### Pre-requisites
 

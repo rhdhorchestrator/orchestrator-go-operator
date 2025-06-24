@@ -172,7 +172,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
    Note: After the first reconciliation of the Orchestrator CR, changes to some of the fields in the CR may not be
    propagated/reconciled to the intended resource. For example, changing the `platform.resources.requests` field in
    the Orchestrator CR will not have any effect on the running instance of the SonataFlowPlatform (SFP) resource.
-   For simplicity sake, that is the current design and may be revisited in the near future. Please refer to
+   For the sake of simplicity, that is the current design and may be revisited in the near future. Please refer to
    the [CRD Parameter List](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/crd)
    to know which fields can be reconciled.
 

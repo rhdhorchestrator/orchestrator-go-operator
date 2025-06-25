@@ -84,7 +84,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
       steps [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/README.md).
     - **If you already have PostgreSQL running in your cluster** \
       ensure that the default settings in
-      the [PostgreSQL values](https://github.com/rhdhorchestrator/orchestrator-helm-chart/blob/main/postgresql/values.yaml)
+      the [PostgreSQL values](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/values.yaml)
       file match the `postgres` field provided in
       the [Orchestrator CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.5/config/samples/_v1alpha3_orchestrator.yaml#L23)
       file.

@@ -17,7 +17,7 @@ const RHDHCatalogTempl = `catalog:
   locations:
     {{- if .EnableGuestProvider }}
     - type: url
-      target: https://github.com/rhdhorchestrator/orchestrator-helm-chart/blob/main/resources/users.yaml
+      target: https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/resources/users.yaml
     {{- end }}
     - type: url
       target: https://github.com/rhdhorchestrator/workflow-software-templates/blob/{{ .CatalogBranch }}/entities/workflow-resources.yaml

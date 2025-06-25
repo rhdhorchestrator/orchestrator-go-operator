@@ -7,7 +7,7 @@ metadata:
     orchestrator-backend-dynamic-package: backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.13.tgz
     orchestrator-form-widgets-integrity: sha512-F49J8XOql9TPlETzqy5ll0XHM4HZiWQbEzM8RsOdMTaMh6FNoTR04LATFDYTi/gQg4PC5qT8W7wSxH7gH/Gj3w==
     orchestrator-form-widgets-package: backstage-plugin-orchestrator-form-widgets-1.6.0-rc.13.tgz
-    orchestrator-integrity: sha512-F49J8XOql9TPlETzqy5ll0XHM4HZiWQbEzM8RsOdMTaMh6FNoTR04LATFDYTi/gQg4PC5qT8W7wSxH7gH/Gj3w==
+    orchestrator-integrity: sha512-8hG2rviqBzzEVRhbHdyZxRZBPLV2fbsDhmTqZSbB6Yt9fDvKNZ/WIaoDGcMmv4cUcmfI3ozTdd5935/1RJG/nA==
     orchestrator-package: backstage-plugin-orchestrator-1.6.0-rc.13.tgz
     orchestrator-scaffolder-backend-integrity: sha512-2ocAxZYxsymLzVNe2ebiD1b9/TxJZyh7TYDcM6PeC1G416Mqf8QJZMuHh44hfBpdDkRRK8qRrVEDOAfDC2J5sA==
     orchestrator-scaffolder-backend-package: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.13.tgz

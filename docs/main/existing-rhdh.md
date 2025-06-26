@@ -134,15 +134,15 @@ To incorporate the Orchestrator plugins, append the following configuration to t
   ```
 ```yaml
     - disabled: false
-      integrity: sha512-kuN16JcbbPSvBdr0iJRUlwMaXppTir+edpsYQerXzHsZhaU9cEzXEI5tAsUklOb5qSAi9ENeCZTK0jTlp8wUlg==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.14/backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.14.tgz
+      integrity: sha512-Kr55YbuVwEADwGef9o9wyimcgHmiwehPeAtVHa9g2RQYoSPEa6BeOlaPzB6W5Ke3M2bN/0j0XXtpLuvrlXQogA==
+      package: @redhat/backstage-plugin-orchestrator-backend-dynamic@1.6.0
       pluginConfig:
         orchestrator:
           dataIndexService:
             url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disabled: false
-      integrity: sha512-9gmptRRqrx0cZjThctJJLYCuzPa1av5S9NdAitAFsGvx5KVgVK8VinOKpyHgLbM6cdBDdIne0wdVFaLijxQHjg==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.14/backstage-plugin-orchestrator-1.6.0-rc.14.tgz
+      integrity: sha512-fOSJv2PgtD2urKwBM7p9W6gV/0UIHSf4pkZ9V/wQO0eg0Zi5Mys/CL1ba3nO9x9l84MX11UBZ2r7PPVJPrmOtw==
+      package: @redhat/backstage-plugin-orchestrator@1.6.0
       pluginConfig:
         dynamicPlugins:
           frontend:
@@ -157,16 +157,16 @@ To incorporate the Orchestrator plugins, append the following configuration to t
                   text: Orchestrator
                 path: /orchestrator
     - disabled: false
-      integrity: sha512-HpP6WFu8xTc2HTg2QLLRCW59nyt4MhFhlww477BUcBwiHzohJipG30b3eT/OcSMaFIMgOaD2dCMlLfxWLab9Qg==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.14/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.14.tgz
+      integrity: sha512-Bueeix4661fXEnfJ9y31Yw91LXJgw6hJUG7lPVdESCi9VwBCjDB9Rm8u2yPqP8sriwr0OMtKtqD+Odn3LOPyVw==
+      package: @redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0
       pluginConfig:
         dynamicPlugins:
           orchestrator:
             dataIndexService:
               url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disabled: false
-      integrity: sha512-ZQwbHD7wWQ9ElOetThPLBwbcmpNR8A+S+XLtG9Q2c7EycxA+mgXTtq8GQV1iteavHhCmcmpCriF3lsdLax61+g==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.14/backstage-plugin-orchestrator-form-widgets-1.6.0-rc.14.tgz
+      integrity: sha512-Tqn6HO21Q1TQ7TFUoRhwBVCtSBzbQYz+OaanzzIB0R24O6YtVx3wR7Chtr5TzC05Vz5GkBO1+FZid8BKpqljgA==
+      package: @redhat/backstage-plugin-orchestrator-form-widgets@1.6.0
       pluginConfig:
         dynamicPlugins:
           frontend:
@@ -332,14 +332,14 @@ In the example output below, `orchestrator-backend-dynamic-integrity` is the int
 ```json
 {
 {
-  "orchestrator-package": "backstage-plugin-orchestrator-1.6.0-rc.14.tgz",
-  "orchestrator-integrity": "sha512-9gmptRRqrx0cZjThctJJLYCuzPa1av5S9NdAitAFsGvx5KVgVK8VinOKpyHgLbM6cdBDdIne0wdVFaLijxQHjg==",
-  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.14.tgz",
-  "orchestrator-backend-dynamic-integrity": "sha512-kuN16JcbbPSvBdr0iJRUlwMaXppTir+edpsYQerXzHsZhaU9cEzXEI5tAsUklOb5qSAi9ENeCZTK0jTlp8wUlg==",
-  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.14.tgz",
-  "orchestrator-scaffolder-backend-integrity": "sha512-HpP6WFu8xTc2HTg2QLLRCW59nyt4MhFhlww477BUcBwiHzohJipG30b3eT/OcSMaFIMgOaD2dCMlLfxWLab9Qg==",
-  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.14.tgz",
-  "orchestrator-form-widgets-integrity": "sha512-ZQwbHD7wWQ9ElOetThPLBwbcmpNR8A+S+XLtG9Q2c7EycxA+mgXTtq8GQV1iteavHhCmcmpCriF3lsdLax61+g=="
+  "orchestrator-package": "backstage-plugin-orchestrator@1.6.0",
+  "orchestrator-integrity": "sha512-fOSJv2PgtD2urKwBM7p9W6gV/0UIHSf4pkZ9V/wQO0eg0Zi5Mys/CL1ba3nO9x9l84MX11UBZ2r7PPVJPrmOtw==",
+  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic@1.6.0",
+  "orchestrator-backend-dynamic-integrity": "sha512-Kr55YbuVwEADwGef9o9wyimcgHmiwehPeAtVHa9g2RQYoSPEa6BeOlaPzB6W5Ke3M2bN/0j0XXtpLuvrlXQogA==",
+  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0",
+  "orchestrator-scaffolder-backend-integrity": "sha512-Bueeix4661fXEnfJ9y31Yw91LXJgw6hJUG7lPVdESCi9VwBCjDB9Rm8u2yPqP8sriwr0OMtKtqD+Odn3LOPyVw==",
+  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets@1.6.0",
+  "orchestrator-form-widgets-integrity": "sha512-Tqn6HO21Q1TQ7TFUoRhwBVCtSBzbQYz+OaanzzIB0R24O6YtVx3wR7Chtr5TzC05Vz5GkBO1+FZid8BKpqljgA=="
 }
 }
 ```
@@ -371,19 +371,19 @@ done
 A sample output should look like:
 ```
 Retrieving latest version for plugin: backstage-plugin-orchestrator
-package: "backstage-plugin-orchestrator-1.6.0-rc.14.tgz"
+package: "backstage-plugin-orchestrator@1.6.0"
 integrity: sha512-8hG2rviqBzzEVRhbHdyZxRZBPLV2fbsDhmTqZSbB6Yt9fDvKNZ/WIaoDGcMmv4cUcmfI3ozTdd5935/1RJG/nA==
 ---
 Retrieving latest version for plugin: backstage-plugin-orchestrator-backend-dynamic
-package: "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.14.tgz"
+package: "backstage-plugin-orchestrator-backend-dynamic@1.6.0"
 integrity: sha512-bnfDpTa3snJMByumIGOSt0iuT0kQEAA7w9lLY1SrLm++3maWFUw6zAe70DQsT7qv1d+gx6pXCdmyTAxk8L+4dw==
 ---
 Retrieving latest version for plugin: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic
-package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.14.tgz"
+package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0"
 integrity: sha512-2ocAxZYxsymLzVNe2ebiD1b9/TxJZyh7TYDcM6PeC1G416Mqf8QJZMuHh44hfBpdDkRRK8qRrVEDOAfDC2J5sA==
 ---
 Retrieving latest version for plugin: backstage-plugin-orchestrator-form-widgets
-package: "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.14.tgz"
+package: "backstage-plugin-orchestrator-form-widgets@1.6.0"
 integrity: sha512-F49J8XOql9TPlETzqy5ll0XHM4HZiWQbEzM8RsOdMTaMh6FNoTR04LATFDYTi/gQg4PC5qT8W7wSxH7gH/Gj3w==
 
 

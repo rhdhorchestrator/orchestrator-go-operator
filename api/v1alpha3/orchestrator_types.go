@@ -239,14 +239,14 @@ type OrchestratorStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=".metadata.creationTimestamp",description="Age"
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=".status.phase",description="Status"
-// +kubebuilder:metadata:annotations=orchestrator-package=backstage-plugin-orchestrator-1.6.0-rc.13.tgz
-// +kubebuilder:metadata:annotations=orchestrator-integrity=sha512-8hG2rviqBzzEVRhbHdyZxRZBPLV2fbsDhmTqZSbB6Yt9fDvKNZ/WIaoDGcMmv4cUcmfI3ozTdd5935/1RJG/nA==
-// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-package=backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.13.tgz
-// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-integrity=sha512-bnfDpTa3snJMByumIGOSt0iuT0kQEAA7w9lLY1SrLm++3maWFUw6zAe70DQsT7qv1d+gx6pXCdmyTAxk8L+4dw==
-// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-package=backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.13.tgz
-// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-integrity=sha512-2ocAxZYxsymLzVNe2ebiD1b9/TxJZyh7TYDcM6PeC1G416Mqf8QJZMuHh44hfBpdDkRRK8qRrVEDOAfDC2J5sA==
-// +kubebuilder:metadata:annotations=orchestrator-form-widgets-package=backstage-plugin-orchestrator-form-widgets-1.6.0-rc.13.tgz
-// +kubebuilder:metadata:annotations=orchestrator-form-widgets-integrity=sha512-F49J8XOql9TPlETzqy5ll0XHM4HZiWQbEzM8RsOdMTaMh6FNoTR04LATFDYTi/gQg4PC5qT8W7wSxH7gH/Gj3w==
+// +kubebuilder:metadata:annotations=orchestrator-package=backstage-plugin-orchestrator-1.6.0-rc.14.tgz
+// +kubebuilder:metadata:annotations=orchestrator-integrity=sha512-9gmptRRqrx0cZjThctJJLYCuzPa1av5S9NdAitAFsGvx5KVgVK8VinOKpyHgLbM6cdBDdIne0wdVFaLijxQHjg==
+// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-package=backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.14.tgz
+// +kubebuilder:metadata:annotations=orchestrator-backend-dynamic-integrity=sha512-kuN16JcbbPSvBdr0iJRUlwMaXppTir+edpsYQerXzHsZhaU9cEzXEI5tAsUklOb5qSAi9ENeCZTK0jTlp8wUlg==
+// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-package=backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.14.tgz
+// +kubebuilder:metadata:annotations=orchestrator-scaffolder-backend-integrity=sha512-HpP6WFu8xTc2HTg2QLLRCW59nyt4MhFhlww477BUcBwiHzohJipG30b3eT/OcSMaFIMgOaD2dCMlLfxWLab9Qg==
+// +kubebuilder:metadata:annotations=orchestrator-form-widgets-package=backstage-plugin-orchestrator-form-widgets-1.6.0-rc.14.tgz
+// +kubebuilder:metadata:annotations=orchestrator-form-widgets-integrity=sha512-ZQwbHD7wWQ9ElOetThPLBwbcmpNR8A+S+XLtG9Q2c7EycxA+mgXTtq8GQV1iteavHhCmcmpCriF3lsdLax61+g==
 type Orchestrator struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

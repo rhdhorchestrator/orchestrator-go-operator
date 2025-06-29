@@ -114,7 +114,7 @@ oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
   ]'
 ```
 
-Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/main#zip-bomb-detected-with-orchestrator-plugin).
+Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/release-1.6#zip-bomb-detected-with-orchestrator-plugin).
 
 ### Proxy configuration
 

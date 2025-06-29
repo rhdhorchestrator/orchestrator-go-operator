@@ -50,6 +50,7 @@ Make sure you install an OpenShift Pipelines Operator's version compatible with 
 | 4.16                                          | 1.3.x                         |
 | 4.17                                          | 1.4.x                         |
 | 4.17                                          | 1.5.x                         |
+| 4.17                                          | 1.6.x                         |
 
 
 ### Install OpenShift GitOps Operator

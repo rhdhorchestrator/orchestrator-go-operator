@@ -113,7 +113,8 @@ oc -n <rhdh-namespace> patch backstage <rhdh-name> --type='json' -p='[
     }
   ]'
 ```
-Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/release-1.5#zip-bomb-detected-with-orchestrator-plugin).
+
+Find more about this issue [here](https://github.com/rhdhorchestrator/orchestrator-go-operator/tree/main/docs/release-1.6#zip-bomb-detected-with-orchestrator-plugin).
 
 ### Proxy configuration
 
@@ -133,44 +134,43 @@ To incorporate the Orchestrator plugins, append the following configuration to t
   ```
 ```yaml
     - disabled: false
-      integrity: sha512-ebw1Uk5xsRzIfMziZ4sZU6UPxfQcHnEqAldAGDxT1vih5t+S/w1LuGlRGhajk3JXeA+RUXA6xfFcr9nNgYGegQ==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.11/backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.11.tgz
+      integrity: sha512-Kr55YbuVwEADwGef9o9wyimcgHmiwehPeAtVHa9g2RQYoSPEa6BeOlaPzB6W5Ke3M2bN/0j0XXtpLuvrlXQogA==
+      package: @redhat/backstage-plugin-orchestrator-backend-dynamic@1.6.0
       pluginConfig:
         orchestrator:
           dataIndexService:
             url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disabled: false
-      integrity: sha512-jZNnWMh4Hjs9cem5uvmt89j3Yded61EVYk/NbzeqPfW9NFP7oOzNwyfQeG59hsNQ/PEiL7XIEzGp0vIHbHL+Cg==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.11/backstage-plugin-orchestrator-1.6.0-rc.11.tgz
+      integrity: sha512-fOSJv2PgtD2urKwBM7p9W6gV/0UIHSf4pkZ9V/wQO0eg0Zi5Mys/CL1ba3nO9x9l84MX11UBZ2r7PPVJPrmOtw==
+      package: @redhat/backstage-plugin-orchestrator@1.6.0
       pluginConfig:
         dynamicPlugins:
           frontend:
             red-hat-developer-hub.backstage-plugin-orchestrator:
               appIcons:
-              - importName: OrchestratorIcon
-                name: orchestratorIcon
+                - importName: OrchestratorIcon
+                  name: orchestratorIcon
               dynamicRoutes:
-              - importName: OrchestratorPage
-                menuItem:
-                  icon: orchestratorIcon
-                  text: Orchestrator
-                path: /orchestrator
+                - importName: OrchestratorPage
+                  menuItem:
+                    icon: orchestratorIcon
+                    text: Orchestrator
+                  path: /orchestrator
     - disabled: false
-      integrity: sha512-ufHBFH1maL4w9/pxweFFzK2pGbhDfbJwSfPKmQyCtilJRUR7bLSPKXP2ZYYrR8tysiQ0vB6fw2FtuNQNDqHtqQ==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.11/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.11.tgz
+      integrity: sha512-Bueeix4661fXEnfJ9y31Yw91LXJgw6hJUG7lPVdESCi9VwBCjDB9Rm8u2yPqP8sriwr0OMtKtqD+Odn3LOPyVw==
+      package: @redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0
       pluginConfig:
         dynamicPlugins:
           orchestrator:
             dataIndexService:
               url: http://sonataflow-platform-data-index-service.sonataflow-infra
     - disabled: false
-      integrity: sha512-cZwpaHA1MoydTxRU3404AqgjzX+IeW1/2jnqzSHn4XwYNAg5xk5udTSq+zVabmimdeeKXWB3iCWi1sP4bLkdKQ==
-      package: https://github.com/rhdhorchestrator/orchestrator-plugins-internal-release/releases/download/v1.6.0-rc.11/backstage-plugin-orchestrator-form-widgets-1.6.0-rc.11.tgz
+      integrity: sha512-Tqn6HO21Q1TQ7TFUoRhwBVCtSBzbQYz+OaanzzIB0R24O6YtVx3wR7Chtr5TzC05Vz5GkBO1+FZid8BKpqljgA==
+      package: @redhat/backstage-plugin-orchestrator-form-widgets@1.6.0
       pluginConfig:
         dynamicPlugins:
           frontend:
             red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets: {}
-
 ```
 
 To include the Notification Plugin append this configuration to the ConfigMap:
@@ -329,16 +329,15 @@ oc get crd orchestrators.rhdh.redhat.com -o json | jq '.metadata.annotations | w
 
 In the example output below, `orchestrator-backend-dynamic-integrity` is the integrity value and `orchestrator-backend-dynamic-package` is the package name:
 ```json
-
 {
-  "orchestrator-package": "backstage-plugin-orchestrator-1.6.0-rc.11.tgz",
-  "orchestrator-integrity": "sha512-jZNnWMh4Hjs9cem5uvmt89j3Yded61EVYk/NbzeqPfW9NFP7oOzNwyfQeG59hsNQ/PEiL7XIEzGp0vIHbHL+Cg==",
-  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.11.tgz",
-  "orchestrator-backend-dynamic-integrity": "sha512-ebw1Uk5xsRzIfMziZ4sZU6UPxfQcHnEqAldAGDxT1vih5t+S/w1LuGlRGhajk3JXeA+RUXA6xfFcr9nNgYGegQ==",
-  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.11.tgz",
-  "orchestrator-scaffolder-backend-integrity": "sha512-4F563LxlAzGakDx4J63szF0i8YyO6ZVRz0i9Bp/Qessdp1E+zlRCgyIqHWSgQGUopzVzNrT20LmHQUzosH0naw==",
-  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.11.tgz",
-  "orchestrator-form-widgets-integrity": "sha512-cZwpaHA1MoydTxRU3404AqgjzX+IeW1/2jnqzSHn4XwYNAg5xk5udTSq+zVabmimdeeKXWB3iCWi1sP4bLkdKQ=="
+  "orchestrator-package": "backstage-plugin-orchestrator@1.6.0",
+  "orchestrator-integrity": "sha512-fOSJv2PgtD2urKwBM7p9W6gV/0UIHSf4pkZ9V/wQO0eg0Zi5Mys/CL1ba3nO9x9l84MX11UBZ2r7PPVJPrmOtw==",
+  "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic@1.6.0",
+  "orchestrator-backend-dynamic-integrity": "sha512-Kr55YbuVwEADwGef9o9wyimcgHmiwehPeAtVHa9g2RQYoSPEa6BeOlaPzB6W5Ke3M2bN/0j0XXtpLuvrlXQogA==",
+  "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0",
+  "orchestrator-scaffolder-backend-integrity": "sha512-Bueeix4661fXEnfJ9y31Yw91LXJgw6hJUG7lPVdESCi9VwBCjDB9Rm8u2yPqP8sriwr0OMtKtqD+Odn3LOPyVw==",
+  "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets@1.6.0",
+  "orchestrator-form-widgets-integrity": "sha512-Tqn6HO21Q1TQ7TFUoRhwBVCtSBzbQYz+OaanzzIB0R24O6YtVx3wR7Chtr5TzC05Vz5GkBO1+FZid8BKpqljgA=="
 }
 ```
 > Note: The Orchestrator plugin package names in the `dynamic-plugins` ConfigMap must have `@redhat/` prepended to the package name (i.e., `@redhat/backstage-plugin-orchestrator-backend-dynamic@1.5.0`)
@@ -369,20 +368,20 @@ done
 A sample output should look like:
 ```
 Retrieving latest version for plugin: backstage-plugin-orchestrator
-package: "backstage-plugin-orchestrator-1.6.0-rc.11.tgz"
-integrity: sha512-jZNnWMh4Hjs9cem5uvmt89j3Yded61EVYk/NbzeqPfW9NFP7oOzNwyfQeG59hsNQ/PEiL7XIEzGp0vIHbHL+Cg==
+package: "backstage-plugin-orchestrator@1.6.0"
+integrity: sha512-8hG2rviqBzzEVRhbHdyZxRZBPLV2fbsDhmTqZSbB6Yt9fDvKNZ/WIaoDGcMmv4cUcmfI3ozTdd5935/1RJG/nA==
 ---
 Retrieving latest version for plugin: backstage-plugin-orchestrator-backend-dynamic
-package: "backstage-plugin-orchestrator-backend-dynamic-1.6.0-rc.11.tgz"
-integrity: sha512-ebw1Uk5xsRzIfMziZ4sZU6UPxfQcHnEqAldAGDxT1vih5t+S/w1LuGlRGhajk3JXeA+RUXA6xfFcr9nNgYGegQ==
+package: "backstage-plugin-orchestrator-backend-dynamic@1.6.0"
+integrity: sha512-bnfDpTa3snJMByumIGOSt0iuT0kQEAA7w9lLY1SrLm++3maWFUw6zAe70DQsT7qv1d+gx6pXCdmyTAxk8L+4dw==
 ---
 Retrieving latest version for plugin: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic
-package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.0-rc.11.tgz"
-integrity: sha512-ufHBFH1maL4w9/pxweFFzK2pGbhDfbJwSfPKmQyCtilJRUR7bLSPKXP2ZYYrR8tysiQ0vB6fw2FtuNQNDqHtqQ==
+package: "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0"
+integrity: sha512-2ocAxZYxsymLzVNe2ebiD1b9/TxJZyh7TYDcM6PeC1G416Mqf8QJZMuHh44hfBpdDkRRK8qRrVEDOAfDC2J5sA==
 ---
 Retrieving latest version for plugin: backstage-plugin-orchestrator-form-widgets
-package: "backstage-plugin-orchestrator-form-widgets-1.6.0-rc.11.tgz"
-integrity: sha512-cZwpaHA1MoydTxRU3404AqgjzX+IeW1/2jnqzSHn4XwYNAg5xk5udTSq+zVabmimdeeKXWB3iCWi1sP4bLkdKQ==
+package: "backstage-plugin-orchestrator-form-widgets@1.6.0"
+integrity: sha512-F49J8XOql9TPlETzqy5ll0XHM4HZiWQbEzM8RsOdMTaMh6FNoTR04LATFDYTi/gQg4PC5qT8W7wSxH7gH/Gj3w==
 
 
 ---

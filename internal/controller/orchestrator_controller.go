@@ -19,15 +19,16 @@ package controller
 import (
 	"context"
 	"fmt"
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
 
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	"github.com/rhdhorchestrator/orchestrator-operator/internal/controller/rhdh"
-	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
@@ -191,7 +192,7 @@ func (r *OrchestratorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// handle RHDH
 	rhdhConfig := orchestrator.Spec.RHDHConfig
 	if err := r.reconcileRHDH(ctx, serverlessWorkflowNamespace, argoCDEnabled, tektonEnabled, rhdhConfig); err != nil {
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 			return ctrl.Result{Requeue: true, RequeueAfter: RequeueAfterTime}, nil
 		}
 		logger.Error(err, "Error occurred when creating RHDH resources")
@@ -260,8 +261,7 @@ func (r *OrchestratorReconciler) reconcileServerlessLogic(
 	// check if install operator is disabled and handle clean up if necessary
 	if !serverlessLogicOperator.InstallOperator {
 		sfLogger.Info("Operator is disabled. Handle Clean up process if necessary")
-		// handle clean up
-		return handleServerlessLogicCleanUp(ctx, r.Client, serverlessWorkflowNamespace)
+		return nil
 	}
 	// Subscription is enabled; check namespace exist
 	if _, err := kube.CheckNamespaceExist(ctx, r.Client, serverlessWorkflowNamespace); err != nil {
@@ -307,10 +307,7 @@ func (r *OrchestratorReconciler) reconcileKnative(ctx context.Context, serverles
 
 	// if subscription is disabled; check if subscription exists and handle delete
 	if !serverlessOperator.InstallOperator {
-		// handle cleanup
-		if err := knative.HandleKnativeCleanUp(ctx, r.Client); err != nil {
-			return err
-		}
+		knativeLogger.Info("Operator is disabled. Handle Clean up process if necessary")
 		return nil
 	}
 
@@ -337,15 +334,11 @@ func (r *OrchestratorReconciler) reconcileRHDH(
 	logger := log.FromContext(ctx)
 	logger.Info("Starting Reconciliation for RHDH")
 
-	subscriptionName := rhdhConfig.Name
 	namespace := rhdhConfig.Namespace
 
 	// if install operator is disabled; handle clean up
 	if !rhdhConfig.InstallOperator {
-		if err := rhdh.HandleRHDHCleanUp(ctx, r.Client, namespace); err != nil {
-			logger.Error(err, "Error occurred when cleaning up RHDH", "SubscriptionName", subscriptionName)
-			return err
-		}
+		logger.Info("Operator is disabled. Handle Clean up process if necessary")
 		return nil
 	}
 

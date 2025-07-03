@@ -167,7 +167,7 @@ repository and to automatically trigger the Tekton pipelines as needed.
    the [CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/release-1.6/config/samples/_v1alpha3_orchestrator.yaml)
    before applying it, or test the default Orchestrator CR:
     ```console
-    oc apply -n orchestrator -f https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/main/config/samples/_v1alpha3_orchestrator.yaml
+    oc apply -n orchestrator -f https://raw.githubusercontent.com/rhdhorchestrator/orchestrator-go-operator/refs/heads/release-1.6/config/samples/_v1alpha3_orchestrator.yaml
     ```
    Note: After the first reconciliation of the Orchestrator CR, changes to some of the fields in the CR may not be
    propagated/reconciled to the intended resource. For example, changing the `platform.resources.requests` field in

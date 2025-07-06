@@ -14,12 +14,12 @@ require (
 	sigs.k8s.io/controller-runtime v0.19.4
 )
 
-replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8
+replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250704132620-2c3e9dc2cdf8
 
 require (
 	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69
 	github.com/argoproj/argo-cd/v2 v2.13.4
-	github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a
+	github.com/openshift/api v0.0.0-20250124120743-e8e07fa2990e
 	github.com/operator-framework/api v0.23.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tektoncd/pipeline v0.65.2
@@ -172,7 +172,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.3 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476 // indirect
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect

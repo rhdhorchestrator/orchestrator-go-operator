@@ -495,8 +495,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
-github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a h1:bshSoh1/FLj7Xa1uXXfkVKN+AmPWOpbroGiojlxzecA=
-github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a/go.mod h1:Shkl4HanLwDiiBzakv+con/aMGnVE2MAGvoKp5oyYUo=
+github.com/openshift/api v0.0.0-20250124120743-e8e07fa2990e h1:23akKW56qqyxLhMdiYKtpdm+eMK8+Xz9AOQd/ZDambs=
+github.com/openshift/api v0.0.0-20250124120743-e8e07fa2990e/go.mod h1:Shkl4HanLwDiiBzakv+con/aMGnVE2MAGvoKp5oyYUo=
 github.com/operator-framework/api v0.23.0 h1:kHymOwcHBpBVujT49SKOCd4EVG7Odwj4wl3NbOR2LLA=
 github.com/operator-framework/api v0.23.0/go.mod h1:oKcFOz+Xc1UhMi2Pzcp6qsO7wjS4r+yP7EQprQBXrfM=
 github.com/operator-framework/operator-lifecycle-manager v0.22.0 h1:7DEWOq24HQ0l5xPOXMhn17XaJACgwoipz+JfQ7QCXZw=
@@ -547,8 +547,8 @@ github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0leargg
 github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
 github.com/prometheus/statsd_exporter v0.22.7 h1:7Pji/i2GuhK6Lu7DHrtTkFmNBCudCPT1pX2CziuyQR0=
 github.com/prometheus/statsd_exporter v0.22.7/go.mod h1:N/TevpjkIh9ccs6nuzY3jQn9dFqnUakOjnEuMPJJJnI=
-github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8 h1:JXJOybROLboj9Db1vgrGpTJkMrj0fij0Y8Fdp3ubPGM=
-github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8/go.mod h1:4cPduWIel+8uSVyU4SJnrxl/gPlZeYa2tXFVyLT+rU0=
+github.com/redhat-developer/rhdh-operator v0.0.0-20250704132620-2c3e9dc2cdf8 h1:4gcZoyxDgN2vKCKsMQrApvBHwsHgct5o9Uh1OmHjHPw=
+github.com/redhat-developer/rhdh-operator v0.0.0-20250704132620-2c3e9dc2cdf8/go.mod h1:eA/cafR6n2whQ2I84NSTETUhHQvsLBppVufjfdrFIyY=
 github.com/redis/go-redis/v9 v9.0.0-rc.4/go.mod h1:Vo3EsyWnicKnSKCA7HhgnvnyA74wOA69Cd2Meli5mmA=
 github.com/redis/go-redis/v9 v9.6.3 h1:8Dr5ygF1QFXRxIH/m3Xg9MMG1rS8YCtAgosrsewT6i0=
 github.com/redis/go-redis/v9 v9.6.3/go.mod h1:0C0c6ycQsdpVNQpxb1njEQIqkx5UcsM8FJCQLgE9+RA=

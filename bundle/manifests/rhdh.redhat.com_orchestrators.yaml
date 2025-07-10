@@ -3,14 +3,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-    orchestrator-backend-dynamic-integrity: sha512-Kr55YbuVwEADwGef9o9wyimcgHmiwehPeAtVHa9g2RQYoSPEa6BeOlaPzB6W5Ke3M2bN/0j0XXtpLuvrlXQogA==
-    orchestrator-backend-dynamic-package: backstage-plugin-orchestrator-backend-dynamic@1.6.0
-    orchestrator-form-widgets-integrity: sha512-Tqn6HO21Q1TQ7TFUoRhwBVCtSBzbQYz+OaanzzIB0R24O6YtVx3wR7Chtr5TzC05Vz5GkBO1+FZid8BKpqljgA==
-    orchestrator-form-widgets-package: backstage-plugin-orchestrator-form-widgets@1.6.0
-    orchestrator-integrity: sha512-fOSJv2PgtD2urKwBM7p9W6gV/0UIHSf4pkZ9V/wQO0eg0Zi5Mys/CL1ba3nO9x9l84MX11UBZ2r7PPVJPrmOtw==
-    orchestrator-package: backstage-plugin-orchestrator@1.6.0
-    orchestrator-scaffolder-backend-integrity: sha512-Bueeix4661fXEnfJ9y31Yw91LXJgw6hJUG7lPVdESCi9VwBCjDB9Rm8u2yPqP8sriwr0OMtKtqD+Odn3LOPyVw==
-    orchestrator-scaffolder-backend-package: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.0
+    orchestrator-backend-dynamic-integrity: sha512-ch4Mn+1oGEeQALJ0RY9dfjNj8QQlU0csWm4Vdsr8nQAdW6QLB6A0cuJxhv7Xpum/NzZgVPhOK6BNmb1dHIFr4g==
+    orchestrator-backend-dynamic-package: backstage-plugin-orchestrator-backend-dynamic-1.6.1-rc.1.tgz
+    orchestrator-form-widgets-integrity: sha512-HasqhJHrY4+fQL9EctC1GQDYkw2mfpL/I//ut5RFBXgNM3+DpCh5DmW8QHAfvzWilfuSFJb3cBOfTrdOoOaDMw==
+    orchestrator-form-widgets-package: backstage-plugin-orchestrator-form-widgets-1.6.1-rc.1.tgz
+    orchestrator-integrity: sha512-TYFpSbH4qX09Vzm5wyoUoKpjEQ1idej//KXszD8f6jlqduyVj/KndONIhtAxwHtslIopQVNojv7C5oFJs9+AyQ==
+    orchestrator-package: backstage-plugin-orchestrator-1.6.1-rc.1.tgz
+    orchestrator-scaffolder-backend-integrity: sha512-j/81ZK/+sNdBFdrliCX2q7u0HBhhsx2e6ysfcK1/wj1PW3zHeDDB03w/AFvtPbdnEl5Lq0iZtdF9hNHPt6xV/A==
+    orchestrator-scaffolder-backend-package: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.1-rc.1.tgz
   creationTimestamp: null
   name: orchestrators.rhdh.redhat.com
 spec:

@@ -3,14 +3,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-    orchestrator-backend-dynamic-integrity: sha512-ch4Mn+1oGEeQALJ0RY9dfjNj8QQlU0csWm4Vdsr8nQAdW6QLB6A0cuJxhv7Xpum/NzZgVPhOK6BNmb1dHIFr4g==
-    orchestrator-backend-dynamic-package: backstage-plugin-orchestrator-backend-dynamic-1.6.1-rc.1.tgz
-    orchestrator-form-widgets-integrity: sha512-HasqhJHrY4+fQL9EctC1GQDYkw2mfpL/I//ut5RFBXgNM3+DpCh5DmW8QHAfvzWilfuSFJb3cBOfTrdOoOaDMw==
-    orchestrator-form-widgets-package: backstage-plugin-orchestrator-form-widgets-1.6.1-rc.1.tgz
-    orchestrator-integrity: sha512-TYFpSbH4qX09Vzm5wyoUoKpjEQ1idej//KXszD8f6jlqduyVj/KndONIhtAxwHtslIopQVNojv7C5oFJs9+AyQ==
-    orchestrator-package: backstage-plugin-orchestrator-1.6.1-rc.1.tgz
-    orchestrator-scaffolder-backend-integrity: sha512-j/81ZK/+sNdBFdrliCX2q7u0HBhhsx2e6ysfcK1/wj1PW3zHeDDB03w/AFvtPbdnEl5Lq0iZtdF9hNHPt6xV/A==
-    orchestrator-scaffolder-backend-package: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.1-rc.1.tgz
+    orchestrator-backend-dynamic-integrity: sha512-qveMcu8jO2KsKzgXioNmmbQKxGUbUloWbDxZfa3sQDSGakB6RSE5kNPTAy1QmCvBqufeOFrfv36LpV7d757SHA==
+    orchestrator-backend-dynamic-package: backstage-plugin-orchestrator-backend-dynamic-1.6.1-rc.2.tgz
+    orchestrator-form-widgets-integrity: sha512-1KDZmf+iJUevivLsamiD/wvGhuK9PZeGrPNz5wevFC4eXYHB1Iq+Nugjq1IqBQWKIY3jhAIMwba1ZVz4jlu7/A==
+    orchestrator-form-widgets-package: backstage-plugin-orchestrator-form-widgets-1.6.1-rc.2.tgz
+    orchestrator-integrity: sha512-TJ58d5CqFcNmvhBPJp+/7nt0gZo4ILqRjE2+9ZHjIVht2X0gCJqqGYF41sTgBotb2biOD024W/5xp2qQzRbaww==
+    orchestrator-package: backstage-plugin-orchestrator-1.6.1-rc.2.tgz
+    orchestrator-scaffolder-backend-integrity: sha512-fq5oUIVyigshMUHD5N85937wCLIQVixV+mvVmCjl99FvY7A4/5X11vASHOFx+1cLW7zBZDT5hc3zJlPDBR2zWQ==
+    orchestrator-scaffolder-backend-package: backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.1-rc.2.tgz
   creationTimestamp: null
   name: orchestrators.rhdh.redhat.com
 spec:

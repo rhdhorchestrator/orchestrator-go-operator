@@ -11,7 +11,7 @@ require (
 	k8s.io/api v0.31.3
 	k8s.io/apimachinery v0.31.3
 	k8s.io/client-go v0.31.3
-	sigs.k8s.io/controller-runtime v0.19.4
+	sigs.k8s.io/controller-runtime v0.21.0
 )
 
 replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8

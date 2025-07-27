@@ -20,7 +20,7 @@ require (
 	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69
 	github.com/argoproj/argo-cd/v2 v2.13.4
 	github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a
-	github.com/operator-framework/api v0.23.0
+	github.com/operator-framework/api v0.33.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tektoncd/pipeline v0.65.2
 	k8s.io/apiextensions-apiserver v0.31.3

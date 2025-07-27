@@ -24,7 +24,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tektoncd/pipeline v0.65.2
 	k8s.io/apiextensions-apiserver v0.31.3
-	knative.dev/operator v0.42.5
+	knative.dev/operator v0.46.0
 	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608
 	redhat-developer/red-hat-developer-hub-operator v0.0.0-00010101000000-000000000000
 )

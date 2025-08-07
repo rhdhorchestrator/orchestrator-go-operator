@@ -71,6 +71,20 @@ func TestHandleNetworkPolicy(t *testing.T) {
 						Ingress: []networkingv1.NetworkPolicyIngressRule{},
 					},
 				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      allowServerlessLogicToSonataFlowWorkflows,
+						Namespace: testNamespace,
+						Labels:    kubeoperations.GetOrchestratorLabel(),
+					},
+					Spec: networkingv1.NetworkPolicySpec{
+						PodSelector: metav1.LabelSelector{},
+						PolicyTypes: []networkingv1.PolicyType{
+							networkingv1.PolicyTypeIngress,
+						},
+						Ingress: []networkingv1.NetworkPolicyIngressRule{},
+					},
+				},
 			},
 			monitoringFlag: false,
 			expectCreate:   false,
@@ -96,6 +110,8 @@ func TestHandleNetworkPolicy(t *testing.T) {
 				err := fakeClient.Get(ctx, types.NamespacedName{Name: allowRHDHToSonataflowWorkflows, Namespace: testNamespace}, existingNP)
 				assert.NoError(t, err)
 				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowIntraNamespace, Namespace: testNamespace}, existingNP)
+				assert.NoError(t, err)
+				err = fakeClient.Get(ctx, types.NamespacedName{Name: allowServerlessLogicToSonataFlowWorkflows, Namespace: testNamespace}, existingNP)
 				assert.NoError(t, err)
 
 				if tc.monitoringFlag {
@@ -154,6 +170,11 @@ func TestCreateIngressSwitch(t *testing.T) {
 			name:            "Create Monitoring Ingress",
 			npName:          allowMonitoringToSonataflowWorkflows,
 			expectedIngress: createIngressMonitoringSonataflowWorkflows(),
+		},
+		{
+			name:            "Create Serverless Operator Ingress",
+			npName:          allowServerlessLogicToSonataFlowWorkflows,
+			expectedIngress: createIngressServerlessLogicSonataFlowWorkflows(),
 		},
 		{
 			name:            "Create Non existent Ingress",

@@ -4,8 +4,8 @@ import (
 	"context"
 	"reflect"
 
-	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 	knative "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/knative"
+	kubeoperations "github.com/rhdhorchestrator/orchestrator-operator/internal/controller/kube"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrros "k8s.io/apimachinery/pkg/api/errors"
@@ -16,11 +16,12 @@ import (
 )
 
 const (
-	metaDataNameLabel                    = "kubernetes.io/metadata.name"
-	monitoringNamespace                  = "openshift-user-workload-monitoring"
-	allowRHDHToSonataflowWorkflows       = "allow-rhdh-to-sonataflow-and-workflows"
-	allowIntraNamespace                  = "allow-intra-namespace"
-	allowMonitoringToSonataflowWorkflows = "allow-monitoring-to-sonataflow-and-workflows"
+	metaDataNameLabel                         = "kubernetes.io/metadata.name"
+	monitoringNamespace                       = "openshift-user-workload-monitoring"
+	allowRHDHToSonataflowWorkflows            = "allow-rhdh-to-sonataflow-and-workflows"
+	allowIntraNamespace                       = "allow-intra-namespace"
+	allowMonitoringToSonataflowWorkflows      = "allow-monitoring-to-sonataflow-and-workflows"
+	allowServerlessLogicToSonataFlowWorkflows = "allow-openshift-serverless-logic-to-sonataflow-and-workflows"
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 		allowRHDHToSonataflowWorkflows,
 		allowIntraNamespace,
 		allowMonitoringToSonataflowWorkflows,
+		allowServerlessLogicToSonataFlowWorkflows,
 	}
 	allErrors = make(map[string]error)
 )
@@ -103,6 +105,8 @@ func createIngress(networkPolicyName string, networkAndServerlessWorkflowNamespa
 		return createIngressIntraNamespaces()
 	case allowMonitoringToSonataflowWorkflows:
 		return createIngressMonitoringSonataflowWorkflows()
+	case allowServerlessLogicToSonataFlowWorkflows:
+		return createIngressServerlessLogicSonataFlowWorkflows()
 	default:
 		return []networkingv1.NetworkPolicyIngressRule{}
 	}
@@ -180,6 +184,24 @@ func createIngressMonitoringSonataflowWorkflows() []networkingv1.NetworkPolicyIn
 					NamespaceSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							metaDataNameLabel: monitoringNamespace,
+						},
+					},
+				},
+			},
+		},
+	}
+	return Ingress
+}
+
+func createIngressServerlessLogicSonataFlowWorkflows() []networkingv1.NetworkPolicyIngressRule {
+	Ingress := []networkingv1.NetworkPolicyIngressRule{
+		{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					// Allow traffic for all pods in the openshift-serverless-logic namespace.
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							metaDataNameLabel: serverlessLogicOperatorNamespace,
 						},
 					},
 				},

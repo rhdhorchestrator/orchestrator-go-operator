@@ -192,7 +192,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	istio.io/api v0.0.0-20231206023236-e7cadb36da57 // indirect
+	istio.io/api v1.26.3 // indirect
 	k8s.io/apiserver v0.31.3 // indirect
 	k8s.io/cli-runtime v0.31.2 // indirect
 	k8s.io/component-base v0.31.3 // indirect

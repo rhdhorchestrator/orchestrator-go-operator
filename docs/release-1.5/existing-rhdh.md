@@ -1,7 +1,10 @@
 # Prerequisites
 - RHDH 1.5 instance deployed with IDP configured (GitHub, GitLab, ...)
 - For using the Orchestrator's [software templates](https://github.com/rhdhorchestrator/workflow-software-templates/tree/v1.5.x), OpenShift GitOps (ArgoCD) and OpenShift Pipelines (Tekton) should be installed and configured in RHDH (to enhance the CI/CD plugins) - [Follow these steps](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/gitops/README.md)
-- A secret in RHDH's namespace named `dynamic-plugins-npmrc` that points to the plugins npm registry (details will be provided below)
+- A secret in RHDH's namespace named `dynamic-plugins-npmrc` that points to the plugins npm registry (details will be provided below). If the RHDH Helm Chart was used to install RHDH, then the secret name will be `<Release name>-dynamic-plugins-npmrc` (<Release-name> being the RHDH release name).
+- Ensure that a [PostgreSQL](https://www.postgresql.org/) database is available and that you have credentials to access the database. Credentials with tablespace management privileges are only required if you intend to manage tablespaces.
+For your convenience, a [reference implementation](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/README.md) is provided.
+- If you already have a PostgreSQL database installed, please refer to this [note](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/docs/postgresql/README.md#note-the-default-settings-provided-in-postgresql-values-match-the-defaults-provided-in-the-orchestrator-values) regarding default settings.
 
 # Installation steps
 
@@ -38,6 +41,8 @@ In 1.5, the Orchestrator infrastructure is installed using the Orchestrator Oper
       rhdh:
         installOperator: false
     ```
+    For users installing an existing-rhdh via the Helm Chart, note that the default values in the [Orchestrator CR under](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml) 'postgres' may need modifying.
+    
 1. Verify resources and wait until they are running
     1. From the console run the following command in order to get the necessary wait commands: \
        `oc describe orchestrator orchestrator-sample -n ${TARGET_NAMESPACE} | grep -A 10 "Run the following commands to wait until the services are ready:"`
@@ -69,6 +74,8 @@ metadata:
   name: dynamic-plugins-npmrc
 EOF
 ```
+ If the RHDH Helm Chart was used to install RHDH, then the secret name will be `<Release name>-dynamic-plugins-npmrc` (<Release-name> being the RHDH release name).
+
 The value of `.data.npmrc` in the above example points to https://npm.registry.redhat.com. It should be included to consume plugins referenced in this document. If including plugins
 from a different NPM registry, the `.data.npmrc` value should be updated with the base64 encoded NPM registry. Example: https://registry.npmjs.org would be `aHR0cHM6Ly9yZWdpc3RyeS5ucG1qcy5vcmcK`.
 

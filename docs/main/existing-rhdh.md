@@ -340,7 +340,7 @@ In the example output below, `orchestrator-backend-dynamic-integrity` is the int
   "orchestrator-package": "backstage-plugin-orchestrator@1.6.1",
   "orchestrator-integrity": "sha512-6qQ/TLvrf4+gDhrF5JtKQ51hTrNkhEw0jE4lWvLmhauZKeD0EeJVYOlbAvDJZjmx7iJZXLFFydR6EnYuaHBZ+A==",
   "orchestrator-backend-dynamic-package": "backstage-plugin-orchestrator-backend-dynamic@1.6.1",
-  "orchestrator-backend-dynamic-integrity": "ha512-oAHyLnLWzPMeCuUCc2syuG1bJ+7say7n+AjXu/oEi2t59ULCKI6zFpBSy0GvXd7zoBC9ruW/slhEG+APKmTQUg==",
+  "orchestrator-backend-dynamic-integrity": "sha512-oAHyLnLWzPMeCuUCc2syuG1bJ+7say7n+AjXu/oEi2t59ULCKI6zFpBSy0GvXd7zoBC9ruW/slhEG+APKmTQUg==",
   "orchestrator-scaffolder-backend-package": "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.1",
   "orchestrator-scaffolder-backend-integrity": "sha512-FPd9bZZhlnYqPej4gCWR1eXaGOPouticrufd8kvHNwfJcO3eRCzPr5yC9E9tbEqyzvZvQBDfljcBeswORhIqfQ==",
   "orchestrator-form-widgets-package": "backstage-plugin-orchestrator-form-widgets@1.6.1",

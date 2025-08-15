@@ -13,20 +13,20 @@ const OrchestratorFormWidgets string = "orchestratorFormWidgets"
 func getPlugins() map[string]Plugin {
 	return map[string]Plugin{
 		Orchestrator: {
-			Package:   "backstage-plugin-orchestrator-1.6.1-rc.2.tgz",
-			Integrity: "sha512-TJ58d5CqFcNmvhBPJp+/7nt0gZo4ILqRjE2+9ZHjIVht2X0gCJqqGYF41sTgBotb2biOD024W/5xp2qQzRbaww==",
+			Package:   "backstage-plugin-orchestrator@1.6.1",
+			Integrity: "sha512-6qQ/TLvrf4+gDhrF5JtKQ51hTrNkhEw0jE4lWvLmhauZKeD0EeJVYOlbAvDJZjmx7iJZXLFFydR6EnYuaHBZ+A==",
 		},
 		OrchestratorBackend: {
-			Package:   "backstage-plugin-orchestrator-backend-dynamic-1.6.1-rc.2.tgz",
-			Integrity: "sha512-qveMcu8jO2KsKzgXioNmmbQKxGUbUloWbDxZfa3sQDSGakB6RSE5kNPTAy1QmCvBqufeOFrfv36LpV7d757SHA==",
+			Package:   "backstage-plugin-orchestrator-backend-dynamic@1.6.1",
+			Integrity: "sha512-oAHyLnLWzPMeCuUCc2syuG1bJ+7say7n+AjXu/oEi2t59ULCKI6zFpBSy0GvXd7zoBC9ruW/slhEG+APKmTQUg==",
 		},
 		ScaffolderBackendOrchestrator: {
-			Package:   "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic-1.6.1-rc.2.tgz",
-			Integrity: "sha512-fq5oUIVyigshMUHD5N85937wCLIQVixV+mvVmCjl99FvY7A4/5X11vASHOFx+1cLW7zBZDT5hc3zJlPDBR2zWQ==",
+			Package:   "backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.6.1",
+			Integrity: "sha512-FPd9bZZhlnYqPej4gCWR1eXaGOPouticrufd8kvHNwfJcO3eRCzPr5yC9E9tbEqyzvZvQBDfljcBeswORhIqfQ==",
 		},
 		OrchestratorFormWidgets: {
-			Package:   "backstage-plugin-orchestrator-form-widgets-1.6.1-rc.2.tgz",
-			Integrity: "sha512-1KDZmf+iJUevivLsamiD/wvGhuK9PZeGrPNz5wevFC4eXYHB1Iq+Nugjq1IqBQWKIY3jhAIMwba1ZVz4jlu7/A==",
+			Package:   "backstage-plugin-orchestrator-form-widgets@1.6.1",
+			Integrity: "sha512-jWuawuAxVo7DDSX26t+L4DPhCxR8cpl3AMvUQnWKejzj2/1GwL/FHfffQwa2sSF2xtOKfkAJwnv5p4/5ocjcaQ==",
 		},
 	}
 

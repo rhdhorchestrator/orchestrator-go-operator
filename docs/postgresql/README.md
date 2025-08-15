@@ -3,6 +3,12 @@
 Below there are two options to install PostgreSQL Server v15 on OCP cluster.
 Both options shouldn't be used in production.
 
+Note: The [Orchestrator CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml#L23) 
+sample works by default without any changes in the postgres fields, if using the [Bitnami Helm chart](#using-bitnami-helm-chart) method to install 
+the postgres Database. However, if using [PostgresSQL from the RH catalog](#using-postgresql-image-from-rh-catalog) method, 
+the postgres field in the [Orchestrator CR](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml#L23) sample must 
+be updated as described [here](#using-postgresql-image-from-rh-catalog).
+
 # Using Bitnami helm chart
 Follow these steps to deploy a sample PostgreSQL instance in the `sonataflow-infra` namespace, with minimal requirements to deploy the Orchestrator.
 

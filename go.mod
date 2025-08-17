@@ -8,9 +8,9 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	k8s.io/api v0.31.3
-	k8s.io/apimachinery v0.31.3
-	k8s.io/client-go v0.31.3
+	k8s.io/api v0.33.4
+	k8s.io/apimachinery v0.33.4
+	k8s.io/client-go v0.33.4
 	sigs.k8s.io/controller-runtime v0.19.4
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/operator-framework/api v0.23.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tektoncd/pipeline v0.65.2
-	k8s.io/apiextensions-apiserver v0.31.3
+	k8s.io/apiextensions-apiserver v0.33.4
 	knative.dev/operator v0.42.5
 	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608
 	redhat-developer/red-hat-developer-hub-operator v0.0.0-00010101000000-000000000000
@@ -193,14 +193,14 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	istio.io/api v0.0.0-20231206023236-e7cadb36da57 // indirect
-	k8s.io/apiserver v0.31.3 // indirect
-	k8s.io/cli-runtime v0.31.2 // indirect
-	k8s.io/component-base v0.31.3 // indirect
-	k8s.io/component-helpers v0.31.2 // indirect
+	k8s.io/apiserver v0.33.4 // indirect
+	k8s.io/cli-runtime v0.33.4 // indirect
+	k8s.io/component-base v0.33.4 // indirect
+	k8s.io/component-helpers v0.33.4 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-aggregator v0.31.2 // indirect
+	k8s.io/kube-aggregator v0.33.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20250628140032-d90c4fd18f59 // indirect
-	k8s.io/kubectl v0.31.2 // indirect
+	k8s.io/kubectl v0.33.4 // indirect
 	k8s.io/kubernetes v1.31.9 // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	oras.land/oras-go/v2 v2.5.0 // indirect

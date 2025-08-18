@@ -40,6 +40,8 @@ In 1.6, the Orchestrator infrastructure is installed using the Orchestrator Oper
         namespace: sonataflow-infra
       rhdh:
         installOperator: false
+        name: "my-rhdh" # Name of existing RHDH CR. Required
+        namespace: "rhdh" # Namespace of RHDH Instance, whether existing or to be installed. Required
     ```
     For users installing an existing-rhdh via the Helm Chart, note that the default values in the [Orchestrator CR under](https://github.com/rhdhorchestrator/orchestrator-go-operator/blob/main/config/samples/_v1alpha3_orchestrator.yaml) 'postgres' may need modifying.
     

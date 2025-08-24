@@ -17,7 +17,7 @@ require (
 replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8
 
 require (
-	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69
+	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250823105803-4da801dcf2f3
 	github.com/argoproj/argo-cd/v2 v2.13.4
 	github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a
 	github.com/operator-framework/api v0.23.0
@@ -145,7 +145,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/serverlessworkflow/sdk-go/v2 v2.4.2 // indirect
+	github.com/serverlessworkflow/sdk-go/v2 v2.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect

@@ -14,12 +14,12 @@ require (
 	sigs.k8s.io/controller-runtime v0.19.4
 )
 
-replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250114185941-91e321986dc8
+replace redhat-developer/red-hat-developer-hub-operator => github.com/redhat-developer/rhdh-operator v0.0.0-20250821153251-86650e51745d
 
 require (
 	github.com/apache/incubator-kie-tools/packages/sonataflow-operator/api v0.0.0-20250124143824-bbf18e931a69
 	github.com/argoproj/argo-cd/v2 v2.13.4
-	github.com/openshift/api v0.0.0-20250110183840-c1a063b1614a
+	github.com/openshift/api v0.0.0-20250124120743-e8e07fa2990e
 	github.com/operator-framework/api v0.23.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tektoncd/pipeline v0.65.2
@@ -200,7 +200,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	k8s.io/kubectl v0.31.2 // indirect
 	k8s.io/kubernetes v1.31.6 // indirect
-	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
+	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
 	oras.land/oras-go/v2 v2.5.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect

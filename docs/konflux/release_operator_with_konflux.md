@@ -181,7 +181,7 @@ go operator application that were created as a result of a nudge, by timestamp
 in ascending order and displays the name, integration tests success status and
 the merge PR number and remote branch used in the commit.
 ```console
-oc get snapshots --sort-by .metadata.creationTimestamp -l pac.test.appstudio.openshift.io/event-type=push,appstudio.openshift.io/component=$orchestrator_operator_bundle -ojsonpath='{range .items[*]}{@.metadata.name}{"\t"}{@.status.conditions[?(@.type=="AppStudioTestSucceeded")].status}{"\t"}{@.metadata.annotations.pac\.test\.appstudio\.openshift\.io/sha-title}{"\n"}{end}' | grep "Update controller-rhel9-operator"
+oc get snapshots --sort-by .metadata.creationTimestamp -l pac.test.appstudio.openshift.io/event-type=push,appstudio.openshift.io/component=$orchestrator_operator_bundle -ojsonpath='{range .items[*]}{@.metadata.name}{"\t"}{@.status.conditions[?(@.type=="AppStudioTestSucceeded")].status}{"\t"}{@.metadata.annotations.pac\.test\.appstudio\.openshift\.io/sha-title}{"\n"}{end}' | grep "chore(deps): update controller-rhel9-operator-1-6"
 ```
 Example:
 ```console
@@ -249,7 +249,7 @@ guide to find out the root cause.
   manifest:
 
 ```console
-advisoryURL=$(oc get $releaseName -ojsonpath='{.status.artifacts.advisory.url}' | sed  's/blob/raw/')
+advisoryURL=$(oc get $releaseName -ojsonpath='{.status.artifacts.advisory.internal_url}' | sed  's/blob/raw/')
 controllerPullSpec=$(curl $advisoryURL | yq '.spec.content[] | with_entries(select(.value.repository | test("controller-rhel9-operator$") ))| .[].containerImage')
 bundlePullSpec=$(curl $advisoryURL | yq '.spec.content[] | with_entries(select(.value.repository | test("orchestrator-operator-bundle$") ))| .[].containerImage')
 skopeo inspect docker://$controllerPullSpec >/dev/null && echo "Controller image found in $controllerPullSpec" || echo "Controller image not found in $controllerPullSpec"
@@ -518,7 +518,7 @@ guide to find out the root cause.
   advisory manifest:
 
 ```console
-advisoryURL=$(oc get $releaseName -ojsonpath='{.status.artifacts.advisory.url}' | sed  's/blob/raw/')
+advisoryURL=$(oc get $releaseName -ojsonpath='{.status.artifacts.advisory.internal_url}' | sed  's/blob/raw/')
 controllerPullSpec=$(curl $advisoryURL | yq '.spec.content[] | with_entries(select(.value.repository | test("controller-rhel9-operator$") ))| .[].containerImage')
 bundlePullSpec=$(curl $advisoryURL | yq '.spec.content[] | with_entries(select(.value.repository | test("orchestrator-operator-bundle$") ))| .[].containerImage')
 skopeo inspect docker://$controllerPullSpec >/dev/null && echo "Controller image found in $controllerPullSpec" || echo "Controller image not found in $controllerPullSpec"

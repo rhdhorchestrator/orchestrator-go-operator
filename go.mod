@@ -25,7 +25,7 @@ require (
 	github.com/tektoncd/pipeline v0.65.2
 	k8s.io/apiextensions-apiserver v0.31.3
 	knative.dev/operator v0.42.5
-	knative.dev/pkg v0.0.0-20240716082220-4355f0c73608
+	knative.dev/pkg e9c87121ec4c
 	redhat-developer/red-hat-developer-hub-operator v0.0.0-00010101000000-000000000000
 )
 

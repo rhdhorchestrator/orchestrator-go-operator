@@ -17,7 +17,8 @@ LABEL controller="registry.redhat.io/rhdh-orchestrator-dev-preview-beta/controll
 # Required labels
 LABEL com.redhat.component="RHDH Orchestrator Operator"
 LABEL distribution-scope="public"
-LABEL name="rhdh-orchestrator-go-operator-bundle"
+LABEL name="rhdh-orchestrator-dev-preview-beta/orchestrator-operator-bundle"
+LABEL cpe="cpe:/a:redhat:rhdh:1.6::el9"
 LABEL release="1.6.1"
 LABEL version="1.6.1"
 LABEL maintainer="Red Hat jubah@redhat.com"
